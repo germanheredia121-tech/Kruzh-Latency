@@ -1802,7 +1802,7 @@
 
             <!-- Card Central Flotante -->
             <Border Width="500" HorizontalAlignment="Center" VerticalAlignment="Center"
-                    Background="#141414" BorderBrush="#262626" BorderThickness="1"
+                    Background="#000000" BorderBrush="#1F1F1F" BorderThickness="1"
                     CornerRadius="16" Padding="32,28" Translation="0,0,40">
                 <Border.Shadow>
                     <ThemeShadow />
@@ -1810,7 +1810,7 @@
                 <StackPanel Spacing="16" HorizontalAlignment="Stretch">
                     <!-- Cabecera: Loader + Titulo + Punto de restauracion -->
                     <StackPanel HorizontalAlignment="Center" Spacing="8">
-                        <Grid Width="160" Height="160" HorizontalAlignment="Center">
+                        <Grid Width="180" Height="180" HorizontalAlignment="Center">
                             <Grid x:Name="OverlayFallbackSpinner" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Ellipse Stroke="#222222" StrokeThickness="3" Width="40" Height="40" />
                                 <Canvas Width="40" Height="40">
@@ -1822,7 +1822,7 @@
                                     </Path>
                                 </Canvas>
                             </Grid>
-                            <WebView2 x:Name="OverlayBoxLoaderWebView" Width="160" Height="160" Opacity="0"
+                            <WebView2 x:Name="OverlayBoxLoaderWebView" Width="180" Height="180" Opacity="0"
                                       IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
 

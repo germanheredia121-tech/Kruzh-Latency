@@ -8,7 +8,7 @@ using Microsoft.Web.WebView2.Core;
 namespace KruzhLatency.Controls;
 
 /// <summary>
-/// Monta el componente Assets/box-loader.html (cajas animadas) en un WebView2 transparente.
+/// Monta el componente Assets/box-loader.html (cajas blancas animadas, fondo negro) en un WebView2.
 /// Si WebView2 no está disponible, queda visible el spinner XAML de respaldo.
 /// </summary>
 internal static class BoxLoader
@@ -46,8 +46,9 @@ internal static class BoxLoader
                 return false;
             }
 
-            // Transparente ANTES de inicializar para que no haya flash blanco.
-            view.DefaultBackgroundColor = Microsoft.UI.Colors.Transparent;
+            // Negro, igual que el fondo del HTML y de los contenedores (splash / tarjeta del overlay): así no se ve
+            // ningún recuadro aunque WebView2 no componga bien la transparencia. Se fija ANTES de inicializar (sin flash blanco).
+            view.DefaultBackgroundColor = Microsoft.UI.Colors.Black;
             await view.EnsureCoreWebView2Async();
 
             var settings = view.CoreWebView2.Settings;

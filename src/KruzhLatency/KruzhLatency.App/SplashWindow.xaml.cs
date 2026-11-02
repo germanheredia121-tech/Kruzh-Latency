@@ -51,7 +51,8 @@ public sealed partial class SplashWindow : Window
                 presenter.IsResizable = false;
                 presenter.IsMaximizable = false;
                 presenter.IsMinimizable = false;
-                presenter.SetBorderAndTitleBar(false, false);
+                // Borde fino SIN barra de título: Windows dibuja la sombra nativa y las esquinas redondeadas.
+                presenter.SetBorderAndTitleBar(true, false);
             }
 
             int round = 2;

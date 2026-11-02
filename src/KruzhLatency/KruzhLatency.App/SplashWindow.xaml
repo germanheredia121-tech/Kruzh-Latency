@@ -7,12 +7,12 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <!-- Splash 420x300, sin bordes, fondo #0F0F0F, esquinas redondeadas (DWM). Arriba el box-loader, abajo marca + estado. -->
-    <Border Background="#0F0F0F" BorderBrush="#1C1C1C" BorderThickness="1" CornerRadius="12">
+    <!-- Splash 420x300, fondo negro (igual al del box-loader: sin recuadro visible), borde fino + sombra nativa de Windows. Arriba el box-loader, abajo marca + estado. -->
+    <Border Background="#000000" CornerRadius="8">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
 
-            <!-- Box-loader (WebView2 160x160: más chico se corta). Spinner XAML solo si WebView2 no está disponible. -->
-            <Grid Width="160" Height="160" HorizontalAlignment="Center">
+            <!-- Box-loader (WebView2 180x180 = contenedor .relative del HTML; más chico se corta). Spinner XAML solo si WebView2 no está disponible. -->
+            <Grid Width="180" Height="180" HorizontalAlignment="Center">
                 <Grid x:Name="SplashFallbackSpinner" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Ellipse Stroke="#1C1C1C" StrokeThickness="3" Width="40" Height="40" />
                     <Canvas Width="40" Height="40">
@@ -24,7 +24,7 @@
                         </Path>
                     </Canvas>
                 </Grid>
-                <WebView2 x:Name="SplashBoxLoaderWebView" Width="160" Height="160" Opacity="0"
+                <WebView2 x:Name="SplashBoxLoaderWebView" Width="180" Height="180" Opacity="0"
                           IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Grid>
 

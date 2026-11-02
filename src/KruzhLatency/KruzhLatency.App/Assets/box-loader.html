@@ -1,134 +1,96 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KRUZH LATENCY — Box Loader</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    background: transparent !important;
-    background-color: transparent !important;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    height: 100vh;
+  /* Fondo transparente para WebView2 (en el overlay/splash el fondo lo pone la app).
+     Para esta preview se ve sobre negro. overflow:visible para que NO se corte la animación. */
+  html,body{height:100%;margin:0;background:#000;display:flex;align-items:center;justify-content:center;overflow:visible}
+  /* contenedor con aire suficiente para el bounding box de la proyección isométrica */
+  .relative{position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center;overflow:visible}
+
+  .boxes{
+    --size:32px;
+    --duration:800ms;
+    height:calc(var(--size) * 2);
+    width:calc(var(--size) * 3);
+    position:relative;
+    transform-style:preserve-3d;
+    transform-origin:50% 50%;
+    transform:rotateX(60deg) rotateZ(45deg) rotateY(0deg) translateZ(0px);
   }
-  .boxes {
-    height: 32px;
-    width: 32px;
-    position: relative;
-    -webkit-transform-style: preserve-3d;
-    transform-style: preserve-3d;
-    -webkit-transform-origin: 50% 50%;
-    transform-origin: 50% 50%;
-    margin-top: 10px;
-    -webkit-transform: rotateX(60deg) rotateZ(45deg) rotateY(0deg) translateZ(0px);
-    transform: rotateX(60deg) rotateZ(45deg) rotateY(0deg) translateZ(0px);
+  .boxes .box{
+    width:var(--size);
+    height:var(--size);
+    top:0;left:0;
+    position:absolute;
+    transform-style:preserve-3d;
   }
-  .boxes .box {
-    width: 32px;
-    height: 32px;
-    top: 0px;
-    left: 0;
-    position: absolute;
-    -webkit-transform-style: preserve-3d;
-    transform-style: preserve-3d;
+  .boxes .box:nth-child(1){ transform:translate(100%,0);   animation:box1 var(--duration) linear infinite; }
+  .boxes .box:nth-child(2){ transform:translate(0,100%);   animation:box2 var(--duration) linear infinite; }
+  .boxes .box:nth-child(3){ transform:translate(100%,100%);animation:box3 var(--duration) linear infinite; }
+  .boxes .box:nth-child(4){ transform:translate(200%,0);   animation:box4 var(--duration) linear infinite; }
+
+  .boxes .box > div{
+    --background:#f5f5f5;
+    --top:#ffffff;
+    --right:#bcbcbc;
+    --depth:#0a0a0a;
+    position:absolute;width:100%;height:100%;
+    background:var(--background);
+    backface-visibility:hidden;
   }
-  .boxes .box:nth-child(1) {
-    -webkit-transform: translate(100%, 0);
-    transform: translate(100%, 0);
-    -webkit-animation: box1 1s linear infinite;
-    animation: box1 1s linear infinite;
+  /* cara frontal (la de arriba en la proyección iso) */
+  .boxes .box > div.face-front{
+    background:var(--top);
+    transform:translateZ(calc(var(--size) / 2));
   }
-  .boxes .box:nth-child(2) {
-    -webkit-transform: translate(0, 100%);
-    transform: translate(0, 100%);
-    -webkit-animation: box2 1s linear infinite;
-    animation: box2 1s linear infinite;
+  /* cara derecha */
+  .boxes .box > div.face-right{
+    background:var(--right);
+    transform:rotateY(90deg) translateZ(calc(var(--size) / 2));
   }
-  .boxes .box:nth-child(3) {
-    -webkit-transform: translate(100%, 100%);
-    transform: translate(100%, 100%);
-    -webkit-animation: box3 1s linear infinite;
-    animation: box3 1s linear infinite;
+  /* cara superior lateral */
+  .boxes .box > div.face-top{
+    background:var(--background);
+    transform:rotateX(-90deg) translateZ(calc(var(--size) / 2));
   }
-  .boxes .box:nth-child(4) {
-    -webkit-transform: translate(200%, 0);
-    transform: translate(200%, 0);
-    -webkit-animation: box4 1s linear infinite;
-    animation: box4 1s linear infinite;
-  }
-  .boxes .box > div {
-    --translateZ: 15.5px;
-    --rotateY: 0deg;
-    --rotateX: 0deg;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #63C088;
-    top: auto;
-    right: auto;
-    bottom: auto;
-    left: auto;
-    -webkit-transform: rotateY(var(--rotateY)) rotateX(var(--rotateX)) translateZ(var(--translateZ));
-    transform: rotateY(var(--rotateY)) rotateX(var(--rotateX)) translateZ(var(--translateZ));
-  }
-  .boxes .box > div:nth-child(1) {
-    top: 0;
-    left: 0;
-    background: #63C088;
-  }
-  .boxes .box > div:nth-child(2) {
-    background: #4DAE72;
-    --rotateY: 90deg;
-  }
-  .boxes .box > div:nth-child(3) {
-    background: #3B915C;
-    --rotateX: -90deg;
-  }
-  .boxes .box > div:nth-child(4) {
-    background: #1F4A30;
-    top: 0;
-    left: 0;
-    --translateZ: -90px;
+  /* "reflejo" / profundidad (se ve oscuro debajo por la proyección) */
+  .boxes .box > div.face-back{
+    background:var(--depth);
+    transform:translateZ(calc(var(--size) / 2 * -3));
   }
 
-  @keyframes box1 {
-    0%, 50% { transform: translate(100%, 0); }
-    100% { transform: translate(200%, 0); }
+  @keyframes box1{
+    0%,50%{ transform:translate(100%,0); }
+    100%{ transform:translate(200%,0); }
   }
-  @keyframes box2 {
-    0% { transform: translate(0, 100%); }
-    50% { transform: translate(0, 0); }
-    100% { transform: translate(100%, 0); }
+  @keyframes box2{
+    0%{ transform:translate(0,100%); }
+    50%{ transform:translate(0,0); }
+    100%{ transform:translate(100%,0); }
   }
-  @keyframes box3 {
-    0%, 50% { transform: translate(100%, 100%); }
-    100% { transform: translate(0, 100%); }
+  @keyframes box3{
+    0%,50%{ transform:translate(100%,100%); }
+    100%{ transform:translate(0,100%); }
   }
-  @keyframes box4 {
-    0% { transform: translate(200%, 0); }
-    50% { transform: translate(200%, 100%); }
-    100% { transform: translate(100%, 100%); }
+  @keyframes box4{
+    0%{ transform:translate(200%,0); }
+    50%{ transform:translate(200%,100%); }
+    100%{ transform:translate(100%,100%); }
   }
 </style>
 </head>
 <body>
-  <div class="boxes">
-    <div class="box">
-      <div></div><div></div><div></div><div></div>
-    </div>
-    <div class="box">
-      <div></div><div></div><div></div><div></div>
-    </div>
-    <div class="box">
-      <div></div><div></div><div></div><div></div>
-    </div>
-    <div class="box">
-      <div></div><div></div><div></div><div></div>
+  <div class="relative">
+    <div class="boxes">
+      <div class="box box-1"><div class="face face-front"></div><div class="face face-right"></div><div class="face face-top"></div><div class="face face-back"></div></div>
+      <div class="box box-2"><div class="face face-front"></div><div class="face face-right"></div><div class="face face-top"></div><div class="face face-back"></div></div>
+      <div class="box box-3"><div class="face face-front"></div><div class="face face-right"></div><div class="face face-top"></div><div class="face face-back"></div></div>
+      <div class="box box-4"><div class="face face-front"></div><div class="face face-right"></div><div class="face face-top"></div><div class="face face-back"></div></div>
     </div>
   </div>
 </body>
 </html>
-
