@@ -17,7 +17,7 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 ## Fase 1 — Contratos (secuencial, bloquea todo)
 | ID | Tarea | Deps | Hecho cuando |
 |---|---|---|---|
-| T10 | Core: `Operation`, `TweakDefinition`, `TweakState`, `ApplyResult`, `Profile` (Normal/Competitivo/Profesional/Entusiasta), interfaces `IRegistry/IProcessRunner/IServiceManager/IPowerSettings/IBcdStore/IRestorePoint/IDeviceManager` + fakes | T01 | compila; fakes testeados |
+| T10 ✅ | Core: `Operation`, `TweakDefinition`, `TweakState`, `ApplyResult`, `Profile` (Normal/Competitivo/Profesional/Entusiasta), interfaces `IRegistry/IProcessRunner/IServiceManager/IPowerSettings/IBcdStore/IRestorePoint/IDeviceManager` + fakes | T01 | compila; fakes testeados |
 | T11 | Journal v2 atómico (`schemaVersion`, baseline `(tweakId, opId)`) | T10 | tests baseline único / atómico / corrupción |
 | T12 | Lista de servicios/features protegidos por anticheat (FACEIT, Vanguard) + críticos de Windows, versionada, con fuentes | T10 | documento + test que el perfil Profesional no la toca |
 
