@@ -1,6 +1,7 @@
 # KRUZH LATENCY
 
-Optimizador de latencia para CS2 competitivo. Windows 10/11, app de escritorio que corre como admin y modifica registro, servicios, BCD y powercfg.
+Optimizador de latencia para CS2 y VALORANT (FACEIT AC / Vanguard).
+Límite duro (ADR-004): nunca inyectar ni leer/escribir archivos o memoria de los juegos; por juego solo `.nip`, IFEO, CPU sets, GPU pref, FSO. Windows 10/11, app de escritorio que corre como admin y modifica registro, servicios, BCD y powercfg.
 
 ## Stack
 .NET 8, WinUI 3 (Windows App SDK 1.5, unpackaged, self-contained x64), CommunityToolkit.Mvvm, xUnit.

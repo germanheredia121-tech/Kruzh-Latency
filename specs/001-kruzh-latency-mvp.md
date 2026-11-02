@@ -1,68 +1,108 @@
-# Spec 001 — KRUZH LATENCY MVP (CS2 competitivo)
+# Spec 001 — KRUZH LATENCY MVP (CS2 + VALORANT)
 
-Estado: BORRADOR — revisar y aprobar antes de pasar a PLAN.md / tasks.md.
+Estado: v2 — actualizada con las decisiones del dueño del producto (2026-11-02). Revisar antes de arrancar Fase 1.
 
 ## Objetivo
-App de escritorio Windows 10/11 que deja una PC lista para jugar **CS2 competitivo** con la menor latencia de sistema y la menor varianza de frametime posibles, de forma **segura, reversible al 100 % y medible**.
+App de escritorio Windows 10/11 que exprime **la mínima latencia de sistema posible para la build concreta del usuario** (CPU, GPU, placa, NIC, periféricos), para jugar CS2 y VALORANT en FACEIT AC y Riot Vanguard. Todo seguro, reversible y aplicado en segundo plano con progreso por tweak.
 
-El usuario abre la app, ve qué está bien y qué no en su PC, elige un preset, aplica, reinicia y **ve la diferencia medida** (antes vs después).
+Producto pensado para la comunidad y para venta (la licencia se implementa al final, ver ADR-003).
 
 ## Usuario
-Jugador de CS2 (FACEIT / Premier / LAN) en PC desktop o laptop, con conocimientos medios. No sabe qué es un IRQ; sí sabe qué es Reflex y fps_max.
+Jugador competitivo de CS2 / VALORANT con conocimientos medios. Quiere que la app detecte y ajuste todo por él; no quiere tocar configs del juego (eso ya lo sabe hacer).
+
+## Límite anticheat (ADR-004, no negociable)
+- La app **nunca** se inyecta en procesos, **nunca** lee ni escribe archivos de configuración de los juegos, **nunca** toca memoria de los juegos.
+- Lo único por juego: perfil NVIDIA (`.nip`), prioridad CPU/IO por IFEO (`PerfOptions`), CPU sets / afinidad persistente, preferencia de GPU, flags de compatibilidad (FSO).
+- Perfil **Profesional** = 100 % compatible con FACEIT AC y Vanguard (no desactiva servicios ni features que esos anticheats requieren: TPM, Secure Boot, HVCI/VBS cuando aplique, vgc/vgk, FACEIT service, mitigaciones).
+- Perfil **Entusiasta** = tweak total, sin importar anticheat, con advertencia roja explícita.
 
 ## Alcance funcional (MVP)
 
-1. **Diagnóstico de hardware correcto**: CPU (topología real: P/E-cores, CCDs, SMT), GPU discreta real, RAM (capacidad, canales, velocidad real vs nominal), monitor (Hz actual vs máximo), NIC, chasis (desktop/laptop), build de Windows.
-2. **Catálogo de tweaks** solo con los marcados ✅/🟡 en [docs/AUDITORIA.md §3](../docs/AUDITORIA.md). Cada tweak declara: qué toca, por qué, fuente, riesgo, gates (aplicable / recomendado / anticheat), si requiere reinicio.
-3. **Presets**: Seguro, Competitivo, Profesional, Entusiasta (opt-in con advertencia roja).
-4. **Aplicar / revertir transaccional**: backup exacto de cada valor tocado, revert por tweak y "revertir todo", journal resistente a cortes de luz.
-5. **Punto de restauración real** antes del primer apply (si falla, el usuario lo sabe y decide).
-6. **Asesor CS2 (solo lectura)**: Reflex, modo de pantalla, fps_max, Hz, resolución, launch options. Muestra qué cambiar en el juego; no edita archivos del juego.
-7. **Medición A/B** con PresentMon: captura de N segundos con CS2 abierto → frametime promedio, 1 % low, p99, latencia de PC si está disponible. Guarda "antes" y "después".
+### F1. Diagnóstico de hardware correcto
+CPU (P/E-cores, CCDs, SMT, X3D), GPU discreta real, RAM (capacidad, canales, velocidad real vs nominal), monitor (Hz actual vs máximo), NIC, chasis, build de Windows.
+
+### F2. Catálogo de tweaks + perfiles
+Perfiles: **Normal**, **Competitivo**, **Profesional** (anticheat-safe), **Entusiasta** (total).
+Catálogo según `docs/AUDITORIA.md §3` con las decisiones v2: **se mantienen todos los tweaks de red**; se quitan los placebo de mouse (M02, M03, M04), GPU (G03, G07) y audio (I03).
+
+### F3. Aplicación transaccional en segundo plano
+Backup exacto por operación, estado real `Applied | Partial | NotApplied | NotApplicable`, apply en background con progreso por tweak, un error no corta el lote, revert por tweak y "revertir todo", journal atómico, punto de restauración real.
+
+### F4. Optimizador de servicios por perfil
+- Al elegir un perfil se muestra la **lista exacta de servicios** que se van a desactivar/poner en manual (nombre, para qué sirve, por qué se toca, impacto si lo necesitás).
+- Un click aplica; cada servicio es reversible (tipo de inicio original + estado).
+- Lista de **servicios protegidos** que ningún perfil toca (críticos de Windows + los que requieren FACEIT/Vanguard + red/audio/entrada).
+- El usuario puede destildar servicios individuales antes de aplicar.
+
+### F5. Debloat de Windows por perfil
+- Apps AppX preinstaladas, tareas programadas de telemetría, features opcionales y componentes en segundo plano (widgets, Copilot, sugerencias, etc.).
+- Misma UX que servicios: perfil → lista → destildar → aplicar.
+- AppX: remoción **por usuario** (reversible re-registrando el paquete). Desaprovisionar para todos los usuarios solo en Entusiasta y marcado como "no reversible desde la app".
+
+### F6. Auditor de drivers
+- Detecta dispositivos con error (códigos de Device Manager: 10, 28, 43, etc.), dispositivos **sin driver** y dispositivos con driver genérico de Microsoft donde existe driver de fabricante (GPU, NIC, chipset, audio).
+- Marca versiones conocidas como problemáticas (catálogo local versionado).
+- No descarga ni instala: muestra el problema, el dispositivo y el link oficial.
+
+### F7. MSI Mode + prioridad automáticos por dispositivo (auto-tune)
+- Enumera dispositivos PCI(e) y lee capacidades reales: soporte MSI/MSI-X y máximo de mensajes (desde el hardware, no por categoría).
+- Para cada dispositivo candidato (GPU, NIC, USB xHCI, audio, NVMe, etc.) prueba combinaciones de: **modo** (línea / MSI), **MessageNumberLimit** (1, 2, 4, … hasta el máximo soportado) y **DevicePriority** (undefined / low / normal / high).
+- Mide cada combinación con trazas ETW del kernel (latencia ISR + DPC por driver, promedio / p99 / máximo) bajo una carga reproducible, y deja la combinación con **menor latencia p99 estable**.
+- Seguridad: si el dispositivo no arranca tras un cambio (código de error), se revierte solo. Dispositivos que no se pueden reiniciar en caliente (disco de booteo, a veces GPU/USB del mouse) se prueban con ciclo de reinicio guiado.
+- Resultado guardado y reversible (vuelve a los valores originales del registro).
+
+### F8. NVIDIA `.nip` por perfil
+Perfil global + perfiles por ejecutable de CS2 / VALORANT, con export previo del perfil actual del driver para poder revertir.
+
+### F9. BIOS / NVRAM — solo consejo
+- Pantalla vacía hasta que el usuario **importa su `nvram.txt`** (SCEWIN). Nada de listas por defecto.
+- La app parsea el archivo y cruza cada setting contra una **base de datos amplia de settings AMI** (nombre de la pregunta, variantes por fabricante, valor recomendado por perfil y por tipo de CPU/plataforma, motivo).
+- Resultado por setting encontrado: **Bien / Cambiar a X / Sin recomendación**. Los que no están en el archivo no se muestran.
+- **Sin exportar, sin parchear, sin flashear**: el usuario cambia los valores él mismo en la BIOS o con SCEWIN.
 
 ## Criterios de aceptación
 
 ### Seguridad y reversibilidad
-- [ ] Cada operación (registro, servicio, BCD, powercfg, tarea programada, netsh, perfil NVIDIA) guarda el valor original **antes** de escribir, y el revert lo restaura exacto (tipo y valor) — verificado por tests con registro falso.
-- [ ] "Revertir todo" deja el sistema igual que antes del primer apply (test: snapshot → apply preset → revert all → snapshot idéntico).
-- [ ] El journal se escribe de forma atómica (archivo temporal + replace) y sobrevive a un kill del proceso a mitad de un apply.
-- [ ] Ninguna operación sin backup. Si una operación no se puede respaldar, no existe en el catálogo.
-- [ ] Si el punto de restauración falla, se muestra el error real y se pide confirmación explícita para seguir.
+- [ ] Toda operación guarda el valor original antes de escribir; revert restaura tipo y valor exactos (tests con fakes).
+- [ ] "Revertir todo" deja el sistema igual al estado previo (snapshot → perfil → revert all → snapshot idéntico).
+- [ ] Journal atómico; sobrevive a kill del proceso a mitad de apply.
+- [ ] Si el punto de restauración falla, se muestra el error real y se pide confirmación.
+- [ ] Perfil Profesional: test que verifica que ninguna operación toca la lista de servicios/features protegidos por anticheat.
+- [ ] Ninguna operación lee/escribe dentro de las carpetas de instalación o config de CS2/VALORANT (test sobre el catálogo).
 
 ### Correctitud
-- [ ] Estado de cada tweak = `Applied | Partial | NotApplied | NotApplicable`, calculado leyendo **todas** sus operaciones.
-- [ ] Apply de un tweak en estado `Partial` completa lo faltante (no hace skip).
-- [ ] Un error en un tweak no corta el lote: se reporta `Failed` con el mensaje y se sigue con el resto.
-- [ ] Todo proceso externo devuelve exit code + stdout + stderr; exit code ≠ 0 = `Failed`.
-- [ ] Funciona igual en Windows en español y en inglés (sin parsear texto localizado).
-- [ ] Topología de CPU correcta en: Intel 12-14th/Core Ultra, Ryzen single-CCD, Ryzen dual-CCD (incl. X3D). Test con buffers grabados de cada caso.
+- [ ] Estado de cada tweak calculado leyendo todas sus operaciones; `Partial` se completa al aplicar.
+- [ ] Un error en un tweak no corta el lote; se reporta `Failed` con el motivo.
+- [ ] Procesos externos: exit code + stdout + stderr; ≠ 0 = `Failed`.
+- [ ] Mismo comportamiento en Windows en español y en inglés.
+- [ ] Topología correcta en Intel híbrido, Ryzen 1-CCD, Ryzen 2-CCD (X3D) — tests con buffers grabados.
 - [ ] Cero rutas hardcodeadas a la PC del autor.
 
+### Auto-tune MSI
+- [ ] Nunca configura un límite de mensajes mayor al soportado por el hardware.
+- [ ] Si un dispositivo queda con error tras un cambio, vuelve al valor original sin intervención.
+- [ ] Reporte por dispositivo: combinaciones probadas, latencia p99 de cada una, combinación elegida.
+- [ ] La medición es repetible: dos corridas seguidas eligen la misma combinación o una dentro del margen de ruido documentado.
+
+### Drivers / Servicios / Debloat / NVRAM
+- [ ] Drivers: detecta un dispositivo con Code 28 y uno con Code 10 en tests con datos simulados.
+- [ ] Servicios y debloat: la lista mostrada al elegir perfil == lo que se aplica (sin sorpresas).
+- [ ] NVRAM: sin archivo importado no se muestra ningún setting; con archivo, solo los encontrados; test con el `nvram.txt` real de referencia.
+
 ### Rendimiento de la propia app
-- [ ] Ninguna llamada a registro/proceso externo en el hilo de UI.
-- [ ] Con la app minimizada: 0 polling (CPU de la app < 0,1 %).
-- [ ] El apply muestra progreso por tweak y no congela la ventana.
-
-### Honestidad
-- [ ] La descripción de cada tweak coincide 1:1 con las operaciones que ejecuta (test que compara la lista declarada de operaciones con lo que muestra la UI).
-- [ ] No hay score inventado: el dashboard muestra checklist + métricas medidas.
-
-### CS2
-- [ ] Detecta CS2 en cualquier biblioteca de Steam (parser VDF real, múltiples bibliotecas).
-- [ ] El asesor marca correctamente Reflex/fps_max/modo de pantalla leyendo la config real del usuario.
-- [ ] La medición A/B produce un reporte comparativo guardado en disco.
+- [ ] Nada de registro/procesos en el hilo de UI.
+- [ ] Minimizada: 0 polling (< 0,1 % CPU). No necesita quedar abierta para que los cambios persistan.
 
 ## Non-goals (MVP)
-- NO soporte de otros juegos más allá de que el usuario agregue un `.exe` a mano (Valorant, Fortnite, etc. quedan para después).
-- NO escribir BIOS/NVRAM. El módulo NVRAM queda **solo lectura / consejos**.
-- NO descargar ni instalar drivers. Solo mostrar versión detectada + link oficial.
-- NO sistema de licencias / anti-debug (ver ADR-003). Se decide antes de vender.
-- NO tweaks marcados ❌ en la auditoría.
-- NO tocar archivos de configuración de CS2 (solo lectura).
-- NO "optimizaciones" que no se puedan revertir.
-- NO refactors visuales de la UI más allá de lo necesario para MVVM.
+- NO otros juegos ni apps además de CS2 y VALORANT.
+- NO leer ni escribir configs de juegos, NO inyección, NO overlays.
+- NO asesor de configuración in-game.
+- NO PresentMon / medición de FPS in-game (la medición del MSI auto-tune es ETW de sistema, sin tocar el juego).
+- NO exportar / parchear / flashear NVRAM.
+- NO descargar ni instalar drivers.
+- NO licencias ni anti-debug (al final, spec propia).
 
-## Riesgos conocidos
-- Anticheat: FACEIT AC es kernel-level. Todo lo que toque mitigaciones (E01/E02) queda fuera de presets y con advertencia.
-- Laptops: C-states / P0 / ASPM empeoran térmicas. Gates por chasis obligatorios.
-- HKCU con elevación por otra cuenta: detectar y advertir (o escribir al hive del usuario interactivo).
+## Riesgos
+- Auto-tune MSI requiere reiniciar dispositivos (pantalla negra al reiniciar GPU, mouse se desconecta al reiniciar el xHCI) o la PC → UX guiada y modo "probar en el próximo reinicio".
+- Algunas combinaciones MSI pueden dejar un dispositivo sin funcionar → rollback automático + punto de restauración obligatorio antes del auto-tune.
+- Lista de servicios protegidos por anticheat puede cambiar con updates de FACEIT/Vanguard → catálogo versionado y actualizable.

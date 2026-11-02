@@ -11,9 +11,13 @@ src/
 │   ├─ Catalog/                catálogo declarativo (1 archivo por categoría)
 │   ├─ Engine/                 TweakEngine: Evaluate / Plan / Apply / Verify / Revert
 │   ├─ Journal/                JournalDocument v2, JournalStore (atómico)
-│   ├─ Hardware/               HardwareProfile + parsers puros (topología, VDF, cs2_video.txt)
-│   ├─ Abstractions/           IRegistry, IProcessRunner, IServiceManager, IPowerSettings, IBcdStore, IClock
-│   └─ Measurement/            parser de CSV de PresentMon + comparador A/B
+│   ├─ Hardware/               HardwareProfile + parsers puros (topología, VDF Steam, Riot)
+│   ├─ Services/ Debloat/      catálogos por perfil + lista protegida anticheat (ADR-004)
+│   ├─ Drivers/                auditor de dispositivos (códigos de error, sin driver, versiones malas)
+│   ├─ MsiTuning/              búsqueda MSI/límite/prioridad por dispositivo (ADR-005)
+│   ├─ Nvram/                  parser SCEWIN + base de datos de settings (solo consejo)
+│   ├─ Abstractions/           IRegistry, IProcessRunner, IServiceManager, IPowerSettings, IBcdStore, IDeviceManager, IClock
+│   └─ Measurement/            agregación de trazas ETW ISR/DPC por driver (p99/avg/max)
 ├─ KruzhLatency.Infra/         net8.0-windows: implementaciones reales de Abstractions
 ├─ KruzhLatency.Core.Tests/    xUnit + FakeRegistry / FakeProcessRunner / buffers grabados
 └─ KruzhLatency.App/           WinUI 3 (el proyecto actual), MVVM con CommunityToolkit.Mvvm
@@ -79,14 +83,14 @@ Corre en `Task.Run`; la UI recibe `IProgress<ApplyResult>`.
 | Topología CPU | `GetLogicalProcessorInformationEx` con structs `[StructLayout]` (no offsets a mano) | B3 |
 
 ## 6. UI (WinUI)
-- ViewModels: `DashboardVm`, `TweaksVm`, `Cs2AdvisorVm`, `BenchmarkVm`, `JournalVm`.
+- ViewModels: `DashboardVm`, `ProfilesVm` (tweaks + servicios + debloat), `DriversVm`, `MsiTunerVm`, `NvramVm`, `JournalVm`.
 - Nada de `DispatcherTimer` de 1 s refrescando todo: refresh al abrir la vista + al terminar un apply + watchers con debounce 500 ms, **pausados durante el apply**.
 - Telemetría (CPU/GPU/DPC) solo si la vista Monitor está visible.
 - Partir `MainWindow.xaml(.cs)` (4.000 líneas) en Pages por vista.
 
 ## 7. Verificación
 - `dotnet build -warnaserror` + `dotnet test` en cada PR (GitHub Actions, `windows-latest`).
-- Tests obligatorios: cada `Operation` (apply/read/restore con fakes), engine (partial, failed, revert all = snapshot inicial), journal (atómico, corrupción), topología (buffers grabados de 3 CPUs), parser VDF, parser cs2_video.txt, parser PresentMon CSV.
+- Tests obligatorios: cada `Operation` (apply/read/restore con fakes), engine (partial, failed, revert all = snapshot inicial), journal (atómico, corrupción), topología (buffers grabados de 3 CPUs), parser VDF, parser nvram.txt, MsiTuner con mediciones simuladas, perfil Profesional no toca la lista protegida.
 - E2E manual: VM Hyper-V con checkpoint → preset Profesional → reiniciar → revert all → comparar export de registro. Checklist en `docs/E2E.md` (T62).
 
 ## 8. Migración desde v3
