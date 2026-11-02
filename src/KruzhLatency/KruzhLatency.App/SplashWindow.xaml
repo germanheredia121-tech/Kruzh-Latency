@@ -7,44 +7,31 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Border Background="#0F0F0F" BorderBrush="#1C1C1C" BorderThickness="1" CornerRadius="16">
-        <Grid Padding="32,28">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
-                <!-- Brand Badge -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
-                    <Border Width="42" Height="42" CornerRadius="10" Background="#161616" BorderBrush="#242424" BorderThickness="1">
-                        <TextBlock Text="K" FontSize="20" FontWeight="Bold" Foreground="#F2F2F2" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <StackPanel VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Text="KRUZH LATENCY" FontSize="16" FontWeight="Bold" Foreground="#F2F2F2" CharacterSpacing="60" />
-                        <TextBlock Text="MOTOR DE LATENCIA COMPETITIVA" FontSize="9.5" FontWeight="SemiBold" Foreground="#5E5E5E" CharacterSpacing="80" />
-                    </StackPanel>
-                </StackPanel>
+    <!-- Splash 420x300, sin bordes, fondo #0F0F0F, esquinas redondeadas (DWM). Arriba el box-loader, abajo marca + estado. -->
+    <Border Background="#0F0F0F" BorderBrush="#1C1C1C" BorderThickness="1" CornerRadius="12">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
 
-                <!-- Box-Loader Component via WebView2 with XAML Composition Fallback -->
-                <Grid Width="160" Height="140" HorizontalAlignment="Center">
-                    <Grid x:Name="SplashFallbackSpinner" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Ellipse Stroke="#1C1C1C" StrokeThickness="3" Width="40" Height="40" />
-                        <Canvas Width="40" Height="40">
-                            <Path Stroke="#63C088" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                  Data="M 20 0 A 20 20 0 0 1 40 20">
-                                <Path.RenderTransform>
-                                    <RotateTransform x:Name="SplashSpinnerRotate" CenterX="20" CenterY="20" />
-                                </Path.RenderTransform>
-                            </Path>
-                        </Canvas>
-                    </Grid>
-                    <WebView2 x:Name="SplashBoxLoaderWebView" Width="160" Height="140"
-                              IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <!-- Box-loader (WebView2 160x160: más chico se corta). Spinner XAML solo si WebView2 no está disponible. -->
+            <Grid Width="160" Height="160" HorizontalAlignment="Center">
+                <Grid x:Name="SplashFallbackSpinner" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse Stroke="#1C1C1C" StrokeThickness="3" Width="40" Height="40" />
+                    <Canvas Width="40" Height="40">
+                        <Path Stroke="#63C088" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Data="M 20 0 A 20 20 0 0 1 40 20">
+                            <Path.RenderTransform>
+                                <RotateTransform x:Name="SplashSpinnerRotate" CenterX="20" CenterY="20" />
+                            </Path.RenderTransform>
+                        </Path>
+                    </Canvas>
                 </Grid>
+                <WebView2 x:Name="SplashBoxLoaderWebView" Width="160" Height="160" Opacity="0"
+                          IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
 
-                <!-- Status Text -->
-                <StackPanel HorizontalAlignment="Center" Spacing="4">
-                    <TextBlock x:Name="SplashStatusText" Text="Iniciando motor…" FontSize="12.5" FontWeight="Medium" Foreground="#9A9A9A" HorizontalAlignment="Center" />
-                    <TextBlock Text="KRUZH — author" FontSize="10" Foreground="#444444" HorizontalAlignment="Center" />
-                </StackPanel>
+            <StackPanel HorizontalAlignment="Center" Spacing="4">
+                <TextBlock Text="KRUZH LATENCY" FontSize="16" FontWeight="Bold" Foreground="#F2F2F2" CharacterSpacing="60" HorizontalAlignment="Center" />
+                <TextBlock x:Name="SplashStatusText" Text="Iniciando…" FontSize="12.5" Foreground="#9A9A9A" HorizontalAlignment="Center" />
             </StackPanel>
-        </Grid>
+        </StackPanel>
     </Border>
 </Window>
-

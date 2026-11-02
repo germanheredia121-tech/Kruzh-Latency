@@ -1275,7 +1275,8 @@
                         x:Name="ViewBiosNvram"
                         Visibility="Collapsed"
                         VerticalScrollBarVisibility="Auto"
-                        HorizontalScrollBarVisibility="Disabled">
+                        HorizontalScrollBarVisibility="Disabled"
+                        HorizontalScrollMode="Disabled">
 
                         <StackPanel Padding="48,18,48,36" Spacing="24" MaxWidth="1280" HorizontalAlignment="Stretch" AllowDrop="True" DragOver="NvramPanel_DragOver" Drop="NvramPanel_Drop">
                             <!-- Head: Eyebrow + Title + Subtitle + Action Buttons -->
@@ -1386,12 +1387,14 @@
                                 </Border>
                             </Grid>
 
-                            <!-- Guide Card: Procedimiento Manual (Clean Text + Inline Code, NO terminal block) -->
+                            <!--
+                              Guía del procedimiento. Cada paso es UN TextBlock con Runs y TextWrapping: antes eran StackPanels
+                              horizontales que reportaban un ancho mayor a la ventana y corrían toda la vista a la derecha.
+                            -->
                             <Border Style="{StaticResource KruzhCardStyle}" Padding="20,18">
                                 <StackPanel Spacing="14">
                                     <TextBlock Text="PROCEDIMIENTO MANUAL" Style="{StaticResource KruzhMicroLabelStyle}" />
 
-                                    <!-- Step 1 -->
                                     <Grid ColumnSpacing="12">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -1400,17 +1403,14 @@
                                         <Border Width="20" Height="20" CornerRadius="10" Background="#202020" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0">
                                             <TextBlock Text="1" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="Backup obligatorio." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
-                                            <TextBlock Text="Abrí CMD como Administrador y ejecutá" Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
-                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
-                                                <TextBlock Text="SCEWIN_64.exe /o /s nvram_backup_original.txt" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
-                                            </Border>
-                                            <TextBlock Text="— guardalo en un pendrive." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
-                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" TextWrapping="Wrap" FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}">
+                                            <Run Text="Backup obligatorio." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <Run Text=" Abrí CMD como Administrador y ejecutá " />
+                                            <Run Text="SCEWIN_64.exe /o /s nvram_backup_original.txt" FontFamily="Consolas" Foreground="#CFD2C8" />
+                                            <Run Text=" — guardalo en un pendrive." />
+                                        </TextBlock>
                                     </Grid>
 
-                                    <!-- Step 2 -->
                                     <Grid ColumnSpacing="12">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -1419,17 +1419,14 @@
                                         <Border Width="20" Height="20" CornerRadius="10" Background="#202020" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0">
                                             <TextBlock Text="2" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="Analizá." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
-                                            <TextBlock Text="Importá tu" Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
-                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
-                                                <TextBlock Text="nvram.txt" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
-                                            </Border>
-                                            <TextBlock Text="acá arriba y revisá qué settings están bien y cuáles cambiar." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
-                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" TextWrapping="Wrap" FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}">
+                                            <Run Text="Analizá." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <Run Text=" Importá tu " />
+                                            <Run Text="nvram.txt" FontFamily="Consolas" Foreground="#CFD2C8" />
+                                            <Run Text=" acá arriba y revisá qué settings están bien y cuáles cambiar." />
+                                        </TextBlock>
                                     </Grid>
 
-                                    <!-- Step 3 -->
                                     <Grid ColumnSpacing="12">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -1438,13 +1435,12 @@
                                         <Border Width="20" Height="20" CornerRadius="10" Background="#202020" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0">
                                             <TextBlock Text="3" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="Cambiá vos los valores." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
-                                            <TextBlock Text="KRUZH LATENCY no modifica la BIOS: aplicá cada recomendación desde el setup de tu BIOS, bajo tu responsabilidad." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" TextWrapping="Wrap" />
-                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" TextWrapping="Wrap" FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}">
+                                            <Run Text="Cambiá vos los valores." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <Run Text=" KRUZH LATENCY no modifica la BIOS: aplicá cada recomendación desde el setup de tu BIOS, bajo tu responsabilidad." />
+                                        </TextBlock>
                                     </Grid>
 
-                                    <!-- Step 4 -->
                                     <Grid ColumnSpacing="12">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -1453,10 +1449,10 @@
                                         <Border Width="20" Height="20" CornerRadius="10" Background="#202020" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0">
                                             <TextBlock Text="4" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="Recuperación." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
-                                            <TextBlock Text="Si no bootea: Clear CMOS (jumper o botón trasero) o reflash con programador SPI CH341A." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
-                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" TextWrapping="Wrap" FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}">
+                                            <Run Text="Recuperación." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <Run Text=" Si no bootea: Clear CMOS (jumper o botón trasero) o reflash con programador SPI CH341A." />
+                                        </TextBlock>
                                     </Grid>
                                 </StackPanel>
                             </Border>
@@ -1795,9 +1791,14 @@
         <!-- ======================================================================= -->
         <!-- OVERLAY AL "APLICAR CAMBIOS" (MOCKUP KRUZH_LOADERS 1:1)                  -->
         <!-- ======================================================================= -->
-        <Grid x:Name="ApplyingChangesOverlay" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <!-- Scrim semitransparente oscuro rgba(7,7,7,0.55) -->
-            <Border Background="#8C070707" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+        <!-- Grid.RowSpan=2: cubre barra de título + contenido (antes quedaba atrapado en la fila de 38px del título). -->
+        <Grid x:Name="ApplyingChangesOverlay" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <!-- Velo rgba(7,7,7,.55) + blur: el acrílico in-app desenfoca la UI de abajo sin taparla. -->
+            <Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Border.Background>
+                    <AcrylicBrush TintColor="#070707" TintOpacity="0.55" TintLuminosityOpacity="0.55" FallbackColor="#8C070707" />
+                </Border.Background>
+            </Border>
 
             <!-- Card Central Flotante -->
             <Border Width="500" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -1809,7 +1810,7 @@
                 <StackPanel Spacing="16" HorizontalAlignment="Stretch">
                     <!-- Cabecera: Loader + Titulo + Punto de restauracion -->
                     <StackPanel HorizontalAlignment="Center" Spacing="8">
-                        <Grid Width="160" Height="130" HorizontalAlignment="Center">
+                        <Grid Width="160" Height="160" HorizontalAlignment="Center">
                             <Grid x:Name="OverlayFallbackSpinner" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Ellipse Stroke="#222222" StrokeThickness="3" Width="40" Height="40" />
                                 <Canvas Width="40" Height="40">
@@ -1821,7 +1822,7 @@
                                     </Path>
                                 </Canvas>
                             </Grid>
-                            <WebView2 x:Name="OverlayBoxLoaderWebView" Width="160" Height="130"
+                            <WebView2 x:Name="OverlayBoxLoaderWebView" Width="160" Height="160" Opacity="0"
                                       IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
 
@@ -1831,79 +1832,99 @@
                                    FontSize="12" Foreground="{StaticResource KruzhPositiveBrush}" HorizontalAlignment="Center" />
                     </StackPanel>
 
-                    <!-- Carrusel de 3 líneas de tweaks con degradé superior e inferior -->
+                    <!--
+                      Carrusel de 3 líneas: banda iluminada FIJA en el medio (lo que se está aplicando) y una pista de 4 filas
+                      que se desliza hacia arriba una posición cada vez que termina un tweak. Arriba = ya aplicado, abajo = en espera.
+                      Paso de la pista = 44 (alto de fila) + 4 (separación) = 48.
+                    -->
                     <Grid Height="140" Margin="0,6,0,0">
-                        <Border CornerRadius="10" Background="#0C0C0C" BorderBrush="#1C1C1C" BorderThickness="1" Padding="6,4">
-                            <Grid RowSpacing="4">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="40" />
-                                    <RowDefinition Height="44" />
-                                    <RowDefinition Height="40" />
-                                </Grid.RowDefinitions>
+                        <Border CornerRadius="10" Background="#0C0C0C" BorderBrush="#1C1C1C" BorderThickness="1" />
 
-                                <!-- Fila 0: Tweak anterior (Listo) -->
-                                <Border Grid.Row="0" CornerRadius="6" Background="Transparent" Padding="12,0" Opacity="0.45">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon Glyph="&#xE73E;" FontSize="12" Foreground="{StaticResource KruzhPositiveBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" x:Name="CarouselPrevTitleText" Text="-"
-                                                   FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="2" x:Name="CarouselPrevStatusText" Text="listo ✓"
-                                                   FontSize="11" Foreground="{StaticResource KruzhPositiveBrush}" VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
+                        <!-- Banda fija del tweak en foco -->
+                        <Border Height="44" Margin="6,0" VerticalAlignment="Center" CornerRadius="8"
+                                Background="#1D1D1D" BorderBrush="#2C2C2C" BorderThickness="1" />
 
-                                <!-- Fila 1: TWEAK EN FOCO (ILUMINADA, FONDO #1D1D1D, VERDE #63C088) -->
-                                <Border Grid.Row="1" CornerRadius="8" Background="#1D1D1D" BorderBrush="#2C2C2C" BorderThickness="1" Padding="14,0">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Ellipse Width="7" Height="7" Fill="{StaticResource KruzhPositiveBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" x:Name="CarouselActiveTitleText" Text="Iniciando cambios..."
-                                                   FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="2" Text="aplicando…"
-                                                   FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhPositiveBrush}" VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
+                        <!-- Ventana recortada (3 filas visibles) con la pista que se desliza -->
+                        <Grid x:Name="CarouselViewport" Margin="6,0">
+                            <Grid.Clip>
+                                <RectangleGeometry Rect="0,0,2000,140" />
+                            </Grid.Clip>
+                            <StackPanel x:Name="CarouselTrack" Spacing="4" VerticalAlignment="Top">
+                                <StackPanel.RenderTransform>
+                                    <TranslateTransform x:Name="CarouselTrackTransform" Y="0" />
+                                </StackPanel.RenderTransform>
 
-                                <!-- Fila 2: Siguiente tweak (En espera) -->
-                                <Border Grid.Row="2" CornerRadius="6" Background="Transparent" Padding="12,0" Opacity="0.45">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon Glyph="&#xE823;" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" x:Name="CarouselNextTitleText" Text="-"
-                                                   FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="2" Text="en espera"
-                                                   FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
-                            </Grid>
-                        </Border>
+                                <!-- Fila 0 (arriba): ya aplicado -->
+                                <Grid Height="44" Padding="14,0" Opacity="0.45">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon x:Name="CarouselPrevIcon" Glyph="&#xE73E;" FontSize="12" Foreground="{StaticResource KruzhPositiveBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" x:Name="CarouselPrevTitleText" Text="(Inicio del lote)"
+                                               FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" x:Name="CarouselPrevStatusText" Text=""
+                                               FontSize="11" Foreground="{StaticResource KruzhPositiveBrush}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                </Grid>
 
-                        <!-- Mascaras degrade superior e inferior para desvanecimiento sutil -->
-                        <Border Height="18" VerticalAlignment="Top" CornerRadius="10,10,0,0" IsHitTestVisible="False">
+                                <!-- Fila 1 (medio, sobre la banda): aplicando -->
+                                <Grid Height="44" Padding="14,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Width="7" Height="7" Fill="{StaticResource KruzhPositiveBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" x:Name="CarouselActiveTitleText" Text="Preparando cambios…"
+                                               FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" x:Name="CarouselActiveStatusText" Text="aplicando…"
+                                               FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhPositiveBrush}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                </Grid>
+
+                                <!-- Fila 2 (abajo): en espera -->
+                                <Grid Height="44" Padding="14,0" Opacity="0.45">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE823;" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" x:Name="CarouselNextTitleText" Text=""
+                                               FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" x:Name="CarouselNextStatusText" Text="en espera"
+                                               FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                </Grid>
+
+                                <!-- Fila 3 (fuera de vista): entra desde abajo al deslizar -->
+                                <Grid Height="44" Padding="14,0" Opacity="0.45">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE823;" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" x:Name="CarouselNext2TitleText" Text=""
+                                               FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" x:Name="CarouselNext2StatusText" Text=""
+                                               FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Degradés superior e inferior (desvanecen las filas que entran/salen) -->
+                        <Border Height="22" VerticalAlignment="Top" CornerRadius="10,10,0,0" IsHitTestVisible="False">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                    <GradientStop Color="#CC0C0C0C" Offset="0.0" />
+                                    <GradientStop Color="#EE0C0C0C" Offset="0.0" />
                                     <GradientStop Color="#000C0C0C" Offset="1.0" />
                                 </LinearGradientBrush>
                             </Border.Background>
                         </Border>
-                        <Border Height="18" VerticalAlignment="Bottom" CornerRadius="0,0,10,10" IsHitTestVisible="False">
+                        <Border Height="22" VerticalAlignment="Bottom" CornerRadius="0,0,10,10" IsHitTestVisible="False">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0.5,1" EndPoint="0.5,0">
-                                    <GradientStop Color="#CC0C0C0C" Offset="0.0" />
+                                    <GradientStop Color="#EE0C0C0C" Offset="0.0" />
                                     <GradientStop Color="#000C0C0C" Offset="1.0" />
                                 </LinearGradientBrush>
                             </Border.Background>

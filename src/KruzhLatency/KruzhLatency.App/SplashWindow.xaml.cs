@@ -1,4 +1,6 @@
 using System;
+using System.Runtime.InteropServices;
+using KruzhLatency.Controls;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -8,35 +10,31 @@ using WinRT.Interop;
 
 namespace KruzhLatency;
 
+/// <summary>Splash chico (420x300) que se muestra al instante mientras la inicialización pesada corre en segundo plano.</summary>
 public sealed partial class SplashWindow : Window
 {
+    private const int SplashWidth = 420;
+    private const int SplashHeight = 300;
+
+    // DWMWA_WINDOW_CORNER_PREFERENCE = 33, DWMWCP_ROUND = 2 (Windows 11; en Windows 10 se ignora).
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
     private Storyboard? _spinStoryboard;
 
     public SplashWindow()
     {
         this.InitializeComponent();
         ConfigureWindow();
-        StartAnimation();
-        InitializeBoxLoaderAsync();
+        StartFallbackSpinner();
+        _ = LoadBoxLoaderAsync();
     }
 
-    private async void InitializeBoxLoaderAsync()
+    private async System.Threading.Tasks.Task LoadBoxLoaderAsync()
     {
-        try
+        if (await BoxLoader.LoadAsync(SplashBoxLoaderWebView, SplashFallbackSpinner))
         {
-            await SplashBoxLoaderWebView.EnsureCoreWebView2Async();
-            SplashBoxLoaderWebView.DefaultBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
-
-            string htmlPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "box-loader.html");
-            if (System.IO.File.Exists(htmlPath))
-            {
-                SplashBoxLoaderWebView.CoreWebView2.Navigate(htmlPath);
-                SplashFallbackSpinner.Visibility = Visibility.Collapsed;
-            }
-        }
-        catch
-        {
-            // Fallback spinner remains active if WebView2 is not initialized
+            _spinStoryboard?.Stop();
         }
     }
 
@@ -56,23 +54,27 @@ public sealed partial class SplashWindow : Window
                 presenter.SetBorderAndTitleBar(false, false);
             }
 
-            int width = 420;
-            int height = 300;
-            appWindow.Resize(new SizeInt32(width, height));
+            int round = 2;
+            DwmSetWindowAttribute(hWnd, 33, ref round, sizeof(int));
+
+            appWindow.Resize(new SizeInt32(SplashWidth, SplashHeight));
 
             var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
             if (displayArea != null)
             {
-                var centerPoint = new PointInt32(
-                    (displayArea.WorkArea.Width - width) / 2,
-                    (displayArea.WorkArea.Height - height) / 2);
-                appWindow.Move(centerPoint);
+                var work = displayArea.WorkArea;
+                appWindow.Move(new PointInt32(
+                    work.X + (work.Width - SplashWidth) / 2,
+                    work.Y + (work.Height - SplashHeight) / 2));
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            App.LogError("Splash ConfigureWindow", ex);
+        }
     }
 
-    private void StartAnimation()
+    private void StartFallbackSpinner()
     {
         try
         {
@@ -101,4 +103,3 @@ public sealed partial class SplashWindow : Window
         });
     }
 }
-

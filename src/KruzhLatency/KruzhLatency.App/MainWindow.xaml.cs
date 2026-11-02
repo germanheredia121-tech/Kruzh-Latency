@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using KruzhLatency.Controls;
 using KruzhLatency.Models;
 using KruzhLatency.Services;
 using Microsoft.UI;
@@ -812,21 +813,19 @@ public sealed partial class MainWindow : Window
         int appliedOk = 0;
         int revertedOk = 0;
         var failures = new List<TweakExecutionReport>();
-        string? prevTweakTitle = null;
 
         try
         {
-            // 1. Mostrar Overlay de aplicación con velo desenfocado y carrusel
+            // 1. Overlay: velo con blur + box-loader + carrusel de 3 líneas
             ApplyingChangesOverlay.Visibility = Visibility.Visible;
             StartOverlaySpinnerAnimation();
 
             OverlayRestorePointText.Text = "Creando punto de restauración del sistema...";
+            OverlayStepDescText.Text = "Preparando cambios...";
             OverlayProgressBar.Value = 0;
             OverlayCountText.Text = $"0 / {total} aplicados";
-            CarouselPrevTitleText.Text = "(Inicio del lote)";
-            CarouselPrevStatusText.Text = "-";
-            CarouselActiveTitleText.Text = "Preparando módulos del kernel...";
-            CarouselNextTitleText.Text = $"[{pending[0].CodeNumber}] {pending[0].Title}";
+            SetCarouselRows(prevTitle: "(Inicio del lote)", prevStatus: string.Empty, prevFailed: false,
+                activeTitle: "Creando punto de restauración…", nextTitle: CarouselTitleAt(pending, 0), next2Title: CarouselTitleAt(pending, 1));
 
             // 2. Punto de restauración previo
             // TODO(T55): el servicio todavía reporta éxito aunque falle; se corrige con el adaptador WMI.
@@ -834,17 +833,28 @@ public sealed partial class MainWindow : Window
             OverlayRestorePointText.Text = rpOk ? "Punto de restauración solicitado" : "No se pudo crear el punto de restauración";
             SetStatus(rpMsg);
 
-            // 3. Un tweak a la vez: chequeo en UI -> operaciones de sistema en background -> verificación en UI
+            // 3. Un tweak a la vez: chequeo en UI -> operaciones de sistema en background -> verificación en UI.
+            //    Al pasar al siguiente, la lista sube una posición: el que estaba en el medio pasa arriba ("listo"),
+            //    el de abajo entra al medio ("aplicando") y entra uno nuevo por abajo ("en espera").
+            string lastTitle = "Creando punto de restauración…";
+            string lastStatus = rpOk ? "listo ✓" : "omitido";
+            bool lastFailed = !rpOk;
+
             for (int i = 0; i < total; i++)
             {
                 var item = pending[i];
-                string nextTweakTitle = (i + 1 < total) ? $"[{pending[i + 1].CodeNumber}] {pending[i + 1].Title}" : "(Fin del lote)";
+                var stepWatch = Stopwatch.StartNew();
+                int step = i; // copia local: la lambda de abajo no debe depender de la variable del for
 
-                CarouselPrevTitleText.Text = prevTweakTitle ?? "(Inicio del lote)";
-                CarouselPrevStatusText.Text = prevTweakTitle != null ? "listo ✓" : "-";
-                CarouselActiveTitleText.Text = $"[{item.CodeNumber}] {item.Title}";
+                string prevTitleForRow = lastTitle;
+                string prevStatusForRow = lastStatus;
+                bool prevFailedForRow = lastFailed;
+                await SlideCarouselUpAsync(
+                    enteringTitle: CarouselTitleAt(pending, i + 1),
+                    afterSlide: () => SetCarouselRows(prevTitleForRow, prevStatusForRow, prevFailedForRow,
+                        CarouselTitleAt(pending, step), CarouselTitleAt(pending, step + 1), CarouselTitleAt(pending, step + 2)));
+
                 OverlayStepDescText.Text = item.IsPendingRevert ? "Revirtiendo al valor original..." : "Aplicando optimización...";
-                CarouselNextTitleText.Text = nextTweakTitle;
                 OverlayProgressBar.Value = (double)completed / total * 100.0;
                 OverlayCountText.Text = $"{completed} / {total} aplicados";
 
@@ -899,17 +909,38 @@ public sealed partial class MainWindow : Window
                 }
 
                 completed++;
-                prevTweakTitle = $"[{item.CodeNumber}] {item.Title}";
-                CarouselPrevStatusText.Text = report.Success ? "listo ✓" : "falló ✗";
+                OverlayProgressBar.Value = (double)completed / total * 100.0;
+                OverlayCountText.Text = $"{completed} / {total} aplicados";
+                lastTitle = CarouselTitleAt(pending, i);
+                lastStatus = report.Success ? (isRevert ? "revertido ✓" : "listo ✓") : "falló ✗";
+                lastFailed = !report.Success;
+
+                // Tiempo mínimo por tweak para que el movimiento de la lista se pueda seguir con la vista.
+                int remaining = MinCarouselStepMs - (int)stepWatch.ElapsedMilliseconds;
+                if (remaining > 0)
+                {
+                    await Task.Delay(remaining);
+                }
             }
+
+            // Último deslizamiento: el último tweak sube a "listo" y el centro muestra el resultado del lote.
+            string finalPrevTitle = lastTitle;
+            string finalPrevStatus = lastStatus;
+            bool finalPrevFailed = lastFailed;
+            string finalMessage = failures.Count == 0 ? "¡Optimizaciones completadas!" : $"Terminado con {failures.Count} error(es)";
+            await SlideCarouselUpAsync(
+                enteringTitle: string.Empty,
+                afterSlide: () =>
+                {
+                    SetCarouselRows(finalPrevTitle, finalPrevStatus, finalPrevFailed, finalMessage, string.Empty, string.Empty);
+                    CarouselActiveStatusText.Text = string.Empty;
+                    CarouselNextStatusText.Text = string.Empty;
+                });
 
             OverlayProgressBar.Value = 100;
             OverlayCountText.Text = $"{total} / {total} procesados";
-            CarouselPrevTitleText.Text = prevTweakTitle ?? "-";
-            CarouselActiveTitleText.Text = failures.Count == 0 ? "¡Optimizaciones completadas!" : $"Terminado con {failures.Count} error(es)";
-            CarouselNextTitleText.Text = "(Lote finalizado)";
             OverlayStepDescText.Text = "Verificando estado real en el registro...";
-            await Task.Delay(350);
+            await Task.Delay(500);
         }
         finally
         {
@@ -957,9 +988,23 @@ public sealed partial class MainWindow : Window
     }
 
     private Storyboard? _overlaySpinnerStoryboard;
+    private Task<bool>? _overlayBoxLoaderTask;
+
+    /// <summary>Paso de la pista del carrusel: alto de fila (44) + separación (4).</summary>
+    private const double CarouselRowPitch = 48;
+    private const int CarouselSlideMs = 260;
+    /// <summary>Tiempo mínimo que cada tweak queda en el centro, para que el movimiento sea legible.</summary>
+    private const int MinCarouselStepMs = 450;
 
     private void StartOverlaySpinnerAnimation()
     {
+        // El box-loader se carga una sola vez (con el overlay ya visible, así el WebView2 está en el árbol visual).
+        _overlayBoxLoaderTask ??= BoxLoader.LoadAsync(OverlayBoxLoaderWebView, OverlayFallbackSpinner);
+        if (_overlayBoxLoaderTask.IsCompletedSuccessfully && _overlayBoxLoaderTask.Result)
+        {
+            return; // las cajas ya están andando; no hace falta el spinner de respaldo
+        }
+
         try
         {
             var anim = new DoubleAnimation
@@ -975,30 +1020,88 @@ public sealed partial class MainWindow : Window
             _overlaySpinnerStoryboard = new Storyboard();
             _overlaySpinnerStoryboard.Children.Add(anim);
             _overlaySpinnerStoryboard.Begin();
-
-            InitializeOverlayBoxLoaderAsync();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            App.LogError("Overlay spinner", ex);
+        }
     }
 
-    private async void InitializeOverlayBoxLoaderAsync()
+    private static string CarouselTitleAt(IReadOnlyList<DeclarativeTweakItem> items, int index) =>
+        index >= 0 && index < items.Count
+            ? $"[{items[index].CodeNumber}] {items[index].Title}"
+            : (index == items.Count ? "(Fin del lote)" : string.Empty);
+
+    /// <summary>Asigna las 3 filas visibles + la fila de abajo que entra al deslizar.</summary>
+    private void SetCarouselRows(string prevTitle, string prevStatus, bool prevFailed, string activeTitle, string nextTitle, string next2Title)
     {
+        var positive = (Brush)Application.Current.Resources["KruzhPositiveBrush"];
+        var danger = (Brush)Application.Current.Resources["KruzhDangerMutedBrush"];
+
+        CarouselPrevTitleText.Text = prevTitle;
+        CarouselPrevStatusText.Text = prevStatus;
+        CarouselPrevStatusText.Foreground = prevFailed ? danger : positive;
+        CarouselPrevIcon.Glyph = prevFailed ? "" : ""; // ✕ / ✓
+        CarouselPrevIcon.Foreground = prevFailed ? danger : positive;
+        CarouselPrevIcon.Visibility = string.IsNullOrEmpty(prevStatus) ? Visibility.Collapsed : Visibility.Visible;
+
+        CarouselActiveTitleText.Text = activeTitle;
+        CarouselActiveStatusText.Text = "aplicando…";
+
+        CarouselNextTitleText.Text = nextTitle;
+        CarouselNextStatusText.Text = string.IsNullOrEmpty(nextTitle) || nextTitle == "(Fin del lote)" ? string.Empty : "en espera";
+
+        CarouselNext2TitleText.Text = next2Title;
+        CarouselNext2StatusText.Text = string.IsNullOrEmpty(next2Title) || next2Title == "(Fin del lote)" ? string.Empty : "en espera";
+    }
+
+    /// <summary>
+    /// Sube la lista una posición (animación de 260 ms). Al terminar llama a <paramref name="afterSlide"/> para
+    /// reasignar los textos y vuelve la pista a su lugar en el mismo frame, así el salto no se ve.
+    /// </summary>
+    private Task SlideCarouselUpAsync(string enteringTitle, Action afterSlide)
+    {
+        CarouselNext2TitleText.Text = enteringTitle;
+        CarouselNext2StatusText.Text = string.IsNullOrEmpty(enteringTitle) || enteringTitle == "(Fin del lote)" ? string.Empty : "en espera";
+
+        var done = new TaskCompletionSource();
         try
         {
-            await OverlayBoxLoaderWebView.EnsureCoreWebView2Async();
-            OverlayBoxLoaderWebView.DefaultBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
-
-            string htmlPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "box-loader.html");
-            if (System.IO.File.Exists(htmlPath))
+            var anim = new DoubleAnimation
             {
-                OverlayBoxLoaderWebView.CoreWebView2.Navigate(htmlPath);
-                OverlayFallbackSpinner.Visibility = Visibility.Collapsed;
-            }
+                From = 0,
+                To = -CarouselRowPitch,
+                Duration = new Duration(TimeSpan.FromMilliseconds(CarouselSlideMs)),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(anim, CarouselTrackTransform);
+            Storyboard.SetTargetProperty(anim, "Y");
+
+            var sb = new Storyboard();
+            sb.Children.Add(anim);
+            sb.Completed += (_, _) =>
+            {
+                try
+                {
+                    afterSlide();
+                }
+                finally
+                {
+                    sb.Stop(); // vuelve Y a 0 con los textos ya corridos
+                    CarouselTrackTransform.Y = 0;
+                    done.TrySetResult();
+                }
+            };
+            sb.Begin();
         }
-        catch
+        catch (Exception ex)
         {
-            // Fallback spinner remains visible
+            App.LogError("Carousel slide", ex);
+            afterSlide();
+            CarouselTrackTransform.Y = 0;
+            done.TrySetResult();
         }
+        return done.Task;
     }
 
     private void StopOverlaySpinnerAnimation()

@@ -27,6 +27,7 @@ public partial class App : Application
     {
         this.UnhandledException += App_UnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        Controls.BoxLoader.ConfigureUserDataFolder();
         this.InitializeComponent();
     }
 
