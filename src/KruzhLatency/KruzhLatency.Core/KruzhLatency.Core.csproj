@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Logica pura: sin WinUI, sin Microsoft.Win32, sin Process. Testeable con fakes. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>KruzhLatency.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="KruzhLatency.Core.Tests" />
+  </ItemGroup>
+</Project>

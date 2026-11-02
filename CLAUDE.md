@@ -11,9 +11,12 @@ Límite duro (ADR-004): nunca inyectar ni leer/escribir archivos o memoria de lo
 - Bugs conocidos y veredicto por tweak: `docs/AUDITORIA.md`
 - Decisiones: `docs/decisions/` (respetarlas; si una tarea las contradice, frenar y preguntar)
 
-## Comandos (desde `src/`)
-- Build: `dotnet build -c Debug -p:Platform=x64 -warnaserror`
-- Tests: `dotnet test`
+## Proyectos (`src/KruzhLatency/`)
+- `KruzhLatency.Core` (net8.0, lógica pura) · `KruzhLatency.Infra` (adaptadores Windows) · `KruzhLatency.Core.Tests` (xUnit) · `KruzhLatency.App` (WinUI, exe `KruzhLatency.exe`)
+
+## Comandos (desde `src/KruzhLatency/`)
+- Build: `dotnet build KruzhLatency.sln -c Debug -warnaserror` (la config "Any CPU" de la solución compila la app en x64)
+- Tests: `dotnet test KruzhLatency.sln`
 Antes de decir "listo": build + tests en verde.
 (Si `dotnet` no está en PATH: `%LOCALAPPDATA%\Microsoft\dotnet\dotnet.exe`.)
 
@@ -26,5 +29,5 @@ Antes de decir "listo": build + tests en verde.
 - La descripción de un tweak sale de sus operaciones; no escribir texto que prometa algo que el código no hace.
 - No agregar tweaks sin `Source` y sin cumplir ADR-002.
 - NO ejecutar la app ni tests de integración en la máquina de desarrollo sin que el usuario lo pida: modifican el sistema real.
-- No instalar paquetes NuGet nuevos sin preguntar.
+- No instalar paquetes NuGet nuevos sin preguntar. Aprobados: `Microsoft.Diagnostics.Tracing.TraceEvent` (solo en Infra, para ETW).
 - `research/` es material de referencia: no se compila ni se modifica.

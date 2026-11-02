@@ -19,7 +19,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ProjectPath = Join-Path $ScriptDir "KruzhLatency\KruzhLatency.csproj"
+$ProjectPath = Join-Path $ScriptDir "KruzhLatency.App\KruzhLatency.App.csproj"
 $OutputDir = Join-Path $ScriptDir "publish\$RuntimeIdentifier"
 
 $DotnetExe = "dotnet"
@@ -54,7 +54,7 @@ if (-not (Test-Path $ExePath)) {
 }
 
 Write-Host "`n[2/4] Copiando XBF compilados y generando indice de recursos WinUI 3 (resources.pri)..." -ForegroundColor Yellow
-$BinDir = Join-Path $ScriptDir "KruzhLatency\bin\x64\$Configuration\net8.0-windows10.0.19041.0\$RuntimeIdentifier"
+$BinDir = Join-Path $ScriptDir "KruzhLatency.App\bin\x64\$Configuration\net8.0-windows10.0.19041.0\$RuntimeIdentifier"
 if (Test-Path $BinDir) {
     Copy-Item (Join-Path $BinDir "*.xbf") $OutputDir -Force -ErrorAction SilentlyContinue
     Copy-Item (Join-Path $BinDir "*.pri") $OutputDir -Force -ErrorAction SilentlyContinue

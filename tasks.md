@@ -9,7 +9,7 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 | ID | Tarea | Deps | Hecho cuando |
 |---|---|---|---|
 | T00 ✅ | `git init`, `.gitignore`, research a `research/`, README propio | – | commit `d541a0b` |
-| T01 | Crear `KruzhLatency.Core`, `.Infra`, `.Core.Tests` (xUnit) en el `.sln`; renombrar app a `KruzhLatency.App` | T00 | `dotnet test` corre (0 tests) |
+| T01 ✅ | Crear `KruzhLatency.Core`, `.Infra`, `.Core.Tests` (xUnit) en el `.sln`; renombrar app a `KruzhLatency.App` | T00 | `dotnet test` corre (0 tests) |
 | T02 | GitHub Actions `windows-latest`: build `-warnaserror` + test | T01 | CI verde |
 | T03 | Hotfix B1: apply en `Task.Run` + try/catch por tweak + reporte `Failed` | T00 | lote con excepción termina sin crash |
 | T04 | Hotfix NVRAM: no autocargar `nvram.txt` desde rutas fijas ni mostrar catálogo antes de importar | T00 | vista vacía hasta importar |

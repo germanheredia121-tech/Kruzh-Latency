@@ -11,7 +11,8 @@ Windows 10/11 · .NET 8 · WinUI 3.
 ## Build
 ```
 cd src/KruzhLatency
-dotnet build KruzhLatency/KruzhLatency.csproj -c Debug -p:Platform=x64
+dotnet build KruzhLatency.sln -c Debug
+dotnet test KruzhLatency.sln
 ```
 
 ## Créditos / fuentes

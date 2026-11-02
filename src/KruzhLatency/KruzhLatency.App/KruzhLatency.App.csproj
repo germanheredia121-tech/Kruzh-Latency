@@ -44,6 +44,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KruzhLatency.Core\KruzhLatency.Core.csproj" />
+    <ProjectReference Include="..\KruzhLatency.Infra\KruzhLatency.Infra.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
