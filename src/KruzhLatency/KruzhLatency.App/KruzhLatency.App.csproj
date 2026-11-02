@@ -59,13 +59,15 @@
     (MSB4062), por eso está apagada arriba y acá se genera con makepri.exe del paquete Microsoft.Windows.SDK.BuildTools.
     Corre en cada build (Debug, Release, CI) y se copia también al publicar.
   -->
-  <PropertyGroup>
-    <KruzhMakePriExe>$(PkgMicrosoft_Windows_SDK_BuildTools)\bin\10.0.22621.0\x64\makepri.exe</KruzhMakePriExe>
-    <KruzhPriStageDir>$(IntermediateOutputPath)pri-stage\</KruzhPriStageDir>
-    <KruzhPriConfig>$(IntermediateOutputPath)priconfig.xml</KruzhPriConfig>
-  </PropertyGroup>
-
   <Target Name="KruzhGenerateResourcesPri" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
+    <!-- Propiedades DENTRO del target: IntermediateOutputPath recién está definido en tiempo de ejecución
+         (a nivel de proyecto vale vacío y la carpeta temporal terminaba en la raíz del proyecto). -->
+    <PropertyGroup>
+      <KruzhMakePriExe>$(PkgMicrosoft_Windows_SDK_BuildTools)\bin\10.0.22621.0\x64\makepri.exe</KruzhMakePriExe>
+      <KruzhPriStageDir>$(ProjectDir)$(IntermediateOutputPath)pri-stage\</KruzhPriStageDir>
+      <KruzhPriConfig>$(ProjectDir)$(IntermediateOutputPath)priconfig.xml</KruzhPriConfig>
+    </PropertyGroup>
+    <Error Condition="'$(IntermediateOutputPath)' == ''" Text="IntermediateOutputPath vacío: no se puede ubicar la carpeta temporal de PRI." />
     <Error Condition="!Exists('$(KruzhMakePriExe)')" Text="No se encontró makepri.exe en '$(KruzhMakePriExe)'. Restaurá los paquetes NuGet (Microsoft.Windows.SDK.BuildTools)." />
     <ItemGroup>
       <_KruzhPriInputs Include="$(OutDir)*.xbf" />

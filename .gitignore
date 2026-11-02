@@ -18,3 +18,7 @@ research/tools/
 # OS
 Thumbs.db
 desktop.ini
+
+# Artefactos de makepri (por si algun build viejo los deja en la raiz del proyecto)
+pri-stage/
+priconfig.xml
