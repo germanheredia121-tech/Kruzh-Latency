@@ -1836,55 +1836,56 @@ public sealed partial class MainWindow : Window
             ? (SolidColorBrush)Application.Current.Resources["KruzhPositiveBrush"]
             : (SolidColorBrush)Application.Current.Resources["KruzhDangerMutedBrush"];
 
-        string[] autoPaths =
-        {
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "nvram.txt"),
-            @"c:\Users\kruzh\OneDrive\Desktop\input lag\nvram.txt"
-        };
+        // Spec 001 F9: no se carga nada automáticamente ni se muestra ningún setting hasta que el usuario importa su nvram.txt.
+        ShowNvramEmptyState(
+            "Todavía no importaste tu nvram.txt",
+            "Exportalo con SCEWIN y arrastralo acá o usá «Importar nvram.txt». Solo vas a ver los settings que existen en tu BIOS.");
+    }
 
-        string? foundPath = autoPaths.FirstOrDefault(File.Exists);
-        if (!string.IsNullOrEmpty(foundPath))
-        {
-            LoadAndDisplayNvramFile(foundPath);
-        }
-        else
-        {
-            // Curated catalog display
-            _currentNvramItems = App.NvramService.GetCuratedCatalog(hw);
-            NvramFindingsItemsControl.ItemsSource = null;
-            NvramFindingsItemsControl.ItemsSource = _currentNvramItems;
-            int needsChange = _currentNvramItems.Count(x => x.NeedsChange);
-            int optimal = _currentNvramItems.Count - needsChange;
-            BiosParamsFoundText.Text = _currentNvramItems.Count.ToString();
-            BiosOptimosSugeridosText.Text = $"{optimal} óptimos · {needsChange} sugeridos";
-        }
+    private void ShowNvramEmptyState(string title, string detail)
+    {
+        _currentNvramItems = new List<NvramCheckItem>();
+        NvramFindingsItemsControl.ItemsSource = null;
+        NvramResultsPanel.Visibility = Visibility.Collapsed;
+        NvramEmptyStatePanel.Visibility = Visibility.Visible;
+        NvramEmptyStateTitle.Text = title;
+        NvramEmptyStateDetail.Text = detail;
+        BiosParamsFoundText.Text = "—";
+        BiosOptimosSugeridosText.Text = "Importá tu nvram.txt";
     }
 
     private void LoadAndDisplayNvramFile(string filePath)
     {
-        _currentNvramItems = App.NvramService.AnalyzeNvramFile(filePath);
+        List<NvramCheckItem> items;
+        try
+        {
+            items = App.NvramService.AnalyzeNvramFile(filePath);
+        }
+        catch (Exception ex)
+        {
+            App.LogError("NVRAM import", ex);
+            ShowNvramEmptyState("No se pudo leer el archivo", $"{Path.GetFileName(filePath)}: {ex.Message}");
+            return;
+        }
+
+        if (items.Count == 0)
+        {
+            ShowNvramEmptyState(
+                "No encontramos settings conocidos en este archivo",
+                $"{Path.GetFileName(filePath)} no contiene ninguna «Setup Question» de nuestra base de datos. Verificá que sea el nvram.txt exportado por SCEWIN.");
+            return;
+        }
+
+        _currentNvramItems = items;
         NvramFindingsItemsControl.ItemsSource = null;
         NvramFindingsItemsControl.ItemsSource = _currentNvramItems;
+        NvramEmptyStatePanel.Visibility = Visibility.Collapsed;
+        NvramResultsPanel.Visibility = Visibility.Visible;
 
         int needsChange = _currentNvramItems.Count(x => x.NeedsChange);
         int optimal = _currentNvramItems.Count - needsChange;
         BiosParamsFoundText.Text = _currentNvramItems.Count.ToString();
-        BiosOptimosSugeridosText.Text = $"{optimal} óptimos · {needsChange} sugeridos";
-    }
-
-    private void ToggleNvramParamBtn_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.Tag is NvramCheckItem item)
-        {
-            item.NeedsChange = !item.NeedsChange;
-            item.SelectedForExport = item.NeedsChange;
-            NvramFindingsItemsControl.ItemsSource = null;
-            NvramFindingsItemsControl.ItemsSource = _currentNvramItems;
-
-            int needsChange = _currentNvramItems.Count(x => x.NeedsChange);
-            int optimal = _currentNvramItems.Count - needsChange;
-            BiosOptimosSugeridosText.Text = $"{optimal} óptimos · {needsChange} sugeridos";
-        }
+        BiosOptimosSugeridosText.Text = $"{optimal} bien · {needsChange} a revisar";
     }
 
     private async void ViewCurrentBiosConfigBtn_Click(object sender, RoutedEventArgs e)
@@ -1909,13 +1910,14 @@ public sealed partial class MainWindow : Window
 
     private async void DownloadScewinBtn_Click(object sender, RoutedEventArgs e)
     {
-        string instructions = "AMI SCEWIN (Aptio V / IV) es una utilidad oficial de American Megatrends para lectura y modificación no volátil de variables NVRAM en caliente.\n\n" +
-                              "Procedimiento de uso seguro:\n" +
-                              "1. Abrí Terminal / CMD con privilegios de Administrador.\n" +
-                              "2. Exportar backup:\n   SCEWIN_64.exe /o /s nvram_backup_original.txt\n" +
-                              "3. Guardá una copia en tu pendrive.\n" +
-                              "4. Importá el nvram.txt generado en KRUZH LATENCY para auditar latencias y timings.";
-        await ShowSimpleInfoModalAsync("AMI SCEWIN 64-bit — Instrucciones", instructions);
+        string instructions = "AMI SCEWIN (Aptio V / IV) es una utilidad de American Megatrends que exporta las variables de setup de la BIOS a un archivo de texto.\n\n" +
+                              "Cómo exportar tu nvram.txt (solo lectura):\n" +
+                              "1. Abrí Terminal / CMD como Administrador en la carpeta de SCEWIN.\n" +
+                              "2. Ejecutá:  SCEWIN_64.exe /o /s nvram.txt\n" +
+                              "3. Guardá una copia en un pendrive como backup.\n" +
+                              "4. Importá ese nvram.txt en KRUZH LATENCY para ver qué settings conviene cambiar.\n\n" +
+                              "KRUZH LATENCY nunca escribe en la BIOS: los cambios los aplicás vos desde el setup de la BIOS.";
+        await ShowSimpleInfoModalAsync("AMI SCEWIN — Cómo exportar nvram.txt", instructions);
     }
 
     private void ImportNvramFileBtn_Click(object sender, RoutedEventArgs e)
@@ -1947,34 +1949,6 @@ public sealed partial class MainWindow : Window
                 LoadAndDisplayNvramFile(file.Path);
                 SetStatus($"Archivo '{file.Name}' importado.");
             }
-        }
-    }
-
-    private async void ExportOptimizedNvramBtn_Click(object sender, RoutedEventArgs e)
-    {
-        if (_currentNvramItems.Count == 0)
-        {
-            await ShowSimpleInfoModalAsync("Sin archivo NVRAM", "Importá primero tu archivo nvram.txt antes de exportar.");
-            return;
-        }
-
-        string? savePath = Win32DialogService.ShowSaveFileDialog(
-            GetWindowHandle(),
-            "Guardar nvram_optimizado.txt para SCEWIN",
-            "Archivo NVRAM Optimizado (*.txt)\0*.txt\0",
-            "nvram_optimizado.txt",
-            "txt");
-
-        if (string.IsNullOrWhiteSpace(savePath)) return;
-
-        var (ok, _, msg) = App.NvramService.ExportPatchedNvramFile(savePath, _currentNvramItems);
-        SetStatus(msg);
-
-        if (ok)
-        {
-            await ShowSimpleInfoModalAsync(
-                "Archivo nvram_optimizado.txt exportado",
-                $"{msg}\n\nRecordatorio:\n1) Conservá tu backup original sin modificar.\n2) Importalo con: SCEWIN_64.exe /i /s \"{savePath}\"\n3) Apagá la PC por completo (shutdown /s /f /t 0).");
         }
     }
 

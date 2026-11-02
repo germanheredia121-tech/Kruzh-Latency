@@ -34,7 +34,7 @@ public sealed class NvramAdvisoryService
         {
             return (false, $"BIOS NO COMPATIBLE CON SCEWIN: El proveedor detectado es '{hw.BiosVendor}' (se requiere American Megatrends / AMI Aptio V). No utilices SCEWIN en este equipo.");
         }
-        return (true, $"BIOS AMI Aptio Compatible detectada ({hw.BiosVendor} — Versión {hw.BiosVersion} en placa {hw.BaseBoardModel}). Modo Advisory + Exportación Manual habilitado.");
+        return (true, $"BIOS AMI Aptio Compatible detectada ({hw.BiosVendor} — Versión {hw.BiosVersion} en placa {hw.BaseBoardModel}). Modo solo lectura: importá tu nvram.txt para ver recomendaciones.");
     }
 
     public List<NvramCheckItem> AnalyzeNvramFile(string filePath)
@@ -62,8 +62,6 @@ public sealed class NvramAdvisoryService
             bool isBad = def.AvoidValues.Any(bad =>
                 match.CurrentOption.Contains(bad, StringComparison.OrdinalIgnoreCase));
 
-            // For fTPM (Security Device Support), keep ON by default for Anticheat (Valorant/FACEIT) unless user opts in
-            bool selectByDefault = isBad && !def.IsAnticheatSensitive;
 
             results.Add(new NvramCheckItem
             {
@@ -76,7 +74,6 @@ public sealed class NvramAdvisoryService
                 TechnicalReason = def.TechnicalReason,
                 FoundInFile = true,
                 NeedsChange = isBad,
-                SelectedForExport = selectByDefault,
                 IsAnticheatSensitive = def.IsAnticheatSensitive
             });
         }
@@ -92,59 +89,6 @@ public sealed class NvramAdvisoryService
                 _ => 4
             })
             .ToList();
-    }
-
-    public (bool Success, int PatchedCount, string Message) ExportPatchedNvramFile(
-        string destinationPath,
-        IEnumerable<NvramCheckItem> itemsToApply)
-    {
-        if (string.IsNullOrEmpty(LastRawContent))
-        {
-            return (false, 0, "Primero debés importar y analizar un archivo nvram.txt válido.");
-        }
-
-        string patched = LastRawContent;
-        int patchedCount = 0;
-
-        foreach (var item in itemsToApply.Where(i => i.NeedsChange && i.SelectedForExport))
-        {
-            string pattern = $@"(Setup Question\s*=\s*[^\r\n]*{Regex.Escape(item.QuestionName)}[^\r\n]*[\r\n]+)((?:.|\n)*?)(?=\r?\n\r?\n|\Z)";
-            var blockMatch = Regex.Match(patched, pattern, RegexOptions.IgnoreCase);
-            if (!blockMatch.Success) continue;
-
-            string fullBlock = blockMatch.Value;
-
-            // Check that the target recommended option actually exists inside this block's options
-            string targetOptPattern = $@"(^[ \t]*)\*?(\[[0-9A-Fa-f]+\]\s*{Regex.Escape(item.RecommendedValue)}\b)";
-            if (!Regex.IsMatch(fullBlock, targetOptPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline))
-            {
-                continue;
-            }
-
-            // 1. Remove '*' from currently selected option in this block
-            string blockWithoutStar = Regex.Replace(
-                fullBlock,
-                @"(^[ \t]*)\*(\[[0-9A-Fa-f]+\])",
-                "$1$2",
-                RegexOptions.Multiline);
-
-            // 2. Place '*' on the recommended option line
-            string updatedBlock = Regex.Replace(
-                blockWithoutStar,
-                targetOptPattern,
-                "$1*$2",
-                RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-            if (updatedBlock != fullBlock)
-            {
-                patched = patched.Substring(0, blockMatch.Index) + updatedBlock + patched.Substring(blockMatch.Index + blockMatch.Length);
-                patchedCount++;
-            }
-        }
-
-        File.WriteAllText(destinationPath, patched, Encoding.UTF8);
-        return (true, patchedCount,
-            $"Archivo exportado con éxito en '{destinationPath}' ({patchedCount} parámetros optimizados preservando Token/Offset/Width intactos).");
     }
 
     public (string Sha256Hex, string VerificationDetail) VerifyScewinBinarySha256(string exePath)
@@ -176,19 +120,6 @@ public sealed class NvramAdvisoryService
         var opts = allMatches.Select(x => x.Groups[1].Value.Trim()).Distinct().ToList();
 
         return (true, current, opts);
-    }
-
-    public List<NvramCheckItem> GetCuratedCatalog(HardwareProfile hw)
-    {
-        var items = GetCuratedBiosDefinitions(hw);
-        foreach (var it in items)
-        {
-            it.CurrentValue = it.AvoidValues.FirstOrDefault() ?? "Auto";
-            it.FoundInFile = true;
-            it.NeedsChange = true;
-            it.SelectedForExport = !it.IsAnticheatSensitive;
-        }
-        return items;
     }
 
     private static List<NvramCheckItem> GetCuratedBiosDefinitions(HardwareProfile hw)

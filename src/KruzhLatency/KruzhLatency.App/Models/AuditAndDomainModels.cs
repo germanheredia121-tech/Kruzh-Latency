@@ -127,14 +127,16 @@ public sealed class NvramCheckItem
     public string TechnicalReason { get; set; } = string.Empty;
     public bool FoundInFile { get; set; }
     public bool NeedsChange { get; set; }
-    public bool SelectedForExport { get; set; } = true;
     public bool IsAnticheatSensitive { get; set; }
     [JsonIgnore]
     public string StatusBadge => NeedsChange ? "CAMBIAR" : "ÓPTIMO";
 
+    // El catálogo usa "CRÍTICO" (con tilde); se aceptan ambas grafías.
+    private bool IsSevereImpact => Impact is "EXTREMO" or "CRITICO" or "CRÍTICO";
+
     [JsonIgnore]
     public Microsoft.UI.Xaml.Media.SolidColorBrush ImpactBadgeBorderBrush =>
-        Impact is "EXTREMO" or "CRITICO"
+        IsSevereImpact
             ? new(Windows.UI.Color.FromArgb(90, 184, 95, 95))
             : (Impact is "ALTO" or "MEDIO"
                 ? new(Windows.UI.Color.FromArgb(90, 184, 151, 95))
@@ -142,14 +144,17 @@ public sealed class NvramCheckItem
 
     [JsonIgnore]
     public Microsoft.UI.Xaml.Media.SolidColorBrush ImpactBadgeForeground =>
-        Impact is "EXTREMO" or "CRITICO"
+        IsSevereImpact
             ? new(Windows.UI.Color.FromArgb(255, 184, 95, 95))
             : (Impact is "ALTO" or "MEDIO"
                 ? new(Windows.UI.Color.FromArgb(255, 184, 151, 95))
                 : new(Windows.UI.Color.FromArgb(255, 154, 154, 154)));
 
+    /// <summary>Resultado de solo lectura: la app recomienda, nunca modifica la BIOS.</summary>
     [JsonIgnore]
-    public string NvramActionButtonText => NeedsChange ? "Cambiar" : "Óptimo ✓";
+    public string NvramStatusText => !NeedsChange
+        ? "Bien ✓"
+        : (IsAnticheatSensitive ? "Revisar (anticheat)" : "Cambiar");
 }
 
 public sealed class DriverCatalogueEntry

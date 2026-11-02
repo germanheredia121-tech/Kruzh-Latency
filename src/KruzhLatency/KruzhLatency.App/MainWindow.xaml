@@ -1287,12 +1287,10 @@
                                 <StackPanel Spacing="3">
                                     <TextBlock Text="FIRMWARE" Style="{StaticResource KruzhMicroLabelStyle}" />
                                     <TextBlock Text="BIOS / NVRAM" Style="{StaticResource KruzhPageTitleStyle}" />
-                                    <TextBlock Text="Analizá, revisá y exportá tu configuración de BIOS (AMI Aptio SCEWIN)." Style="{StaticResource KruzhPageSubtitleStyle}" />
+                                    <TextBlock Text="Importá tu nvram.txt (AMI SCEWIN) y te decimos qué settings están bien y cuáles conviene cambiar. Solo lectura: los cambios los hacés vos en la BIOS." Style="{StaticResource KruzhPageSubtitleStyle}" TextWrapping="Wrap" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                    <Button Click="VerifyScewinHashBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Verificar SHA-256" />
-                                    <Button Click="ImportNvramFileBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Importar nvram.txt" />
-                                    <Button Click="ExportOptimizedNvramBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Exportar nvram_optimizado.txt" />
+                                    <Button Click="ImportNvramFileBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Importar nvram.txt" />
                                 </StackPanel>
                             </Grid>
 
@@ -1310,10 +1308,9 @@
                                     <Button Click="ViewCurrentBiosConfigBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Ver configuración" Margin="0,0,0,8" />
                                     <Button Click="OpenScewinFolderBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Abrir carpeta" Margin="0,0,0,8" />
 
-                                    <TextBlock Text="02 / EXPORTAR" FontSize="10" FontWeight="SemiBold" CharacterSpacing="60" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,16,0,10" />
-                                    <Button Click="ExportOptimizedNvramBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Exportar optimizado" Margin="0,0,0,8" />
-                                    <Button Click="VerifyScewinHashBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Verificar hash" Margin="0,0,0,8" />
-                                    <Button Click="DownloadScewinBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Descargar SCEWIN" Margin="0,0,0,8" />
+                                    <TextBlock Text="02 / SCEWIN" FontSize="10" FontWeight="SemiBold" CharacterSpacing="60" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,16,0,10" />
+                                    <Button Click="DownloadScewinBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Cómo exportar nvram.txt" Margin="0,0,0,8" />
+                                    <Button Click="VerifyScewinHashBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Verificar hash de SCEWIN" Margin="0,0,0,8" />
                                 </StackPanel>
 
                                 <!-- Right Column: Firmware Info Card -->
@@ -1373,7 +1370,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Parámetros encontrados" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                            <TextBlock Grid.Column="1" x:Name="BiosParamsFoundText" Text="35" FontSize="13" FontWeight="Medium" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock Grid.Column="1" x:Name="BiosParamsFoundText" Text="—" FontSize="13" FontWeight="Medium" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
                                         </Grid>
                                         <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
 
@@ -1383,7 +1380,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Óptimos / Sugeridos" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                            <TextBlock Grid.Column="1" x:Name="BiosOptimosSugeridosText" Text="31 óptimos · 4 sugeridos" FontSize="13" FontWeight="Medium" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock Grid.Column="1" x:Name="BiosOptimosSugeridosText" Text="Importá tu nvram.txt" FontSize="13" FontWeight="Medium" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -1423,15 +1420,12 @@
                                             <TextBlock Text="2" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="Analizá y exportá." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
+                                            <TextBlock Text="Analizá." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
                                             <TextBlock Text="Importá tu" Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
                                             <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
                                                 <TextBlock Text="nvram.txt" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
                                             </Border>
-                                            <TextBlock Text="acá arriba, revisá los parámetros (fTPM permanece ON) y exportá" Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
-                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
-                                                <TextBlock Text="nvram_optimizado.txt" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
-                                            </Border>
+                                            <TextBlock Text="acá arriba y revisá qué settings están bien y cuáles cambiar." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
                                         </StackPanel>
                                     </Grid>
 
@@ -1445,15 +1439,8 @@
                                             <TextBlock Text="3" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="Aplicá manualmente." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
-                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
-                                                <TextBlock Text="SCEWIN_64.exe /i /s nvram_optimizado.txt" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
-                                            </Border>
-                                            <TextBlock Text="y luego apagá por completo:" Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
-                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
-                                                <TextBlock Text="shutdown /s /f /t 0" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
-                                            </Border>
-                                            <TextBlock Text="(apagar, no reiniciar)." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
+                                            <TextBlock Text="Cambiá vos los valores." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
+                                            <TextBlock Text="KRUZH LATENCY no modifica la BIOS: aplicá cada recomendación desde el setup de tu BIOS, bajo tu responsabilidad." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </Grid>
 
@@ -1477,7 +1464,16 @@
                             <!-- Analyzed Firmware Parameters List -->
                             <StackPanel Spacing="12">
                                 <TextBlock Text="PARÁMETROS DE FIRMWARE ANALIZADOS" Style="{StaticResource KruzhMicroLabelStyle}" />
-                                <Border Style="{StaticResource KruzhCardStyle}" Padding="0">
+
+                                <!-- Estado vacío: no se muestra NINGÚN setting hasta que el usuario importa su nvram.txt -->
+                                <Border x:Name="NvramEmptyStatePanel" Style="{StaticResource KruzhCardStyle}" Padding="24,28">
+                                    <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                        <TextBlock x:Name="NvramEmptyStateTitle" Text="Todavía no importaste tu nvram.txt" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" HorizontalAlignment="Center" />
+                                        <TextBlock x:Name="NvramEmptyStateDetail" Text="Exportalo con SCEWIN y arrastralo acá o usá «Importar nvram.txt». Solo vas a ver los settings que existen en tu BIOS." FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="560" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border x:Name="NvramResultsPanel" Style="{StaticResource KruzhCardStyle}" Padding="0" Visibility="Collapsed">
                                     <ItemsControl x:Name="NvramFindingsItemsControl">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -1489,8 +1485,6 @@
                                                             <ColumnDefinition Width="170" />
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
-
-                                                        <CheckBox Grid.Column="0" IsChecked="{Binding SelectedForExport, Mode=TwoWay}" VerticalAlignment="Center" MinWidth="26" />
 
                                                         <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
                                                             <StackPanel Orientation="Horizontal" Spacing="9">
@@ -1511,10 +1505,10 @@
                                                             </StackPanel>
                                                         </StackPanel>
 
-                                                        <Button Grid.Column="3" Tag="{Binding}" Click="ToggleNvramParamBtn_Click"
-                                                                Style="{StaticResource KruzhGhostButtonStyle}"
-                                                                VerticalAlignment="Center" Margin="10,0,0,0"
-                                                                Content="{Binding NvramActionButtonText}" />
+                                                        <Border Grid.Column="3" VerticalAlignment="Center" Margin="10,0,0,0" CornerRadius="5" Padding="9,3"
+                                                                BorderThickness="1" BorderBrush="{Binding ImpactBadgeBorderBrush}">
+                                                            <TextBlock Text="{Binding NvramStatusText}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                        </Border>
                                                     </Grid>
                                                     <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
                                                 </StackPanel>

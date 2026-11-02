@@ -421,26 +421,8 @@ public sealed partial class HardwareChassisService
             reason = $"All-Core Overclock Fijo detectado (~{hw.CpuMaxClockMHz / 1000.0:F2} GHz multiplicador estático en BIOS)";
         }
 
-        // Also check nvram.txt in project root if present for PSS Support / Core Performance Boost / Custom Ratio
-        try
-        {
-            string candidateNvram = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "nvram.txt");
-            if (!File.Exists(candidateNvram))
-            {
-                candidateNvram = @"c:\Users\kruzh\OneDrive\Desktop\input lag\nvram.txt";
-            }
-            if (File.Exists(candidateNvram))
-            {
-                string raw = File.ReadAllText(candidateNvram);
-                if (raw.Contains("*[00]Disabled") &&
-                    (raw.Contains("Setup Question\t= PSS Support") || raw.Contains("Setup Question\t= Core Performance Boost")))
-                {
-                    staticOcDetected = true;
-                    reason = "All-Core Overclock Fijo detectado en NVRAM/BIOS (PSS/Boost desactivado — frecuencia fija)";
-                }
-            }
-        }
-        catch { }
+        // (T04) Ya no se lee ningún nvram.txt automáticamente: la detección no debe depender de archivos del autor.
+        // El usuario puede forzar el modo con el override de la UI (ClockingModeOverride).
 
         hw.ClockingMode = staticOcDetected ? CpuClockingMode.StaticAllCoreOverclock : CpuClockingMode.DynamicBoostPbo;
         hw.ClockingModeDescription = reason;
