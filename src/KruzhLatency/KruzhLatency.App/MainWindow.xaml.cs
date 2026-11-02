@@ -150,7 +150,7 @@ public sealed partial class MainWindow : Window
             {
                 this.DispatcherQueue.TryEnqueue(() =>
                 {
-                    if (!_isInitializingUi)
+                    if (!_isInitializingUi && !_isApplyingBatch)
                     {
                         RefreshLiveTweaksStateInPlace();
                     }
@@ -772,8 +772,11 @@ public sealed partial class MainWindow : Window
         await ApplyPendingChangesFlowAsync();
     }
 
+    private bool _isApplyingBatch;
+
     private async Task ApplyPendingChangesFlowAsync()
     {
+        if (_isApplyingBatch) return;
         var pending = App.TweakEngine.AllTweaks.Where(t => t.IsPending).ToList();
         if (pending.Count == 0) return;
 
@@ -801,100 +804,149 @@ public sealed partial class MainWindow : Window
             }
         }
 
-        // 1. Mostrar Overlay de aplicación con velo desenfocado y carrusel
-        ApplyingChangesOverlay.Visibility = Visibility.Visible;
-        StartOverlaySpinnerAnimation();
-
-        OverlayRestorePointText.Text = "Creando punto de restauración del sistema...";
-        OverlayProgressBar.Value = 0;
-        OverlayCountText.Text = $"0 / {pending.Count} aplicados";
-        CarouselPrevTitleText.Text = "(Inicio del lote)";
-        CarouselPrevStatusText.Text = "-";
-        CarouselActiveTitleText.Text = "Preparando módulos del kernel...";
-        CarouselNextTitleText.Text = pending.Count > 0 ? $"[{pending[0].CodeNumber}] {pending[0].Title}" : "-";
-
-        // 2. Punto de restauración obligatorio previo
-        var (_, rpMsg) = await App.AuditService.CreateSystemRestorePointAsync($"KRUZH LATENCY ({pending.Count} cambios)");
-        OverlayRestorePointText.Text = "Punto de restauración creado ✓";
-        SetStatus(rpMsg);
+        _isApplyingBatch = true;
+        _telemetryTimer.Stop(); // no refrescar estado de tweaks mientras se escriben (evita lecturas a medio aplicar)
 
         int total = pending.Count;
         int completed = 0;
         int appliedOk = 0;
         int revertedOk = 0;
+        var failures = new List<TweakExecutionReport>();
         string? prevTweakTitle = null;
 
-        // 3. Iteración y animación fluida del carrusel de 3 filas
-        for (int i = 0; i < pending.Count; i++)
-        {
-            var item = pending[i];
-            string nextTweakTitle = (i + 1 < pending.Count) ? $"[{pending[i + 1].CodeNumber}] {pending[i + 1].Title}" : "(Fin del lote)";
-
-            // Fila superior: anterior ("listo ✓")
-            CarouselPrevTitleText.Text = prevTweakTitle ?? "(Inicio del lote)";
-            CarouselPrevStatusText.Text = prevTweakTitle != null ? "listo ✓" : "-";
-
-            // Fila central: activo en foco ("aplicando…")
-            CarouselActiveTitleText.Text = $"[{item.CodeNumber}] {item.Title}";
-            OverlayStepDescText.Text = item.IsPendingRevert ? "Revirtiendo al valor original..." : "Inyectando optimización...";
-
-            // Fila inferior: siguiente ("en espera")
-            CarouselNextTitleText.Text = nextTweakTitle;
-
-            OverlayProgressBar.Value = (double)completed / total * 100.0;
-            OverlayCountText.Text = $"{completed} / {total} aplicados";
-
-            // Transición suave visible del carrusel
-            await Task.Delay(130);
-
-            if (item.IsPendingRevert)
-            {
-                var rep = App.TweakEngine.ExecuteRevert(item);
-                if (rep.Success) revertedOk++;
-            }
-            else
-            {
-                if (item.HasOptions)
-                {
-                    item.SelectedOptionKey = item.DesiredOptionKey;
-                }
-                var rep = App.TweakEngine.ExecuteApply(item);
-                if (rep.Success) appliedOk++;
-            }
-
-            completed++;
-            prevTweakTitle = $"[{item.CodeNumber}] {item.Title}";
-        }
-
-        // Finalización
-        OverlayProgressBar.Value = 100;
-        OverlayCountText.Text = $"{total} / {total} aplicados";
-        CarouselPrevTitleText.Text = prevTweakTitle ?? "-";
-        CarouselPrevStatusText.Text = "listo ✓";
-        CarouselActiveTitleText.Text = "¡Optimizaciones completadas!";
-        CarouselNextTitleText.Text = "(Lote finalizado)";
-        OverlayStepDescText.Text = "Verificando estado real en el registro...";
-
-        await Task.Delay(350);
-
-        // Ocultar Overlay
-        ApplyingChangesOverlay.Visibility = Visibility.Collapsed;
-        StopOverlaySpinnerAnimation();
-
-        // 4. Re-leer estado real en vivo y actualizar UI
-        _isHandlingToggleChange = true;
         try
         {
-            App.TweakEngine.DiscardAllPending();
-            RefreshLiveTweaksStateInPlace();
-            RefreshJournalAndLicenseUi();
+            // 1. Mostrar Overlay de aplicación con velo desenfocado y carrusel
+            ApplyingChangesOverlay.Visibility = Visibility.Visible;
+            StartOverlaySpinnerAnimation();
+
+            OverlayRestorePointText.Text = "Creando punto de restauración del sistema...";
+            OverlayProgressBar.Value = 0;
+            OverlayCountText.Text = $"0 / {total} aplicados";
+            CarouselPrevTitleText.Text = "(Inicio del lote)";
+            CarouselPrevStatusText.Text = "-";
+            CarouselActiveTitleText.Text = "Preparando módulos del kernel...";
+            CarouselNextTitleText.Text = $"[{pending[0].CodeNumber}] {pending[0].Title}";
+
+            // 2. Punto de restauración previo
+            // TODO(T55): el servicio todavía reporta éxito aunque falle; se corrige con el adaptador WMI.
+            var (rpOk, rpMsg) = await App.AuditService.CreateSystemRestorePointAsync($"KRUZH LATENCY ({total} cambios)");
+            OverlayRestorePointText.Text = rpOk ? "Punto de restauración solicitado" : "No se pudo crear el punto de restauración";
+            SetStatus(rpMsg);
+
+            // 3. Un tweak a la vez: chequeo en UI -> operaciones de sistema en background -> verificación en UI
+            for (int i = 0; i < total; i++)
+            {
+                var item = pending[i];
+                string nextTweakTitle = (i + 1 < total) ? $"[{pending[i + 1].CodeNumber}] {pending[i + 1].Title}" : "(Fin del lote)";
+
+                CarouselPrevTitleText.Text = prevTweakTitle ?? "(Inicio del lote)";
+                CarouselPrevStatusText.Text = prevTweakTitle != null ? "listo ✓" : "-";
+                CarouselActiveTitleText.Text = $"[{item.CodeNumber}] {item.Title}";
+                OverlayStepDescText.Text = item.IsPendingRevert ? "Revirtiendo al valor original..." : "Aplicando optimización...";
+                CarouselNextTitleText.Text = nextTweakTitle;
+                OverlayProgressBar.Value = (double)completed / total * 100.0;
+                OverlayCountText.Text = $"{completed} / {total} aplicados";
+
+                TweakExecutionReport report;
+                bool isRevert = item.IsPendingRevert;
+                try
+                {
+                    if (isRevert)
+                    {
+                        var (ok, detail) = await Task.Run(() => App.TweakEngine.RunRevertActions(item));
+                        report = App.TweakEngine.CompleteRevert(item, ok, detail);
+                    }
+                    else
+                    {
+                        if (item.HasOptions)
+                        {
+                            item.SelectedOptionKey = item.DesiredOptionKey;
+                        }
+                        var early = App.TweakEngine.PreCheckApply(item);
+                        if (early != null)
+                        {
+                            report = early;
+                        }
+                        else
+                        {
+                            string optionKey = item.SelectedOptionKey;
+                            var (ok, detail) = await Task.Run(() => DeclarativeTweakEngine.RunApplyAction(item, optionKey));
+                            report = App.TweakEngine.CompleteApply(item, ok, detail);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Red de seguridad: un tweak nunca corta el lote ni crashea la app.
+                    App.LogError($"Batch item {item.Id}", ex);
+                    report = new TweakExecutionReport
+                    {
+                        TweakId = item.Id,
+                        TweakTitle = item.Title,
+                        Success = false,
+                        Message = $"Error inesperado: {ex.Message}"
+                    };
+                }
+
+                if (report.Success)
+                {
+                    if (isRevert) revertedOk++; else appliedOk++;
+                }
+                else
+                {
+                    failures.Add(report);
+                }
+
+                completed++;
+                prevTweakTitle = $"[{item.CodeNumber}] {item.Title}";
+                CarouselPrevStatusText.Text = report.Success ? "listo ✓" : "falló ✗";
+            }
+
+            OverlayProgressBar.Value = 100;
+            OverlayCountText.Text = $"{total} / {total} procesados";
+            CarouselPrevTitleText.Text = prevTweakTitle ?? "-";
+            CarouselActiveTitleText.Text = failures.Count == 0 ? "¡Optimizaciones completadas!" : $"Terminado con {failures.Count} error(es)";
+            CarouselNextTitleText.Text = "(Lote finalizado)";
+            OverlayStepDescText.Text = "Verificando estado real en el registro...";
+            await Task.Delay(350);
         }
         finally
         {
-            _isHandlingToggleChange = false;
+            // El overlay se cierra SIEMPRE, aunque algo haya fallado.
+            ApplyingChangesOverlay.Visibility = Visibility.Collapsed;
+            StopOverlaySpinnerAnimation();
+
+            _isHandlingToggleChange = true;
+            try
+            {
+                App.TweakEngine.DiscardAllPending();
+                RefreshLiveTweaksStateInPlace();
+                RefreshJournalAndLicenseUi();
+            }
+            catch (Exception ex)
+            {
+                App.LogError("Refresh after batch", ex);
+            }
+            finally
+            {
+                _isHandlingToggleChange = false;
+                _isApplyingBatch = false;
+                _telemetryTimer.Start();
+            }
         }
 
-        SetStatus($"Cambios completados y verificados en vivo: {appliedOk} aplicados, {revertedOk} revertidos.");
+        SetStatus(failures.Count == 0
+            ? $"Cambios completados: {appliedOk} aplicados, {revertedOk} revertidos."
+            : $"Cambios completados con errores: {appliedOk} aplicados, {revertedOk} revertidos, {failures.Count} fallaron.");
+
+        if (failures.Count > 0)
+        {
+            string detailText = string.Join("\n", failures.Select(f => $"• {f.TweakTitle}: {f.Message}"));
+            await ShowSimpleInfoModalAsync(
+                $"{failures.Count} cambio(s) no se aplicaron",
+                $"{detailText}\n\nEl resto del lote se aplicó normalmente. Detalle técnico en %LOCALAPPDATA%\\KruzhLatency\\errors.log");
+        }
 
         if (needsReboot)
         {

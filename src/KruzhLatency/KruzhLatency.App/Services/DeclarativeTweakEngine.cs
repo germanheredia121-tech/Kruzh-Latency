@@ -568,7 +568,19 @@ public sealed class DeclarativeTweakEngine
         }
     }
 
-    public TweakExecutionReport ExecuteApply(DeclarativeTweakItem item)
+    // ------------------------------------------------------------------------------------------
+    // Apply / Revert en 3 pasos (hotfix T03):
+    //   1) PreCheckApply      -> hilo de UI (lee gates/estado y toca propiedades observables)
+    //   2) RunApplyAction /
+    //      RunRevertActions   -> hilo de background (SOLO operaciones de sistema; no toca propiedades
+    //                            observables del item, que estan enlazadas a la UI)
+    //   3) CompleteApply /
+    //      CompleteRevert     -> hilo de UI (re-lee estado real y arma el reporte)
+    // Ninguno de los pasos 2 deja escapar excepciones: un tweak que falla no corta el lote.
+    // ------------------------------------------------------------------------------------------
+
+    /// <summary>Paso 1 (UI). Devuelve un reporte si NO hay nada que ejecutar; null si hay que correr el paso 2.</summary>
+    public TweakExecutionReport? PreCheckApply(DeclarativeTweakItem item)
     {
         var hw = _hwService.CurrentProfile;
         item.RefreshGatesAndLiveState(hw);
@@ -600,12 +612,41 @@ public sealed class DeclarativeTweakEngine
             };
         }
 
-        var (ok, detail) = item.ApplyAction(item.SelectedOptionKey);
-        item.RefreshGatesAndLiveState(hw);
-        bool verified = ok && item.IsLiveApplied;
-        item.LastStatusNote = verified
-            ? $"{detail} [Verificado OK]"
-            : $"{detail} (Requiere reinicio para reflejar estado)";
+        return null;
+    }
+
+    /// <summary>Paso 2 (background). Ejecuta las operaciones de sistema del tweak. Nunca lanza.</summary>
+    public static (bool Success, string Detail) RunApplyAction(DeclarativeTweakItem item, string optionKey)
+    {
+        try
+        {
+            return item.ApplyAction(optionKey);
+        }
+        catch (Exception ex)
+        {
+            App.LogError($"Apply {item.Id}", ex);
+            return (false, $"Error al aplicar: {ex.Message}");
+        }
+    }
+
+    /// <summary>Paso 3 (UI). Re-lee el estado real y arma el reporte.</summary>
+    public TweakExecutionReport CompleteApply(DeclarativeTweakItem item, bool ok, string detail)
+    {
+        bool verified = false;
+        try
+        {
+            InvalidateBcdCache();
+            item.RefreshGatesAndLiveState(_hwService.CurrentProfile);
+            verified = ok && item.IsLiveApplied;
+        }
+        catch (Exception ex)
+        {
+            App.LogError($"Verify {item.Id}", ex);
+        }
+
+        item.LastStatusNote = !ok
+            ? detail
+            : (verified ? $"{detail} [Verificado OK]" : $"{detail} (Requiere reinicio para reflejar estado)");
 
         return new TweakExecutionReport
         {
@@ -617,37 +658,74 @@ public sealed class DeclarativeTweakEngine
         };
     }
 
-    public TweakExecutionReport ExecuteRevert(DeclarativeTweakItem item)
+    /// <summary>Paso 2 del revert (background). Journal -> fallback del tweak -> fallback de OS. Nunca lanza.</summary>
+    public (bool Success, string Detail) RunRevertActions(DeclarativeTweakItem item)
     {
-        bool revertedFromJournal = _audit.RevertTweakFromJournal(item.Id, out string msg);
-        if (!revertedFromJournal && item.CustomRevertFallback != null)
+        try
         {
-            var (okFallback, detailFallback) = item.CustomRevertFallback();
-            msg = detailFallback;
-            revertedFromJournal = okFallback;
-        }
-        if (!revertedFromJournal)
-        {
-            var (okOs, detailOs) = ApplyDefaultOsRevertFallback(item.Id);
-            if (okOs)
+            bool reverted = _audit.RevertTweakFromJournal(item.Id, out string msg);
+            if (!reverted && item.CustomRevertFallback != null)
             {
-                revertedFromJournal = true;
-                msg = detailOs;
+                var (okFallback, detailFallback) = item.CustomRevertFallback();
+                msg = detailFallback;
+                reverted = okFallback;
             }
+            if (!reverted)
+            {
+                var (okOs, detailOs) = ApplyDefaultOsRevertFallback(item.Id);
+                if (okOs)
+                {
+                    reverted = true;
+                    msg = detailOs;
+                }
+            }
+            return (reverted, msg);
         }
+        catch (Exception ex)
+        {
+            App.LogError($"Revert {item.Id}", ex);
+            return (false, $"Error al revertir: {ex.Message}");
+        }
+    }
 
-        InvalidateBcdCache();
-        item.RefreshGatesAndLiveState(_hwService.CurrentProfile);
-        item.LastStatusNote = msg;
+    /// <summary>Paso 3 del revert (UI).</summary>
+    public TweakExecutionReport CompleteRevert(DeclarativeTweakItem item, bool ok, string detail)
+    {
+        try
+        {
+            InvalidateBcdCache();
+            item.RefreshGatesAndLiveState(_hwService.CurrentProfile);
+        }
+        catch (Exception ex)
+        {
+            App.LogError($"Verify revert {item.Id}", ex);
+        }
+        item.LastStatusNote = detail;
 
         return new TweakExecutionReport
         {
             TweakId = item.Id,
             TweakTitle = item.Title,
-            Success = revertedFromJournal,
-            Verified = !item.IsLiveApplied,
-            Message = msg
+            Success = ok,
+            Verified = ok && !item.IsLiveApplied,
+            Message = detail
         };
+    }
+
+    /// <summary>Versión sincrónica (para los flujos que todavía no migraron al lote en background).</summary>
+    public TweakExecutionReport ExecuteApply(DeclarativeTweakItem item)
+    {
+        var early = PreCheckApply(item);
+        if (early != null) return early;
+        var (ok, detail) = RunApplyAction(item, item.SelectedOptionKey);
+        return CompleteApply(item, ok, detail);
+    }
+
+    /// <summary>Versión sincrónica (para los flujos que todavía no migraron al lote en background).</summary>
+    public TweakExecutionReport ExecuteRevert(DeclarativeTweakItem item)
+    {
+        var (ok, detail) = RunRevertActions(item);
+        return CompleteRevert(item, ok, detail);
     }
 
     private void BuildDeclarativeCatalog()

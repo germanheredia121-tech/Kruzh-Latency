@@ -109,6 +109,20 @@ public partial class App : Application
         }
     }
 
+    /// <summary>Registra un error no fatal en el log de diagnóstico, sin mostrar MessageBox.</summary>
+    public static void LogError(string context, Exception ex)
+    {
+        try
+        {
+            string logDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "KruzhLatency");
+            Directory.CreateDirectory(logDir);
+            File.AppendAllText(Path.Combine(logDir, "errors.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{context}]\n{ex}\n\n");
+        }
+        catch { }
+    }
+
     public static void LogAndDisplayFatalError(string context, Exception ex)
     {
         try
