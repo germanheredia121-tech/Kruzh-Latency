@@ -36,7 +36,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240802000" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" GeneratePathProperty="true" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.1" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
@@ -51,4 +51,35 @@
   <ItemGroup>
     <Content Include="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+
+  <!--
+    resources.pri (fix crash "Cannot locate resource ms-appx:///Microsoft.UI.Xaml/Themes/themeresources.xaml").
+    WinUI sin empaquetar necesita un resources.pri junto al exe con los .xbf de la app + Microsoft.UI.Xaml.Controls.pri.
+    La generación estándar (EnableCoreMrtTooling) usa una tarea que solo trae Visual Studio y falla con `dotnet build`
+    (MSB4062), por eso está apagada arriba y acá se genera con makepri.exe del paquete Microsoft.Windows.SDK.BuildTools.
+    Corre en cada build (Debug, Release, CI) y se copia también al publicar.
+  -->
+  <PropertyGroup>
+    <KruzhMakePriExe>$(PkgMicrosoft_Windows_SDK_BuildTools)\bin\10.0.22621.0\x64\makepri.exe</KruzhMakePriExe>
+    <KruzhPriStageDir>$(IntermediateOutputPath)pri-stage\</KruzhPriStageDir>
+    <KruzhPriConfig>$(IntermediateOutputPath)priconfig.xml</KruzhPriConfig>
+  </PropertyGroup>
+
+  <Target Name="KruzhGenerateResourcesPri" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
+    <Error Condition="!Exists('$(KruzhMakePriExe)')" Text="No se encontró makepri.exe en '$(KruzhMakePriExe)'. Restaurá los paquetes NuGet (Microsoft.Windows.SDK.BuildTools)." />
+    <ItemGroup>
+      <_KruzhPriInputs Include="$(OutDir)*.xbf" />
+      <_KruzhPriInputs Include="$(OutDir)Microsoft.UI.Xaml.Controls.pri" />
+    </ItemGroup>
+    <Error Condition="'@(_KruzhPriInputs)' == ''" Text="No hay .xbf en $(OutDir) para indexar en resources.pri." />
+    <RemoveDir Directories="$(KruzhPriStageDir)" />
+    <Copy SourceFiles="@(_KruzhPriInputs)" DestinationFolder="$(KruzhPriStageDir)" />
+    <Exec Command="&quot;$(KruzhMakePriExe)&quot; createconfig /cf &quot;$(KruzhPriConfig)&quot; /dq en-US /pv 10.0.0 /o" StandardOutputImportance="low" />
+    <Exec Command="&quot;$(KruzhMakePriExe)&quot; new /pr &quot;$(KruzhPriStageDir.TrimEnd('\'))&quot; /cf &quot;$(KruzhPriConfig)&quot; /in $(AssemblyName) /of &quot;$(OutDir)resources.pri&quot; /o" StandardOutputImportance="low" />
+    <Error Condition="!Exists('$(OutDir)resources.pri')" Text="makepri no generó $(OutDir)resources.pri." />
+  </Target>
+
+  <Target Name="KruzhCopyResourcesPriOnPublish" AfterTargets="Publish" Condition="Exists('$(OutDir)resources.pri')">
+    <Copy SourceFiles="$(OutDir)resources.pri" DestinationFolder="$(PublishDir)" />
+  </Target>
 </Project>
