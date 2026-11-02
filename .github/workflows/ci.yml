@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: src/KruzhLatency
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore KruzhLatency.sln
+
+      - name: Build (warnings = errors)
+        run: dotnet build KruzhLatency.sln -c Debug --no-restore -warnaserror
+
+      # Los tests de integracion (marcados Category=Integration) tocan el sistema real: no corren en CI.
+      - name: Test
+        run: dotnet test KruzhLatency.sln -c Debug --no-build --filter "Category!=Integration" --logger "trx" --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: src/KruzhLatency/TestResults
