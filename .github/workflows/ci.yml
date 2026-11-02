@@ -29,8 +29,8 @@ jobs:
         shell: pwsh
         run: |
           $pri = "KruzhLatency.App/bin/x64/Debug/net8.0-windows10.0.19041.0/win-x64/resources.pri"
-          if (-not (Test-Path $pri)) { throw "Falta $pri: la app crashearia al iniciar" }
-          Write-Host "OK: $pri ($((Get-Item $pri).Length) bytes)"
+          if (-not (Test-Path $pri)) { throw "Falta ${pri} (la app crashearia al iniciar)" }
+          Write-Host "OK: ${pri} ($((Get-Item $pri).Length) bytes)"
 
       # Los tests de integracion (marcados Category=Integration) tocan el sistema real: no corren en CI.
       - name: Test
