@@ -1,0 +1,807 @@
+=== MODULE: MpoOff ===
+function Apply-MpoOff {
+    $path="HKLM:\SOFTWARE\Microsoft\Windows\Dwm"
+    if (!(Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+    Set-ItemProperty $path "OverlayTestMode" 5 -Force
+    Set-State "MpoOff" 1
+    Write-Host "Disable MPO (Multi-Plane Overlay): APLICADO." -ForegroundColor Green
+    Write-Host "  -> Soluciona el 'choppy image' (stutters visuales con altos FPS) y flickering." -ForegroundColor DarkGray
+}
+
+=== MODULE: ForceIndependentFlip ===
+function Apply-ForceIndependentFlip {
+    $path="HKCU:\Software\Microsoft\DirectX\UserGpuPreferences"
+    if (!(Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+    Set-ItemProperty $path "DirectXUserGlobalSettings" "SwapEffectUpgradeEnable=1;" -Force
+    Set-State "ForceIndependentFlip" 1
+    Write-Host "Force DXGI Independent Flip: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Activa 'Optimizaciones para juegos en ventana' (Bypass DWM moderno)." -ForegroundColor DarkGray
+    Write-Host "  -> Forza Hardware Composed: Independent Flip en CS2/Valorant para 0 lag." -ForegroundColor DarkGray
+}
+
+=== MODULE: MarkCMouseFix ===
+function Apply-MarkCMouseFix {
+    $path="HKCU:\Control Panel\Mouse"
+    $xCurve = [byte[]](0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x15,0x6E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0x01,0x00,0x00,0x00,0x00,0x00,0x29,0xDC,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x28,0x00,0x00,0x00,0x00,0x00)
+    $yCurve = [byte[]](0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xB8,0x5E,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x80,0x02,0x00,0x00,0x00,0x00,0x00,0x29,0xDC,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x28,0x00,0x00,0x00,0x00,0x00)
+    Set-ItemProperty $path "SmoothMouseXCurve" $xCurve -Force
+    Set-ItemProperty $path "SmoothMouseYCurve" $yCurve -Force
+    Set-State "MarkCMouseFix" 1
+    Write-Host "MarkC Mouse Fix (Curvas 1:1): APLICADO." -ForegroundColor Green
+    Write-Host "  -> Inyecta curvas planas directas en el registro para matar cualquier filtrado residual de Windows." -ForegroundColor DarkGray
+}
+
+=== MODULE: PrioritySeparation ===
+function Apply-PrioritySeparation {
+    $path="HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
+    Set-ItemProperty $path "Win32PrioritySeparation" 0x28 -Force
+    Set-State "PrioritySeparation" 1
+    Write-Host "Win32PrioritySeparation a 0x28: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Prioriza agresivamente la aplicacion en foco (juego) y reduce latencia de input del CPU." -ForegroundColor DarkGray
+}
+
+=== MODULE: NetworkThrottlingOff ===
+function Apply-NetworkThrottlingOff {
+    $path="HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+    Set-ItemProperty $path "NetworkThrottlingIndex" 0xFFFFFFFF -Force
+    Set-ItemProperty $path "SystemResponsiveness" 0 -Force
+    Set-State "NetworkThrottlingOff" 1
+    Write-Host "Network Throttling / System Responsiveness: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Asigna el 100% de la red y CPU a los juegos en vez de reservar para multimedia." -ForegroundColor DarkGray
+}
+
+=== MODULE: TcpAutoTuning ===
+function Apply-TcpAutoTuning {
+    netsh int tcp set global autotuninglevel=disabled 2>$null | Out-Null
+    Set-State "TcpAutoTuning" 1
+    Write-Host "TCP Auto-Tuning: DISABLED. APLICADO." -ForegroundColor Green
+    Write-Host "  -> Mitiga severamente el bufferbloat local al no expandir el tamaño de la ventana TCP." -ForegroundColor DarkGray
+}
+
+=== MODULE: HpetOff ===
+function Apply-HpetOff {
+    bcdedit /deletevalue useplatformclock 2>$null | Out-Null
+    try {
+        $hpet = Get-CimInstance Win32_PnPEntity -Filter "Name='High precision event timer'" -EA SilentlyContinue
+        if ($hpet) { Disable-PnpDevice -InstanceId $hpet.PNPDeviceID -Confirm:$false -EA SilentlyContinue | Out-Null }
+    } catch {}
+    Set-State "HpetOff" 1
+    Write-Host "HPET (High Precision Event Timer): DESACTIVADO." -ForegroundColor Green
+    Write-Host "  -> Desactivado en BCD y Device Manager. Disminuye latencia DPC masivamente." -ForegroundColor DarkGray
+    Write-Host "  -> IMPORTANTE: Si ves micro-stutters, desactivalo tambien en la BIOS." -ForegroundColor Yellow
+}
+
+=== MODULE: PcieAspmDisable ===
+function Apply-PcieAspmDisable {
+    powercfg -attributes SUB_PCIEXPRESS ASPM -ATTRIB_HIDE 2>$null | Out-Null
+    powercfg -attributes SUB_PCIEXPRESS LPM -ATTRIB_HIDE 2>$null | Out-Null
+    $guids = @("381b4222-f694-41f0-9685-ff5bb260df2e", "scheme_current", "e9a42b02-d5df-448d-aa00-03f14749eb61")
+    foreach ($g in $guids) {
+        powercfg -setacvalue $g SUB_PCIEXPRESS ASPM 0 2>$null | Out-Null
+    }
+    $path="HKLM:\SYSTEM\CurrentControlSet\Services\pci\Parameters"
+    if (!(Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+    Set-ItemProperty $path "EnableASPM" 0 -Force -EA SilentlyContinue
+    Set-ItemProperty $path "EnableL1" 0 -Force -EA SilentlyContinue
+    Set-State "PcieAspmDisable" 1
+    Write-Host "PCIe ASPM (L0s/L1) Disabled: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Forza el bus PCIe a quedarse en estado L0 (max power/min latency). Elimina stutter de CPU/GPU." -ForegroundColor DarkGray
+}
+
+=== MODULE: DisableCfgPerGame ===
+function Apply-DisableCfgPerGame {
+    foreach ($exe in $GameExes) {
+        $path="HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$exe"
+        if (!(Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+        Set-ItemProperty $path "MitigationOptions" ([byte[]](2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2)) -Force -EA SilentlyContinue
+    }
+    Set-State "DisableCfgPerGame" 1
+    Write-Host "Disable CFG / Exploit Protection (Per-Game): APLICADO." -ForegroundColor Green
+    Write-Host "  -> Desactiva chequeos de memoria extra de Windows solo para los juegos. Remueve input lag pesado." -ForegroundColor DarkGray
+}
+
+=== MODULE: NdisBufferTuning ===
+function Apply-NdisBufferTuning {
+    $base="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"
+    Get-ChildItem $base -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        cmd /c "reg add `"$($_.Name)`" /v `"*ReceiveBuffers`" /t REG_SZ /d 256 /f >nul 2>&1"
+        cmd /c "reg add `"$($_.Name)`" /v `"*TransmitBuffers`" /t REG_SZ /d 256 /f >nul 2>&1"
+    }
+    Set-State "NdisBufferTuning" 1
+    Write-Host "NDIS Ring Buffer Tuning: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Reduce buffers de NIC a 256 (prioriza menor latencia sobre ancho de banda pico). Corta bufferbloat." -ForegroundColor DarkGray
+}
+
+=== MODULE: AudioDpcFix ===
+function Apply-AudioDpcFix {
+    Set-ItemProperty "HKCU:\Software\Microsoft\Multimedia\Audio\WaveVolumeProperty" "AudioEnhancement" 0 -Force -EA SilentlyContinue
+    $path="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Audio"
+    if (!(Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+    Set-ItemProperty $path "DisableProtectedAudioDG" 1 -Force -EA SilentlyContinue
+    Set-State "AudioDpcFix" 1
+    Write-Host "Audio DPC + Enhancements Fix: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Deshabilita el overhead de DRM en AudioDG y Enhancements, reduciendo interrupciones DPC." -ForegroundColor DarkGray
+}
+
+=== MODULE: CpuIdleThresholds ===
+function Apply-CpuIdleThresholds {
+    # IDLEPROMOTE, IDLEDEMOTE: documentados. IDLEDISABLE GUID: 5d76a2ca
+    powercfg -setacvalue scheme_current sub_processor IDLEPROMOTE 0 2>$null | Out-Null
+    powercfg -setacvalue scheme_current sub_processor IDLEDEMOTE 0 2>$null | Out-Null
+    powercfg -setacvalue scheme_current sub_processor IDLEDISABLE 1 2>$null | Out-Null
+    powercfg -setacvalue scheme_current sub_processor IDLESCALING 0 2>$null | Out-Null
+    powercfg -setacvalue scheme_current sub_processor PERFCHECK 10 2>$null | Out-Null
+    powercfg -setactive scheme_current 2>$null | Out-Null
+    Set-State "CpuIdleThresholds" 1
+    Write-Host "CPU Idle Thresholds (0 Wake-up Latency): APLICADO." -ForegroundColor Green
+    Write-Host "  -> Evita que los cores caigan en C-States profundos via Windows Power Plan." -ForegroundColor DarkGray
+    Write-Host "  -> IDLEDISABLE=1, IDLEPROMOTE=0, IDLEDEMOTE=0, IDLESCALING=0" -ForegroundColor DarkGray
+}
+
+=== MODULE: CpuBoostMode ===
+function Apply-CpuBoostMode {
+    powercfg -setacvalue scheme_current sub_processor PERFBOOSTMODE 2
+    powercfg -setacvalue scheme_current sub_processor PERFBOOSTPOL 100
+    powercfg -setacvalue scheme_current sub_processor PERFOPTION 2
+    powercfg -setactive scheme_current
+    Set-State "CpuBoostMode" 1
+    Write-Host "CPU Performance Boost Mode (Aggressive): APLICADO." -ForegroundColor Green
+    Write-Host "  -> Mantiene frecuencias altas estables eliminando la latencia de rampa." -ForegroundColor DarkGray
+}
+
+=== MODULE: DisableBackgroundHwAccel ===
+function Apply-DisableBackgroundHwAccel {
+    $steamPath="HKCU:\Software\Valve\Steam"
+    if (Test-Path $steamPath) {
+        Set-ItemProperty $steamPath "gpuacceleration" 0 -Force -EA SilentlyContinue
+        Set-ItemProperty $steamPath "WebBrowser" 0 -Force -EA SilentlyContinue
+    }
+    Set-State "DisableBackgroundHwAccel" 1
+    Write-Host "Background HW Accel (Steam): DESACTIVADA." -ForegroundColor Green
+    Write-Host "  -> Steam ya no competira con tu juego por renderizado GPU." -ForegroundColor DarkGray
+    Write-Host "  -> IMPORTANTE: Apaga el Overlay de GeForce Experience manualmente." -ForegroundColor Yellow
+}
+
+=== MODULE: MouseDataQueueSize ===
+function Apply-MouseDataQueueSize {
+    cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters`" /v MouseDataQueueSize /t REG_DWORD /d 16 /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters`" /v KeyboardDataQueueSize /t REG_DWORD /d 16 /f >nul 2>&1"
+    Set-State "MouseDataQueueSize" 1
+    Write-Host "Mouse/Kbd Data Queue Size (16): APLICADO." -ForegroundColor Green
+    Write-Host "  -> Reduce la profundidad del buffer de 100 a 16 para latencia de hardware extrema." -ForegroundColor DarkGray
+}
+
+=== MODULE: CompositorPriority ===
+function Apply-CompositorPriority {
+    $csrss="HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions"
+    $dwm="HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\dwm.exe\PerfOptions"
+    if (!(Test-Path $csrss)) { New-Item -Path $csrss -Force | Out-Null }
+    if (!(Test-Path $dwm)) { New-Item -Path $dwm -Force | Out-Null }
+    Set-ItemProperty $csrss "CpuPriorityClass" 3 -Force -EA SilentlyContinue
+    Set-ItemProperty $dwm "CpuPriorityClass" 3 -Force -EA SilentlyContinue
+    Set-State "CompositorPriority" 1
+    Write-Host "Compositor Priority (CSRSS/DWM High): APLICADO." -ForegroundColor Green
+    Write-Host "  -> El OS priorizara los procesos de I/O de mouse y composicion de pantalla (High)." -ForegroundColor DarkGray
+}
+
+=== MODULE: AudioEnhancementsOff ===
+function Apply-AudioEnhancementsOff {
+    # Deshabilitar Audio Enhancements del sistema - causa DPC spikes que generan floaty mouse
+    # Fuente: BlurBusters threads [15352],[12413],[10508] - confirmado por Chief Blur Buster
+    $audioPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+    Set-ItemProperty $audioPath "SystemResponsiveness" 0 -Force -EA SilentlyContinue
+    # Desactivar mejoras de audio en todos los endpoints
+    $endpointPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render"
+    if (Test-Path $endpointPath) {
+        Get-ChildItem $endpointPath -EA SilentlyContinue | ForEach-Object {
+            $fxProps = Join-Path $_.PSPath "FxProperties"
+            if (Test-Path $fxProps) {
+                # {1da5d803-d492-4edd-8c23-e0c0ffee7f0e},6 = Disable enhancements flag
+                cmd /c "reg add `"$($_.Name)\FxProperties`" /v `"{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},6`" /t REG_DWORD /d 1 /f >nul 2>&1"
+            }
+        }
+    }
+    # Deshabilitar Spatial Sound (Atmos, etc.) - genera callbacks extra en el kernel
+    $spatialPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Audio"
+    if (!(Test-Path $spatialPath)) { New-Item -Path $spatialPath -Force | Out-Null }
+    Set-ItemProperty $spatialPath "EnableSpatialAudio" 0 -Force -EA SilentlyContinue
+    Set-State "AudioEnhancementsOff" 1
+    Write-Host "Audio Enhancements OFF: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Elimina DPC spikes del sistema de audio que causan floaty mouse." -ForegroundColor DarkGray
+    Write-Host "  -> Confirmado por Chief Blur Buster como causa real en algunos sistemas." -ForegroundColor DarkGray
+    Write-Host "  -> REINICIAR para aplicar completamente." -ForegroundColor Yellow
+}
+
+=== MODULE: RealtekAudioFix ===
+function Apply-RealtekAudioFix {
+    # BlurBusters [15352],[12413]: El driver Realtek HD Audio causa DPC spikes que generan
+    # mouse floaty en sistemas especificos. Fix: deshabilitar el dispositivo en Device Manager.
+    $realtekFound = $false
+    Get-PnpDevice -Class "AudioEndpoint" -EA SilentlyContinue | Where-Object { $_.FriendlyName -match 'Realtek' -and $_.Status -eq 'OK' } | ForEach-Object {
+        Disable-PnpDevice -InstanceId $_.InstanceId -Confirm:$false -EA SilentlyContinue
+        $realtekFound = $true
+        Write-Host "  -> Deshabilitado: $($_.FriendlyName)" -ForegroundColor DarkGray
+    }
+    if (-not $realtekFound) {
+        Write-Host "  -> No se encontro dispositivo Realtek Audio activo en este sistema." -ForegroundColor Yellow
+    }
+    # Tambien desactivar enhancements del driver Realtek en registro
+    $realtekRegPaths = @(
+        "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e96c-e325-11ce-bfc1-08002be10318}"
+    )
+    foreach ($path in $realtekRegPaths) {
+        Get-ChildItem $path -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+            $driverDesc = (Get-ItemProperty $_.PSPath -EA SilentlyContinue).DriverDesc
+            if ($driverDesc -match 'Realtek') {
+                Set-ItemProperty $_.PSPath "EnableDynamicDevices" 0 -Force -EA SilentlyContinue
+            }
+        }
+    }
+    Set-State "RealtekAudioFix" 1
+    Write-Host "Realtek Audio Fix: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Si el mouse se siente normal ahora, el driver Realtek era el culpable." -ForegroundColor DarkGray
+    Write-Host "  -> REINICIAR y probar. Si empeora, usa Revertir." -ForegroundColor Yellow
+}
+
+=== MODULE: GameBarPreserve ===
+function Apply-GameBarPreserve {
+    # BlurBusters [15717]: En Windows 11 24H2+, desactivar Game Bar rompe Independent Flip
+    # en juegos DX12, sumando latencia. El modulo [31] lo desactiva globalmente.
+    # Este modulo lo restaura al estado correcto para DX12.
+    $build = [System.Environment]::OSVersion.Version.Build
+    if ($build -ge 26100) {
+        # Win11 24H2+ (build 26100+): mantener Game Bar activo pero deshabilitar solo DVR/capturas
+        $gbPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR"
+        $policyPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR"
+        if (!(Test-Path $gbPath)) { New-Item -Path $gbPath -Force | Out-Null }
+        if (!(Test-Path $policyPath)) { New-Item -Path $policyPath -Force | Out-Null }
+        # Deshabilitar SOLO la grabacion en segundo plano, pero mantener la capa de Game Bar
+        Set-ItemProperty $gbPath "AppCaptureEnabled" 0 -Force -EA SilentlyContinue
+        Set-ItemProperty $gbPath "GameDVR_Enabled" 0 -Force -EA SilentlyContinue
+        # RE-HABILITAR Game Bar si fue desactivado por el modulo [31]
+        $xboxPath = "HKCU:\Software\Microsoft\GameBar"
+        if (!(Test-Path $xboxPath)) { New-Item -Path $xboxPath -Force | Out-Null }
+        Set-ItemProperty $xboxPath "AllowAutoGameMode" 1 -Force -EA SilentlyContinue
+        Set-ItemProperty $xboxPath "ShowGameModeNotifications" 0 -Force -EA SilentlyContinue
+        cmd /c "reg add `"HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR`" /v GameDVR_FSEBehaviorMode /t REG_DWORD /d 2 /f >nul 2>&1"
+        Set-State "GameBarPreserve" 1
+        Write-Host "Game Bar Preserve (DX12 Fix) Win11 24H2+: APLICADO." -ForegroundColor Green
+        Write-Host "  -> DVR/Capture desactivado, pero Game Bar activo para Independent Flip DX12." -ForegroundColor DarkGray
+        Write-Host "  -> Segun BlurBusters: desactivar Game Bar en 24H2 rompe iFlip en DX12." -ForegroundColor Yellow
+    } else {
+        Write-Host "  -> Este fix es solo para Windows 11 24H2+ (build 26100+)." -ForegroundColor Yellow
+        Write-Host "  -> Tu sistema tiene build $build, no es necesario." -ForegroundColor DarkGray
+        Set-State "GameBarPreserve" 1
+    }
+}
+
+=== MODULE: DualCCDRyzenAffinity ===
+function Apply-DualCCDRyzenAffinity {
+    # BlurBusters [15683]: En CPUs Ryzen Dual-CCD (5900X, 7950X3D, 9950X, etc.)
+    # el scheduler salta entre CCDs generando latencia de cache. Fix: forzar affinity
+    # del juego activo al CCD primario (cores 0-7 en la mayoria de modelos).
+    $cpuName = (Get-WmiObject Win32_Processor -EA SilentlyContinue | Select-Object -First 1).Name
+    $isDualCCD = $cpuName -match '(5900X|5950X|7900X|7950X|7900|7950|9900X|9950X|PRO 595)'
+    if (-not $isDualCCD) {
+        Write-Host "  -> CPU detectado: $cpuName" -ForegroundColor DarkGray
+        Write-Host "  -> Este modulo es para Ryzen Dual-CCD. Tu CPU no parece serlo." -ForegroundColor Yellow
+        Write-Host "  -> Podes continuar igual si sabes que tu CPU es Dual-CCD." -ForegroundColor Yellow
+    }
+    # Forzar affinity del proceso principal del juego via registro de Processor Affinity
+    # Para cs2.exe, valorant, etc. usando IFEO ProcessorAffinity
+    # Mascara 0xFF = cores 0-7 (primer CCD)
+    $mask = 255 # 0xFF = cores 0-7
+    $games = @("cs2.exe","VALORANT-Win64-Shipping.exe","EscapeFromTarkov.exe","r5apex.exe")
+    foreach ($game in $games) {
+        $ifeoPth = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$game\PerfOptions"
+        if (!(Test-Path $ifeoPth)) { New-Item -Path $ifeoPth -Force | Out-Null }
+        Set-ItemProperty $ifeoPth "ProcessorAffinity" $mask -Force -EA SilentlyContinue
+    }
+    Set-State "DualCCDRyzenAffinity" 1
+    Write-Host "Dual-CCD Ryzen CPU Affinity (CCD0): APLICADO." -ForegroundColor Green
+    Write-Host "  -> CS2/Valorant forzados al CCD primario (cores 0-7)." -ForegroundColor DarkGray
+    Write-Host "  -> Evita saltos de cache entre CCDs que causan micro-stutters." -ForegroundColor DarkGray
+    Write-Host "  -> Solo en Ryzen Dual-CCD. En X3D: forzar al CCD con 3D V-Cache." -ForegroundColor Yellow
+}
+
+=== MODULE: UsbAudioSeparation ===
+function Apply-UsbAudioSeparation {
+    # BlurBusters [13863],[10508]: USB Headsets en el mismo hub USB que el mouse
+    # generan contention de bandwidth y pueden causar micro-drops de input.
+    # Este modulo detecta dispositivos de audio USB y muestra informacion de diagnostico.
+    Write-Host "Analizando dispositivos de audio USB..." -ForegroundColor Cyan
+    $usbAudioDevices = Get-PnpDevice -Class "AudioEndpoint" -EA SilentlyContinue | Where-Object {
+        $_.InstanceId -match 'USB' -and $_.Status -eq 'OK'
+    }
+    if ($usbAudioDevices) {
+        Write-Host ""
+        Write-Host "  !! ATENCION: Se detectaron dispositivos de audio USB:" -ForegroundColor Red
+        foreach ($dev in $usbAudioDevices) {
+            Write-Host "     -> $($dev.FriendlyName) [$($dev.InstanceId)]" -ForegroundColor Yellow
+        }
+        Write-Host ""
+        Write-Host "  ACCION RECOMENDADA (BlurBusters confirmed):" -ForegroundColor Cyan
+        Write-Host "  1. Mover el headset/audio USB a un puerto TRASERO diferente al del mouse." -ForegroundColor White
+        Write-Host "  2. Idealmente en un puerto gestionado por un controlador xHCI distinto." -ForegroundColor White
+        Write-Host "  3. El audio USB compite en el mismo bus del mouse -> micro-drops de input." -ForegroundColor DarkGray
+    } else {
+        Write-Host "  -> No se detectaron dispositivos de audio USB activos." -ForegroundColor Green
+        Write-Host "  -> Tu configuracion de audio no genera contention USB. Bien!" -ForegroundColor Green
+    }
+    # Marcar como revisado
+    Set-State "UsbAudioSeparation" 1
+    Write-Host ""
+    Write-Host "USB Audio Separation Check: COMPLETADO." -ForegroundColor Green
+}
+
+=== MODULE: GamingPowerPlan ===
+function Apply-GamingPowerPlan {
+    Clear-Host; Write-Banner "CREAR / ACTIVAR POWER PLAN GAMING" "Cyan"
+    $gamingGuid="00000000-0000-0000-0000-000000000042"
+    if (powercfg -list | Select-String $gamingGuid) {
+        Write-Host "Plan Gaming ya existe, activando..." -ForegroundColor Green; powercfg -setactive $gamingGuid
+    } else {
+        $out=powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>&1
+        if ($out -match '([0-9A-Fa-f-]{36})') { $g=$Matches[1]; powercfg -changename $g "Gaming Low-Latency" "Optimizado para competitivo" 2>$null; powercfg -setactive $g }
+        else { powercfg -setactive e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null }
+    }
+    powercfg -setacvalue scheme_current sub_processor PERFBOOSTMODE 2 2>$null | Out-Null
+    powercfg -setacvalue scheme_current sub_processor PERFOPTION 2 2>$null | Out-Null
+    powercfg -setacvalue scheme_current sub_disk DISKIDLE 0 2>$null | Out-Null
+    powercfg -setacvalue scheme_current sub_processor CPMINCORES 100 2>$null | Out-Null
+    Write-Host "Plan Gaming Low-Latency: creado y activado." -ForegroundColor Green; Write-Host ""; Pause
+}
+
+=== MODULE: MouseAccel ===
+function Apply-MouseAccel {
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name MouseSpeed -Value "0"
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name MouseThreshold1 -Value "0"
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name MouseThreshold2 -Value "0"
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name MouseSensitivity -Value "10" -EA SilentlyContinue
+    Set-State "MouseAccel" 1; Write-Host "Aceleracion del puntero: OFF. Speed 6/11 (1:1)." -ForegroundColor Green
+    Write-Host "  -> Activa Raw Input en CS2/Valorant para bypass completo del OS." -ForegroundColor DarkGray
+}
+
+=== MODULE: USBPower ===
+function Apply-USBPower {
+    foreach ($branch in "ACPI","HID","PCI","USB") {
+        Get-ChildItem "HKLM:\SYSTEM\ControlSet001\Enum\$branch" -Recurse -EA SilentlyContinue | Where-Object { $_.PSChildName -eq "Device Parameters" } | ForEach-Object {
+            $p=$_.Name
+            cmd /c "reg add `"$p`" /v EnhancedPowerManagementEnabled /t REG_DWORD /d 0 /f >nul 2>&1"
+            cmd /c "reg add `"$p`" /v SelectiveSuspendEnabled /t REG_BINARY /d 00 /f >nul 2>&1"
+            cmd /c "reg add `"$p`" /v SelectiveSuspendOn /t REG_DWORD /d 0 /f >nul 2>&1"
+            cmd /c "reg add `"$p`" /v WaitWakeEnabled /t REG_DWORD /d 0 /f >nul 2>&1"
+        }
+    }
+    Set-State "USBPower" 1; Write-Host "Ahorro energia USB/HID/PCI/ACPI: OFF." -ForegroundColor Green
+}
+
+=== MODULE: GpuMsi ===
+function Apply-GpuMsi {
+    Get-PnpDevice -Class Display -EA SilentlyContinue | ForEach-Object {
+        cmd /c "reg add `"HKLM\SYSTEM\ControlSet001\Enum\$($_.InstanceId)\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties`" /v MSISupported /t REG_DWORD /d 1 /f >nul 2>&1"
+    }
+    Set-State "GpuMsi" 1; Write-Host "MSI Mode GPU: ACTIVADO (reduce latencia de interrupcion)." -ForegroundColor Green
+}
+
+=== MODULE: NetPower ===
+function Apply-NetPower {
+    $base="HKLM:\System\ControlSet001\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"
+    Get-ChildItem $base -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        $p=$_.Name
+        cmd /c "reg add `"$p`" /v PnPCapabilities /t REG_DWORD /d 24 /f >nul 2>&1"
+        foreach ($v in "AdvancedEEE","*EEE","EEELinkAdvertisement","SipsEnabled","ULPMode","GigaLite","EnableGreenEthernet","PowerSavingMode","AutoDisableGigabit") {
+            cmd /c "reg add `"$p`" /v `"$v`" /t REG_SZ /d 0 /f >nul 2>&1"
+        }
+    }
+    Set-State "NetPower" 1; Write-Host "Ahorro energia NIC: OFF (EEE, GreenEthernet OFF)." -ForegroundColor Green
+}
+
+=== MODULE: TimerRes ===
+function Apply-TimerRes {
+    cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel`" /v GlobalTimerResolutionRequests /t REG_DWORD /d 1 /f >nul 2>&1"
+    Set-State "TimerRes" 1; Write-Host "Timer Resolution 0.5ms: ACTIVADO (requiere reinicio)." -ForegroundColor Green
+}
+
+=== MODULE: Hdcp ===
+function Apply-Hdcp {
+    Get-ChildItem (Get-DisplayClassPath) -EA SilentlyContinue | Where-Object { $_.PSChildName -notlike '*Configuration' } | ForEach-Object {
+        reg add "$($_.Name)" /v "RMHdcpKeyglobZero" /t REG_DWORD /d "1" /f | Out-Null }
+    Set-State "Hdcp" 1; Write-Host "HDCP: OFF (reduce overhead de cifrado de display)." -ForegroundColor Green
+}
+
+=== MODULE: GpuP0 ===
+function Apply-GpuP0 {
+    if (!$script:HW.IsNvidia) { Write-Host "Solo NVIDIA." -ForegroundColor Red; return }
+    Get-ChildItem (Get-DisplayClassPath) -EA SilentlyContinue | Where-Object { $_.PSChildName -notlike '*Configuration' } | ForEach-Object {
+        reg add "$($_.Name)" /v "DisableDynamicPstate" /t REG_DWORD /d "1" /f | Out-Null }
+    Set-State "GpuP0" 1; Write-Host "GPU P0 (clock maximo fijo): ON. Mas calor = zero variabilidad." -ForegroundColor Green
+}
+
+=== MODULE: NvidiaTweaks ===
+function Apply-NvidiaTweaks {
+    if (!$script:HW.IsNvidia) { Write-Host "Solo NVIDIA." -ForegroundColor Red; return }
+    cmd /c "reg add `"HKLM\System\ControlSet001\Services\nvlddmkm\Parameters\Global\NVTweak`" /v NvCplPhysxAuto /t REG_DWORD /d 0 /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\System\ControlSet001\Services\nvlddmkm\Parameters\Global\NVTweak`" /v NvDevToolsVisible /t REG_DWORD /d 1 /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\System\ControlSet001\Services\nvlddmkm\Parameters\Global\NVTweak`" /v RmProfilingAdminOnly /t REG_DWORD /d 0 /f >nul 2>&1"
+    cmd /c "reg add `"HKCU\Software\NVIDIA Corporation\NvTray`" /v StartOnLogin /t REG_DWORD /d 0 /f >nul 2>&1"
+    Set-State "NvidiaTweaks" 1; Write-Host "Ajustes driver NVIDIA: aplicados." -ForegroundColor Green
+}
+
+=== MODULE: GameBar ===
+function Apply-GameBar {
+    cmd /c "reg add `"HKCU\System\GameConfigStore`" /v GameDVR_Enabled /t REG_DWORD /d 0 /f >nul 2>&1"
+    cmd /c "reg add `"HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR`" /v AppCaptureEnabled /t REG_DWORD /d 0 /f >nul 2>&1"
+    cmd /c "reg add `"HKCU\Software\Microsoft\GameBar`" /v UseNexusForGameBarEnabled /t REG_DWORD /d 0 /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR`" /v AllowgameDVR /t REG_DWORD /d 0 /f >nul 2>&1"
+    Set-State "GameBar" 1; Write-Host "Game Bar / Game DVR: OFF." -ForegroundColor Green
+}
+
+=== MODULE: Copilot ===
+function Apply-Copilot {
+    cmd /c "reg add `"HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot`" /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot`" /v TurnOffWindowsCopilot /t REG_DWORD /d 1 /f >nul 2>&1"
+    Set-State "Copilot" 1; Write-Host "Windows Copilot: OFF." -ForegroundColor Green
+}
+
+=== MODULE: WinUpdatePause ===
+function Apply-WinUpdatePause {
+    $pause=(Get-Date).AddDays(365).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    $today=(Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    $path="HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings"
+    if (!(Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+    Set-ItemProperty $path "PauseUpdatesExpiryTime" $pause -Force; Set-ItemProperty $path "PauseFeatureUpdatesEndTime" $pause -Force
+    Set-ItemProperty $path "PauseFeatureUpdatesStartTime" $today -Force; Set-ItemProperty $path "PauseQualityUpdatesEndTime" $pause -Force
+    Set-ItemProperty $path "PauseQualityUpdatesStartTime" $today -Force; Set-ItemProperty $path "PauseUpdatesStartTime" $today -Force
+    Set-State "WinUpdatePause" 1; Write-Host "Windows Update: PAUSADO 1 anio. (Recordar reactivar para seguridad)" -ForegroundColor Green
+}
+
+=== MODULE: UltimatePerf ===
+function Apply-UltimatePerf {
+    $out=powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>&1|Out-String
+    if ($out -match '([0-9A-Fa-f-]{36})') { $g=$Matches[1]; powercfg -setactive $g }
+    else { powercfg -setactive e9a42b02-d5df-448d-aa00-03f14749eb61 }
+    Set-State "UltimatePerf" 1; Write-Host "Ultimate Performance: activado." -ForegroundColor Green
+}
+
+=== MODULE: BitLocker ===
+function Apply-BitLocker {
+    Write-Host "ADVERTENCIA: deja el disco SIN cifrar." -ForegroundColor Red
+    $c=Read-Host "Escribe CONFIRMAR"
+    if ($c -ne "CONFIRMAR") { Write-Host "Cancelado."; return }
+    try { Get-BitLockerVolume | Where-Object { $_.ProtectionStatus -eq "On" } | ForEach-Object { Disable-BitLocker -MountPoint $_.MountPoint -EA SilentlyContinue | Out-Null }; Write-Host "BitLocker: desactivando..." -ForegroundColor Green }
+    catch { Write-Host "No se pudo gestionar BitLocker." -ForegroundColor Red }
+}
+
+=== MODULE: Nagle ===
+function Apply-Nagle {
+    $ifBase="HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
+    Get-ChildItem $ifBase -EA SilentlyContinue | ForEach-Object {
+        cmd /c "reg add `"$($_.Name)`" /v TcpAckFrequency /t REG_DWORD /d 1 /f >nul 2>&1"
+        cmd /c "reg add `"$($_.Name)`" /v TCPNoDelay /t REG_DWORD /d 1 /f >nul 2>&1"
+    }
+    Set-State "Nagle" 1; Write-Host "Nagle: OFF (envio inmediato de paquetes, reduce latencia de red)." -ForegroundColor Green
+}
+
+=== MODULE: Mmcss ===
+function Apply-Mmcss {
+    cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile`" /v SystemResponsiveness /t REG_DWORD /d 10 /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile`" /v NetworkThrottlingIndex /t REG_DWORD /d 0xffffffff /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games`" /v Priority /t REG_DWORD /d 6 /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games`" /v `"Scheduling Category`" /t REG_SZ /d High /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games`" /v `"GPU Priority`" /t REG_DWORD /d 8 /f >nul 2>&1"
+    Set-State "Mmcss" 1; Write-Host "MMCSS: Games priority High, sin throttling de red." -ForegroundColor Green
+}
+
+=== MODULE: GamePriority ===
+function Apply-GamePriority {
+    foreach ($exe in $GameExes) {
+        cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$exe`" /v PriorityClass /t REG_DWORD /d 256 /f >nul 2>&1"
+    }
+    cmd /c "reg add `"HKCU\Software\Microsoft\GameBar`" /v AutoGameModeEnabled /t REG_DWORD /d 1 /f >nul 2>&1"
+    Set-State "GamePriority" 1; Write-Host "Prioridad CPU alta + Game Mode: ON para cs2/Valorant." -ForegroundColor Green
+}
+
+=== MODULE: CoreParking ===
+function Apply-CoreParking { powercfg -setacvalue scheme_current sub_processor CPMINCORES 100; Set-State "CoreParking" 1; Write-Host "Core parking: OFF (100% nucleos despiertos)." -ForegroundColor Green }
+function Revert-CoreParking { powercfg -setacvalue scheme_current sub_processor CPMINCORES 5; Set-State "CoreParking" 0; Write-Host "Core parking: restaurado." -ForegroundColor Yellow }
+
+function Apply-SysMain {
+    if ($script:HW.StorageType -match "HDD") {
+        Write-Host "! HDD detectado. SysMain ayuda en HDD. Continuar? (S/N)" -ForegroundColor Yellow
+        if ((Read-Host).ToUpper() -ne "S") { Write-Host "Cancelado."; return }
+    }
+    Stop-Service SysMain -EA SilentlyContinue; Set-Service SysMain -StartupType Disabled -EA SilentlyContinue
+    Set-State "SysMain" 1; Write-Host "SysMain: OFF." -ForegroundColor Green
+}
+
+=== MODULE: Hags ===
+function Apply-Hags {
+    if ($script:HW.GpuGen -match "GTX10") {
+        Write-Host "! GPU $($script:HW.GpuGen) puede tener stutter con HAGS. Continuar? (S/N)" -ForegroundColor Yellow
+        if ((Read-Host).ToUpper() -ne "S") { Write-Host "Cancelado."; return }
+    }
+    cmd /c "reg add `"HKCU\Software\Microsoft\DirectX\UserGpuPreferences`" /v DirectXUserGlobalSettings /t REG_SZ /d gpupreference=2; /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers`" /v HwSchMode /t REG_DWORD /d 2 /f >nul 2>&1"
+    Set-State "Hags" 1; Write-Host "HAGS: ON." -ForegroundColor Green
+    if ($script:HW.GpuGen -match "RTX[34]0") { Write-Host "  -> Tu GPU $($script:HW.GpuGen) se beneficia bien de HAGS." -ForegroundColor DarkGray }
+}
+
+=== MODULE: VisualFx ===
+function Apply-VisualFx {
+    Set-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name VisualFXSetting -Value 2 -Force
+    Set-State "VisualFx" 1; Write-Host "Efectos visuales: RENDIMIENTO MAXIMO." -ForegroundColor Green
+}
+
+=== MODULE: HidMsi ===
+function Apply-HidMsi {
+    $hidClass="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{745a17a0-74d3-11d0-b6fe-00a0c90f57da}"
+    Get-ChildItem $hidClass -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        cmd /c "reg add `"$($_.Name)\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties`" /v MSISupported /t REG_DWORD /d 1 /f >nul 2>&1"
+        cmd /c "reg add `"$($_.Name)\Device Parameters\Interrupt Management\Affinity Policy`" /v DevicePolicy /t REG_DWORD /d 4 /f >nul 2>&1"
+        cmd /c "reg add `"$($_.Name)\Device Parameters\Interrupt Management\Affinity Policy`" /v AssignmentSetOverride /t REG_BINARY /d 01 /f >nul 2>&1"
+    }
+    Set-State "HidMsi" 1; Write-Host "MSI Interrupts HID/Mouse: ON (requiere reinicio). Mouse -> core 0 = menos jitter." -ForegroundColor Green
+}
+
+=== MODULE: SchedulerFg ===
+function Apply-SchedulerFg {
+    cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl`" /v Win32PrioritySeparation /t REG_DWORD /d 38 /f >nul 2>&1"
+    Set-State "SchedulerFg" 1; Write-Host "CPU Scheduler Foreground Boost 3x: ON." -ForegroundColor Green
+}
+
+=== MODULE: UsbIrqAffinity ===
+function Apply-UsbIrqAffinity {
+    $usbClass="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{36fc9e60-c465-11cf-8056-444553540000}"; $n=0
+    Get-ChildItem $usbClass -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        $ap="$($_.Name)\Device Parameters\Interrupt Management\Affinity Policy"
+        cmd /c "reg add `"$ap`" /v DevicePolicy /t REG_DWORD /d 4 /f >nul 2>&1"
+        cmd /c "reg add `"$ap`" /v AssignmentSetOverride /t REG_BINARY /d 02 /f >nul 2>&1"; $n++
+    }
+    Set-State "UsbIrqAffinity" 1; Write-Host "IRQ Affinity USB: $n controladores -> core 1 (requiere reinicio)." -ForegroundColor Green
+}
+
+=== MODULE: InterruptModeration ===
+function Apply-InterruptModeration {
+    $base="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"; $count=0
+    Get-ChildItem $base -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        $p=$_.Name
+        cmd /c "reg add `"$p`" /v `"*InterruptModeration`" /t REG_SZ /d 0 /f >nul 2>&1"
+        cmd /c "reg add `"$p`" /v `"*ReceiveBuffers`" /t REG_SZ /d 256 /f >nul 2>&1"
+        cmd /c "reg add `"$p`" /v `"*TransmitBuffers`" /t REG_SZ /d 256 /f >nul 2>&1"
+        cmd /c "reg add `"$p`" /v `"*IPChecksumOffloadIPv4`" /t REG_SZ /d 3 /f >nul 2>&1"
+        cmd /c "reg add `"$p`" /v `"*TCPChecksumOffloadIPv4`" /t REG_SZ /d 3 /f >nul 2>&1"
+        cmd /c "reg add `"$p`" /v `"*UDPChecksumOffloadIPv4`" /t REG_SZ /d 3 /f >nul 2>&1"
+        if ($script:HW.NicType -eq "RTL8125") {
+            cmd /c "reg add `"$p`" /v AutoDisableGigabit /t REG_SZ /d 0 /f >nul 2>&1"
+            cmd /c "reg add `"$p`" /v AdvancedEEE /t REG_SZ /d 0 /f >nul 2>&1"
+        }
+        $count++
+    }
+    Set-State "InterruptModeration" 1
+    Write-Host "Interrupt Moderation: OFF en $count interfaces. [FIX PRINCIPAL para jitter/desync]" -ForegroundColor Green
+    Write-Host "  -> CPU procesa cada paquete inmediatamente. Puede aumentar levemente CPU usage de red (normal)." -ForegroundColor DarkGray
+}
+
+=== MODULE: LsoOff ===
+function Apply-LsoOff {
+    $base="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"
+    Get-ChildItem $base -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        $p=$_.Name
+        cmd /c "reg add `"$p`" /v `"*LsoV2IPv4`" /t REG_SZ /d 0 /f >nul 2>&1"
+        cmd /c "reg add `"$p`" /v `"*LsoV2IPv6`" /t REG_SZ /d 0 /f >nul 2>&1"
+        cmd /c "reg add `"$p`" /v LsoV1IPv4 /t REG_SZ /d 0 /f >nul 2>&1"
+    }
+    Set-State "LsoOff" 1
+    Write-Host "LSO (Large Send Offload) v1/v2: OFF. Windows ya no acumula paquetes antes de enviar." -ForegroundColor Green
+    Write-Host "  -> Elimina variabilidad de paquetes que causa jitter y desync." -ForegroundColor DarkGray
+}
+
+=== MODULE: RssOptimize ===
+function Apply-RssOptimize {
+    $base="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"
+    $queues=[Math]::Min(4,$script:HW.CpuCores)
+    Get-ChildItem $base -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        cmd /c "reg add `"$($_.Name)`" /v `"*RSS`" /t REG_SZ /d 1 /f >nul 2>&1"
+        cmd /c "reg add `"$($_.Name)`" /v `"*NumRssQueues`" /t REG_SZ /d $queues /f >nul 2>&1"
+    }
+    netsh int tcp set global rss=enabled 2>$null | Out-Null
+    Set-State "RssOptimize" 1
+    Write-Host "RSS: OPTIMIZADO ($queues queues). Distribuye interrupciones en multiples cores." -ForegroundColor Green
+}
+
+=== MODULE: FlowControlOff ===
+function Apply-FlowControlOff {
+    $base="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"
+    Get-ChildItem $base -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        cmd /c "reg add `"$($_.Name)`" /v FlowControl /t REG_SZ /d 0 /f >nul 2>&1"
+        cmd /c "reg add `"$($_.Name)`" /v `"*FlowControl`" /t REG_SZ /d 0 /f >nul 2>&1"
+    }
+    Set-State "FlowControlOff" 1; Write-Host "Flow Control NIC: OFF (elimina pause frames que interrumpen flujo)." -ForegroundColor Green
+}
+
+=== MODULE: QosDscp ===
+function Apply-QosDscp {
+    $qosPath="HKLM:\SOFTWARE\Policies\Microsoft\Windows\QoS"
+    if (!(Test-Path $qosPath)) { New-Item -Path $qosPath -Force | Out-Null }
+    @(@{Name="CS2_QoS";App="cs2.exe"},@{Name="Valorant_QoS";App="VALORANT-Win64-Shipping.exe"}) | ForEach-Object {
+        $p="$qosPath\$($_.Name)"
+        if (!(Test-Path $p)) { New-Item -Path $p -Force | Out-Null }
+        Set-ItemProperty $p "Version" "1.0" -Force
+        Set-ItemProperty $p "Application Name" $_.App -Force
+        Set-ItemProperty $p "Protocol" "UDP" -Force
+        Set-ItemProperty $p "Local Port" "*" -Force; Set-ItemProperty $p "Remote Port" "*" -Force
+        Set-ItemProperty $p "Local IP" "*" -Force; Set-ItemProperty $p "Local IP Prefix" "32" -Force
+        Set-ItemProperty $p "Remote IP" "*" -Force; Set-ItemProperty $p "Remote IP Prefix" "32" -Force
+        Set-ItemProperty $p "DSCP Value" "46" -Force; Set-ItemProperty $p "Throttle Rate" "-1" -Force
+        Write-Host "  QoS DSCP 46 (EF) para $($_.App)" -ForegroundColor DarkGray
+    }
+    Set-State "QosDscp" 1; Write-Host "QoS DSCP 46: ON para CS2/Valorant. Prioridad maxima si el router lo soporta." -ForegroundColor Green
+}
+
+=== MODULE: EcnOff ===
+function Apply-EcnOff {
+    netsh int tcp set global ecncapability=disabled 2>$null | Out-Null
+    cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters`" /v ECNEnabled /t REG_DWORD /d 0 /f >nul 2>&1"
+    Set-State "EcnOff" 1; Write-Host "ECN: OFF (evita delays paradojicos en redes optimizadas)." -ForegroundColor Green
+}
+
+=== MODULE: NicPowerMgmt ===
+function Apply-NicPowerMgmt {
+    $base="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"
+    Get-ChildItem $base -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        cmd /c "reg add `"$($_.Name)`" /v AllowIdleIrpInD3 /t REG_DWORD /d 0 /f >nul 2>&1" }
+    Get-NetAdapter -Physical -EA SilentlyContinue | ForEach-Object {
+        try { Disable-NetAdapterPowerManagement -Name $_.Name -WakeOnMagicPacket -WakeOnPattern -ArpOffload -D0PacketCoalescing -EA SilentlyContinue } catch {} }
+    Set-State "NicPowerMgmt" 1; Write-Host "NIC Power Management: OFF completo (WoL, idle D3, packet coalescing)." -ForegroundColor Green
+}
+
+=== MODULE: FakeScalingFix ===
+function Apply-FakeScalingFix {
+    if ($script:HW.IsNvidia) {
+        $nvPath="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"
+        Get-ChildItem $nvPath -EA SilentlyContinue | Where-Object { $_.PSChildName -notlike '*Configuration' } | ForEach-Object {
+            cmd /c "reg add `"$($_.Name)`" /v Scaling /t REG_DWORD /d 1 /f >nul 2>&1" }
+        cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration`" /v GpuPreference /t REG_DWORD /d 2 /f >nul 2>&1"
+    } elseif ($script:HW.IsAMDGpu) {
+        $amdPath="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"
+        Get-ChildItem $amdPath -EA SilentlyContinue | Where-Object { $_.PSChildName -notlike '*Configuration' } | ForEach-Object {
+            cmd /c "reg add `"$($_.Name)`" /v DALScalingMode /t REG_DWORD /d 2 /f >nul 2>&1" }
+    }
+    cmd /c "reg add `"HKCU\Control Panel\Desktop`" /v Win8DpiScaling /t REG_DWORD /d 0 /f >nul 2>&1"
+    cmd /c "reg add `"HKCU\Control Panel\Desktop`" /v LogPixels /t REG_DWORD /d 96 /f >nul 2>&1"
+    Set-State "FakeScalingFix" 1
+    Write-Host "Fake/Double Scaling Fix: APLICADO." -ForegroundColor Green
+    Write-Host "  -> GPU maneja el scaling, no el monitor. Elimina double scaling que agrega latencia." -ForegroundColor DarkGray
+    Write-Host "  -> Si juegas en 4:3 stretched: verificar OSD del monitor en modo Full." -ForegroundColor DarkGray
+}
+
+=== MODULE: PowerThrottlingOff ===
+function Apply-PowerThrottlingOff {
+    $path="HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling"
+    if (!(Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+    Set-ItemProperty $path "PowerThrottlingOff" 1 -Force
+    foreach ($exe in $GameExes) {
+        $ifeoPath="HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$exe\PerfOptions"
+        if (!(Test-Path $ifeoPath)) { New-Item -Path $ifeoPath -Force | Out-Null }
+        Set-ItemProperty $ifeoPath "CpuPriorityClass" 3 -Force
+        Set-ItemProperty $ifeoPath "IoPriority" 3 -Force
+    }
+    Set-State "PowerThrottlingOff" 1
+    Write-Host "Power Throttling (EcoQoS): OFF globalmente." -ForegroundColor Green
+    Write-Host "  -> Windows ya no mandara procesos a E-cores ni los throttleara sin avisar." -ForegroundColor DarkGray
+}
+
+=== MODULE: PcoreAffinity ===
+function Apply-PcoreAffinity {
+    if (!$script:HW.IsIntelHybrid) { Write-Host "CPU no es Intel hibrida (12th/13th/14th gen)." -ForegroundColor Yellow; return }
+    $pCoreThreads=$script:HW.CpuCores
+    $mask=0; for ($i=0; $i -lt $pCoreThreads; $i++) { $mask=$mask -bor (1 -shl $i) }
+    Write-Host "  CPU: $($script:HW.CpuName)" -ForegroundColor Cyan
+    Write-Host "  P-cores estimados: $pCoreThreads | Mascara: 0x$("{0:X}" -f $mask)" -ForegroundColor DarkGray
+    Write-Host "  NOTA: Estimacion asume P-cores en primeros threads. Verificar con Task Manager." -ForegroundColor Yellow
+    foreach ($exe in $GameExes) {
+        $ip="HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$exe\PerfOptions"
+        if (!(Test-Path $ip)) { New-Item -Path $ip -Force | Out-Null }
+        Set-ItemProperty $ip "ProcessorAffinityMask" $mask -Force
+    }
+    Set-State "PcoreAffinity" 1
+    Write-Host "P-core Affinity: ON para cs2.exe y Valorant." -ForegroundColor Green
+    Write-Host "  -> Juegos solo usaran P-cores. Elimina frame spikes de E-cores." -ForegroundColor DarkGray
+}
+
+=== MODULE: BCDTweaks ===
+function Apply-BCDTweaks {
+    bcdedit /set disabledynamictick yes 2>$null | Out-Null
+    bcdedit /set tscsyncpolicy enhanced 2>$null | Out-Null
+    bcdedit /set useplatformtick yes 2>$null | Out-Null
+    Set-State "BCDTweaks" 1
+    Write-Host "BCDEdit tweaks: aplicados (requiere reinicio)." -ForegroundColor Green
+    Write-Host "  -> disabledynamictick: reduce overhead de clock interrupt en idle." -ForegroundColor DarkGray
+    Write-Host "  -> tscsyncpolicy enhanced: mejor sync TSC entre cores (menos frame time jitter)." -ForegroundColor DarkGray
+    Write-Host "  -> useplatformtick: timer mas consistente." -ForegroundColor DarkGray
+}
+
+=== MODULE: NTPClockFix ===
+function Apply-NTPClockFix {
+    Write-Host "  Forzando resync de reloj..." -ForegroundColor DarkGray
+    $paramsPath="HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters"
+    $configPath="HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Config"
+    $ntpPath   ="HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpClient"
+    # Servidores NTP alta precision: Cloudflare + Google + NIST
+    Set-ItemProperty $paramsPath "NtpServer" "time.cloudflare.com,0x9 time.google.com,0x9 time.nist.gov,0x9" -Force -EA SilentlyContinue
+    Set-ItemProperty $paramsPath "Type" "NTP" -Force -EA SilentlyContinue
+    # Reducir intervalo de resync (default = cada 7 dias! -> ahora cada 64-1024 seg)
+    Set-ItemProperty $configPath "MaxPollInterval"        10 -Force -EA SilentlyContinue
+    Set-ItemProperty $configPath "MinPollInterval"        6  -Force -EA SilentlyContinue
+    Set-ItemProperty $configPath "UpdateInterval"         100 -Force -EA SilentlyContinue
+    Set-ItemProperty $configPath "MaxNegPhaseCorrection" 3600 -Force -EA SilentlyContinue
+    Set-ItemProperty $configPath "MaxPosPhaseCorrection" 3600 -Force -EA SilentlyContinue
+    Set-ItemProperty $ntpPath "Enabled" 1 -Force -EA SilentlyContinue
+    Restart-Service W32Time -EA SilentlyContinue
+    Start-Sleep -Seconds 2
+    w32tm /resync /force 2>$null | Out-Null
+    w32tm /resync /rediscover 2>$null | Out-Null
+    Set-State "NTPClockFix" 1
+    Write-Host "NTP Clock Fix: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Servidores: Cloudflare, Google, NIST (alta precision)." -ForegroundColor DarkGray
+    Write-Host "  -> Resync cada 64-1024 seg (antes: cada 7 dias)." -ForegroundColor DarkGray
+    Write-Host "  -> Clock drift que causa desync 'todos van adelante' corregido." -ForegroundColor DarkGray
+    try {
+        $st=w32tm /query /status 2>$null
+        Write-Host ""; Write-Host "Estado NTP:" -ForegroundColor Cyan
+        $st | Select-String "Source|Stratum|Offset" | ForEach-Object { Write-Host "  $_" -ForegroundColor White }
+    } catch {}
+}
+
+=== MODULE: NvidiaULL ===
+function Apply-NvidiaULL {
+    if (!$script:HW.IsNvidia) { Write-Host "Solo NVIDIA." -ForegroundColor Red; return }
+    $nvPath="HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS"
+    if (!(Test-Path $nvPath)) { New-Item -Path $nvPath -Force | Out-Null }
+    Set-ItemProperty $nvPath "EnableRID73777" 1 -Force -EA SilentlyContinue
+    $nvGlobal="HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters\Global"
+    if (!(Test-Path $nvGlobal)) { New-Item -Path $nvGlobal -Force | Out-Null }
+    Set-ItemProperty $nvGlobal "PowerMizerEnable" 0 -Force -EA SilentlyContinue
+    Set-ItemProperty $nvGlobal "PowerMizerLevel"  1 -Force -EA SilentlyContinue
+    cmd /c "reg add `"HKLM\SOFTWARE\NVIDIA Corporation\Global\NVTweak`" /v Coolbits /t REG_DWORD /d 28 /f >nul 2>&1"
+    Set-State "NvidiaULL" 1
+    Write-Host "NVIDIA Ultra Low Latency: ON via registry." -ForegroundColor Green
+    Write-Host "  -> Equivalente a Low Latency Mode = Ultra en NVIDIA Control Panel." -ForegroundColor DarkGray
+    Write-Host "  -> PowerMizer en max performance (sin throttling de GPU)." -ForegroundColor DarkGray
+}
+
+=== MODULE: FloatyMouseFix ===
+function Apply-FloatyMouseFix {
+    # Accel OFF + curva lineal 1:1
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name MouseSpeed -Value "0"
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name MouseThreshold1 -Value "0"
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name MouseThreshold2 -Value "0"
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name MouseSensitivity -Value "10" -EA SilentlyContinue
+    # SmoothMouseXCurve/SmoothMouseYCurve: curva lineal pura (sin enhance pointer precision)
+    $curveX=[byte[]](0,0,0,0,0, 0,0,0,0,0, 0,24,0,0,0, 0,48,0,0,0, 0,96,0,0,0)
+    $curveY=[byte[]](0,0,0,0,0, 0,0,0,0,0, 0,24,0,0,0, 0,48,0,0,0, 0,96,0,0,0)
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name "SmoothMouseXCurve" -Value $curveX -EA SilentlyContinue
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name "SmoothMouseYCurve" -Value $curveY -EA SilentlyContinue
+    Set-ItemProperty "HKCU:\Control Panel\Mouse" -Name MouseHoverTime -Value "10" -EA SilentlyContinue
+    cmd /c "reg add `"HKCU\Control Panel\Mouse`" /v MouseTrails /t REG_SZ /d 0 /f >nul 2>&1"
+    # HID power saving OFF para evitar micro-drops de USB
+    $hidClass="HKLM:\SYSTEM\CurrentControlSet\Control\Class\{745a17a0-74d3-11d0-b6fe-00a0c90f57da}"
+    Get-ChildItem $hidClass -EA SilentlyContinue | Where-Object { $_.PSChildName -match '^\d{4}$' } | ForEach-Object {
+        $p="$($_.Name)\Device Parameters"
+        cmd /c "reg add `"$p`" /v EnhancedPowerManagementEnabled /t REG_DWORD /d 0 /f >nul 2>&1"
+        cmd /c "reg add `"$p`" /v SelectiveSuspendEnabled /t REG_BINARY /d 00 /f >nul 2>&1"
+        cmd /c "reg add `"$p`" /v DeviceSelectiveSuspendEnabled /t REG_DWORD /d 0 /f >nul 2>&1"
+    }
+    # Raw input queue optimo
+    cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters`" /v MouseDataQueueSize /t REG_DWORD /d 64 /f >nul 2>&1"
+    cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters`" /v KeyboardDataQueueSize /t REG_DWORD /d 64 /f >nul 2>&1"
+    Set-State "FloatyMouseFix" 1
+    Write-Host "Floaty Mouse Fix COMPLETO: APLICADO." -ForegroundColor Green
+    Write-Host "  -> Mouse accel: OFF (curva lineal 1:1)" -ForegroundColor DarkGray
+    Write-Host "  -> Pointer speed: 6/11 (ratio exacto sin interpolacion)" -ForegroundColor DarkGray
+    Write-Host "  -> HID power saving: OFF (no micro-drops de USB)" -ForegroundColor DarkGray
+    Write-Host "  -> Raw input queue: optimizado" -ForegroundColor DarkGray
+    Write-Host "  -> ACTIVAR Raw Input en CS2/Valorant para bypass completo del OS" -ForegroundColor Yellow
+}
+

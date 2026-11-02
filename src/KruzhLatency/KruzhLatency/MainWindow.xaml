@@ -1,0 +1,1934 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="KruzhLatency.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="KRUZH LATENCY">
+
+    <!-- Solid Opaque Root Grid (#0E0F11) - Honest Program Style -->
+    <Grid x:Name="RootGrid" Background="{StaticResource KruzhBgBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="38" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ==================== TRANSPARENT CONTINUOUS TITLE BAR ==================== -->
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent" Padding="18,0">
+            <TextBlock
+                x:Name="TitleBarPageNameText"
+                Text="Inicio"
+                FontFamily="Segoe UI Variable Text"
+                FontSize="12"
+                FontWeight="Normal"
+                Foreground="{StaticResource KruzhTextSecondaryBrush}"
+                VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- ==================== NATIVE EXPANDABLE NAVIGATIONVIEW ==================== -->
+        <NavigationView
+            x:Name="MainNavView"
+            Grid.Row="1"
+            PaneDisplayMode="Left"
+            IsPaneToggleButtonVisible="True"
+            OpenPaneLength="240"
+            CompactPaneLength="48"
+            IsPaneOpen="False"
+            IsBackButtonVisible="Collapsed"
+            IsSettingsVisible="False"
+            Background="Transparent"
+            PaneOpening="MainNavView_PaneOpening"
+            PaneClosing="MainNavView_PaneClosing"
+            SelectionChanged="MainNavView_SelectionChanged">
+
+            <NavigationView.PaneCustomContent>
+                <Grid Height="42" Margin="0,2,0,6" HorizontalAlignment="Stretch" ToolTipService.ToolTip="KRUZH LATENCY · KRUZH — author">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="48" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Fixed 48px container (= CompactPaneLength): Geometric minimalist "K" (20px) stays at the exact same X position collapsed or expanded -->
+                    <Grid Grid.Column="0" Width="48" Height="42" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Canvas Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Line X1="4" Y1="2" X2="4" Y2="18" Stroke="#F0F2F4" StrokeThickness="2.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            <Line X1="15" Y1="2" X2="4.8" Y2="10.5" Stroke="#F0F2F4" StrokeThickness="2.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            <Line X1="7.2" Y1="8.5" X2="15.5" Y2="18" Stroke="#F0F2F4" StrokeThickness="2.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        </Canvas>
+                    </Grid>
+
+                    <!-- Brand text to the right: appears when expanded without moving the K logo a single pixel -->
+                    <TextBlock x:Name="PaneBrandHeaderPanel"
+                               Grid.Column="1"
+                               Text="KRUZH LATENCY"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               CharacterSpacing="95"
+                               Foreground="{StaticResource KruzhTextPrimaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="4,0,0,0"
+                               Visibility="Collapsed" />
+                </Grid>
+            </NavigationView.PaneCustomContent>
+
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Name="NavDashboardItem" Tag="Dashboard" Content="Inicio" IsSelected="True" ToolTipService.ToolTip="Inicio">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE80F;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem x:Name="NavTweaksItem" Tag="Tweaks" Content="Optimizaciones" ToolTipService.ToolTip="Optimizaciones">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE713;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem x:Name="NavIrqMsiItem" Tag="IrqMsi" Content="GPU" ToolTipService.ToolTip="GPU, MSI Mode v3 e Interrupciones">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE7F4;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem x:Name="NavPowerDriversItem" Tag="PowerDrivers" Content="Instaladores" ToolTipService.ToolTip="Instaladores de Drivers y Energía">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE896;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem x:Name="NavGamesNvidiaItem" Tag="GamesNvidia" Content="Juegos" ToolTipService.ToolTip="Juegos y Prioridad IFEO">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE7FC;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem x:Name="NavBiosNvramItem" Tag="BiosNvram" Content="BIOS" ToolTipService.ToolTip="BIOS y NVRAM (SCEWIN)">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE964;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem x:Name="NavMonitorAuditItem" Tag="MonitorAudit" Content="Monitor" ToolTipService.ToolTip="Monitor en Vivo y Auditoría">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE9D2;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+
+            <NavigationView.PaneFooter>
+                <Grid Height="36" Margin="0,4,0,4" HorizontalAlignment="Stretch" ToolTipService.ToolTip="Estado de licencia">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="48" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" Width="48" Height="36" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Border x:Name="HeaderLicenseDot" Width="8" Height="8" CornerRadius="4" Background="{StaticResource KruzhPositiveBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <TextBlock x:Name="HeaderLicenseText" Grid.Column="1" Text="-" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" VerticalAlignment="Center" Margin="4,0,0,0" Visibility="Collapsed" />
+                </Grid>
+            </NavigationView.PaneFooter>
+
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem x:Name="NavConfigItem" Tag="Config" Content="Configuración" ToolTipService.ToolTip="Configuración, Parámetros y Licencia">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE90F;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+
+            <!-- ALL PAGE CONTENT INSIDE NavigationView.Content -->
+            <Grid Background="Transparent">
+
+                    <!-- ======================================================================= -->
+                    <!-- VIEW 1: INICIO (NEAR-BLACK, SUBTLE GRADIENT CARDS, HONEST PROGRAM LOOK) -->
+                    <!-- ======================================================================= -->
+                    <ScrollViewer
+                        x:Name="ViewDashboard"
+                        Visibility="Visible"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+
+                        <StackPanel Padding="48,18,48,36" Spacing="34" MaxWidth="1280" HorizontalAlignment="Stretch">
+
+                            <!-- Clean Page Title (No Top Telemetry Bar) -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Inicio" Style="{StaticResource KruzhPageTitleStyle}" />
+                                <TextBlock x:Name="BottomStatusBarText" Text="-" Style="{StaticResource KruzhPageSubtitleStyle}" />
+                            </StackPanel>
+
+                            <!-- ROW 1: MONITORES EN VIVO (100% REAL SENSORS, ZERO MOCK DATA, COMPACT) -->
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="MONITORES EN VIVO" Style="{StaticResource KruzhMicroLabelStyle}" />
+
+                                <Grid ColumnSpacing="16" RowSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Live Monitor 1: CPU % -->
+                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource KruzhCardStyle}" Padding="18,14" Translation="0,0,10">
+                                        <Border.Shadow>
+                                            <ThemeShadow />
+                                        </Border.Shadow>
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="USO DE CPU" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="DashboardCpuUsageCardText" Text="-" Style="{StaticResource KruzhMetricLightStyle}" />
+                                            <Canvas Height="14" Margin="0,2,0,2">
+                                                <Polyline x:Name="HomeCpuSparkline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="1.5" />
+                                            </Canvas>
+                                            <TextBlock x:Name="DashboardCpuSubtitleText" Text="-" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Live Monitor 2: GPU % -->
+                                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KruzhCardStyle}" Padding="18,14" Translation="0,0,10">
+                                        <Border.Shadow>
+                                            <ThemeShadow />
+                                        </Border.Shadow>
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="USO DE GPU 3D" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="DashboardGpuUsageCardText" Text="-" Style="{StaticResource KruzhMetricLightStyle}" />
+                                            <Canvas Height="14" Margin="0,2,0,2">
+                                                <Polyline x:Name="HomeGpuSparkline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="1.5" />
+                                            </Canvas>
+                                            <TextBlock x:Name="DashboardGpuSubtitleText" Text="-" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Live Monitor 3: RAM -->
+                                    <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource KruzhCardStyle}" Padding="18,14" Translation="0,0,10">
+                                        <Border.Shadow>
+                                            <ThemeShadow />
+                                        </Border.Shadow>
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="MEMORIA RAM" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="DashboardRamUsageCardText" Text="-" Style="{StaticResource KruzhMetricLightStyle}" />
+                                            <Canvas Height="14" Margin="0,2,0,2">
+                                                <Polyline x:Name="HomeRamSparkline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="1.5" />
+                                            </Canvas>
+                                            <TextBlock x:Name="DashboardRamSubtitleText" Text="-" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Live Monitor 4: Timer Resolution -->
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource KruzhCardStyle}" Padding="18,14" Translation="0,0,10">
+                                        <Border.Shadow>
+                                            <ThemeShadow />
+                                        </Border.Shadow>
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="RESOLUCIÓN DE TIMER" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="DashboardTimerCardText" Text="-" Style="{StaticResource KruzhMetricLightStyle}" />
+                                            <Canvas Height="14" Margin="0,2,0,2">
+                                                <Polyline x:Name="HomeTimerSparkline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="1.5" />
+                                            </Canvas>
+                                            <TextBlock Text="Reloj de kernel NtQueryTimerResolution" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Live Monitor 5: Kernel / DPC Load -->
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource KruzhCardStyle}" Padding="18,14" Translation="0,0,10">
+                                        <Border.Shadow>
+                                            <ThemeShadow />
+                                        </Border.Shadow>
+                                        <StackPanel Spacing="4">
+                                            <Grid>
+                                                <TextBlock Text="LATENCIA DPC / ISR" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
+                                                <Border x:Name="DpcStatusPillBorder" HorizontalAlignment="Right" Style="{StaticResource KruzhPositivePillStyle}">
+                                                    <TextBlock x:Name="DpcStatusPillText" Text="-" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource KruzhPositiveBrush}" />
+                                                </Border>
+                                            </Grid>
+                                            <TextBlock x:Name="DashboardDpcCardText" Text="-" Style="{StaticResource KruzhMetricLightStyle}" />
+                                            <Canvas Height="14" Margin="0,2,0,2">
+                                                <Polyline x:Name="HomeDpcSparkline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="1.5" />
+                                            </Canvas>
+                                            <TextBlock Text="Tiempo de DPC e interrupciones en vivo" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Live Monitor 6: Optimization Index -->
+                                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource KruzhCardStyle}" Padding="18,14" Translation="0,0,10">
+                                        <Border.Shadow>
+                                            <ThemeShadow />
+                                        </Border.Shadow>
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="ÍNDICE DE OPTIMIZACIÓN" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="DashboardScoreValueText" Text="-" Style="{StaticResource KruzhMetricLightStyle}" />
+                                            <Canvas Height="14" Margin="0,2,0,2">
+                                                <Polyline x:Name="HomeScoreSparkline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="1.5" />
+                                            </Canvas>
+                                            <TextBlock x:Name="DashboardAnticheatText" Text="-" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- ROW 2: SISTEMA (BARRA ÚNICA SEGMENTADA FULL-WIDTH) -->
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="SISTEMA" Style="{StaticResource KruzhMicroLabelStyle}" />
+
+                                <Border Background="{StaticResource KruzhCardSurfaceBrush}"
+                                        BorderBrush="{StaticResource KruzhHairlineBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="12"
+                                        Translation="0,0,10">
+                                    <Border.Shadow>
+                                        <ThemeShadow />
+                                    </Border.Shadow>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="1" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="1" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="1" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Segment 1: Procesador -->
+                                        <StackPanel Grid.Column="0" Padding="18,14" Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="PROCESADOR" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextTertiaryBrush}" CharacterSpacing="50" />
+                                            <TextBlock x:Name="HwCpuNameText" Text="-" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock x:Name="HwTopologyText" Text="-" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <!-- Divisor 1 -->
+                                        <Rectangle Grid.Column="1" Fill="{StaticResource KruzhDividerHairlineBrush}" Width="1" VerticalAlignment="Stretch" Margin="0,10" />
+
+                                        <!-- Segment 2: Gráficos -->
+                                        <StackPanel Grid.Column="2" Padding="18,14" Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="GRÁFICOS" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextTertiaryBrush}" CharacterSpacing="50" />
+                                            <TextBlock x:Name="HwGpuNameText" Text="-" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock x:Name="HwGpuGenText" Text="-" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <!-- Divisor 2 -->
+                                        <Rectangle Grid.Column="3" Fill="{StaticResource KruzhDividerHairlineBrush}" Width="1" VerticalAlignment="Stretch" Margin="0,10" />
+
+                                        <!-- Segment 3: Placa Base -->
+                                        <StackPanel Grid.Column="4" Padding="18,14" Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="PLACA BASE" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextTertiaryBrush}" CharacterSpacing="50" />
+                                            <TextBlock x:Name="HwMotherboardText" Text="-" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock x:Name="HwBiosVersionText" Text="-" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <!-- Divisor 3 -->
+                                        <Rectangle Grid.Column="5" Fill="{StaticResource KruzhDividerHairlineBrush}" Width="1" VerticalAlignment="Stretch" Margin="0,10" />
+
+                                        <!-- Segment 4: Memoria y Display / Sistema -->
+                                        <StackPanel Grid.Column="6" Padding="18,14" Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="SISTEMA Y MEMORIA" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextTertiaryBrush}" CharacterSpacing="50" />
+                                            <TextBlock x:Name="HwRamMonitorText" Text="-" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock x:Name="HwChassisText" Text="-" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- ROW 3: 3 CARDS DE RECURSOS CON IMAGEN DE FONDO (FULL-BLEED + GRADIENT OVERLAY) -->
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="RECURSOS" Style="{StaticResource KruzhMicroLabelStyle}" />
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Resource 1: GPU / Driver Settings -->
+                                    <Border x:Name="HomeResourceCard1"
+                                            Grid.Column="0"
+                                            Height="150"
+                                            CornerRadius="12"
+                                            BorderBrush="{StaticResource KruzhHairlineBorderBrush}"
+                                            BorderThickness="1"
+                                            Translation="0,0,12"
+                                            RenderTransformOrigin="0.5,0.5"
+                                            Tapped="HomeResourceCardGpu_Tapped"
+                                            PointerEntered="ResourceCard_PointerEntered"
+                                            PointerExited="ResourceCard_PointerExited"
+                                            Background="{StaticResource KruzhCardSurfaceBrush}">
+                                        <Border.Shadow>
+                                            <ThemeShadow />
+                                        </Border.Shadow>
+                                        <Border.RenderTransform>
+                                            <ScaleTransform x:Name="ResourceCardScale1" ScaleX="1.0" ScaleY="1.0" />
+                                        </Border.RenderTransform>
+                                        <Border CornerRadius="11">
+                                            <Border.Background>
+                                                <ImageBrush ImageSource="ms-appx:///Assets/Images/driver.jpg" Stretch="UniformToFill" />
+                                            </Border.Background>
+                                            <Grid CornerRadius="11">
+                                                <!-- Dark gradient overlay: transparent at 35% to solid #0E0F11 at bottom -->
+                                                <Border CornerRadius="11">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                                            <GradientStop Color="#000E0F11" Offset="0.30" />
+                                                            <GradientStop Color="#CC0E0F11" Offset="0.75" />
+                                                            <GradientStop Color="#FF0E0F11" Offset="1.00" />
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                </Border>
+                                                <!-- Subtle hover highlight overlay -->
+                                                <Border x:Name="ResourceHoverHighlight1" CornerRadius="11" Background="#FFFFFF" Opacity="0.0" />
+
+                                                <FontIcon Glyph="&#xE76C;" FontSize="11" FontFamily="{ThemeResource SymbolThemeFontFamily}" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" />
+
+                                                <StackPanel VerticalAlignment="Bottom" Margin="18,16" Spacing="4">
+                                                    <TextBlock Text="Ajustes de driver / GPU" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Overclocking, MSI Mode v3 y perfiles gráficos" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Border>
+
+                                    <!-- Resource 2: Kruzh AI / Optimizaciones -->
+                                    <Border x:Name="HomeResourceCard2"
+                                            Grid.Column="1"
+                                            Height="150"
+                                            CornerRadius="12"
+                                            BorderBrush="{StaticResource KruzhHairlineBorderBrush}"
+                                            BorderThickness="1"
+                                            Translation="0,0,12"
+                                            RenderTransformOrigin="0.5,0.5"
+                                            Tapped="HomeResourceCardAi_Tapped"
+                                            PointerEntered="ResourceCard_PointerEntered"
+                                            PointerExited="ResourceCard_PointerExited"
+                                            Background="{StaticResource KruzhCardSurfaceBrush}">
+                                        <Border.Shadow>
+                                            <ThemeShadow />
+                                        </Border.Shadow>
+                                        <Border.RenderTransform>
+                                            <ScaleTransform x:Name="ResourceCardScale2" ScaleX="1.0" ScaleY="1.0" />
+                                        </Border.RenderTransform>
+                                        <Border CornerRadius="11">
+                                            <Border.Background>
+                                                <ImageBrush ImageSource="ms-appx:///Assets/Images/ai.jpg" Stretch="UniformToFill" />
+                                            </Border.Background>
+                                            <Grid CornerRadius="11">
+                                                <Border CornerRadius="11">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                                            <GradientStop Color="#000E0F11" Offset="0.30" />
+                                                            <GradientStop Color="#CC0E0F11" Offset="0.75" />
+                                                            <GradientStop Color="#FF0E0F11" Offset="1.00" />
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                </Border>
+                                                <Border x:Name="ResourceHoverHighlight2" CornerRadius="11" Background="#FFFFFF" Opacity="0.0" />
+
+                                                <FontIcon Glyph="&#xE76C;" FontSize="11" FontFamily="{ThemeResource SymbolThemeFontFamily}" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" />
+
+                                                <StackPanel VerticalAlignment="Bottom" Margin="18,16" Spacing="4">
+                                                    <TextBlock Text="Kruzh AI" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Motor de optimizaciones y baja latencia del sistema" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Border>
+
+                                    <!-- Resource 3: Perfil por juego / Configuración -->
+                                    <Border x:Name="HomeResourceCard3"
+                                            Grid.Column="2"
+                                            Height="150"
+                                            CornerRadius="12"
+                                            BorderBrush="{StaticResource KruzhHairlineBorderBrush}"
+                                            BorderThickness="1"
+                                            Translation="0,0,12"
+                                            RenderTransformOrigin="0.5,0.5"
+                                            Tapped="HomeResourceCardGame_Tapped"
+                                            PointerEntered="ResourceCard_PointerEntered"
+                                            PointerExited="ResourceCard_PointerExited"
+                                            Background="{StaticResource KruzhCardSurfaceBrush}">
+                                        <Border.Shadow>
+                                            <ThemeShadow />
+                                        </Border.Shadow>
+                                        <Border.RenderTransform>
+                                            <ScaleTransform x:Name="ResourceCardScale3" ScaleX="1.0" ScaleY="1.0" />
+                                        </Border.RenderTransform>
+                                        <Border CornerRadius="11">
+                                            <Border.Background>
+                                                <ImageBrush ImageSource="ms-appx:///Assets/Images/game.jpg" Stretch="UniformToFill" />
+                                            </Border.Background>
+                                            <Grid CornerRadius="11">
+                                                <Border CornerRadius="11">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                                            <GradientStop Color="#000E0F11" Offset="0.30" />
+                                                            <GradientStop Color="#CC0E0F11" Offset="0.75" />
+                                                            <GradientStop Color="#FF0E0F11" Offset="1.00" />
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                </Border>
+                                                <Border x:Name="ResourceHoverHighlight3" CornerRadius="11" Background="#FFFFFF" Opacity="0.0" />
+
+                                                <FontIcon Glyph="&#xE76C;" FontSize="11" FontFamily="{ThemeResource SymbolThemeFontFamily}" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" />
+
+                                                <StackPanel VerticalAlignment="Bottom" Margin="18,16" Spacing="4">
+                                                    <TextBlock Text="Perfil por juego" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Ajustes por título, sensores en vivo y configuración" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ======================================================================= -->
+                    <!-- VIEW 2: OPTIMIZACIONES (GROUPED CATEGORY CONTAINERS + STICKY APPLY BAR) -->
+                    <!-- ======================================================================= -->
+                    <Grid x:Name="ViewTweaks" Visibility="Collapsed">
+                        <ScrollViewer
+                            x:Name="TweaksScrollViewer"
+                            ViewChanged="TweaksScrollViewer_ViewChanged"
+                            VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled">
+
+                            <StackPanel Padding="32,18,32,110" Spacing="20" MaxWidth="1320" HorizontalAlignment="Stretch">
+
+                                <!-- Full-Width Title + Uncut Subtitle -->
+                                <StackPanel Spacing="4" HorizontalAlignment="Stretch">
+                                    <TextBlock Text="Optimizaciones" Style="{StaticResource KruzhPageTitleStyle}" />
+                                    <TextBlock x:Name="TweaksSummaryCounterText"
+                                               Text="-"
+                                               Style="{StaticResource KruzhPageSubtitleStyle}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <!-- Dedicated Toolbar Row for Presets & Import/Export (Never overlaps Subtitle) -->
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Button Tag="Minimal" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Perfil Minimal" />
+                                    <Button Tag="Competitivo" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Perfil Competitivo" />
+                                    <Button Tag="Profesional" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Perfil Profesional" />
+                                    <Button Tag="Entusiasta" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" BorderBrush="{StaticResource KruzhDangerMutedBorderBrush}" Foreground="{StaticResource KruzhDangerMutedBrush}" Content="Entusiasta" />
+                                    <Border Width="1" Height="18" Background="{StaticResource KruzhDividerHairlineBrush}" Margin="4,0" VerticalAlignment="Center" />
+                                    <Button x:Name="ImportProfileJsonBtn" Click="ImportProfileJsonBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Importar" />
+                                    <Button x:Name="ExportProfileJsonBtn" Click="ExportProfileJsonBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Exportar" />
+                                </StackPanel>
+
+                                <!-- Discrete Filters Row -->
+                                <Grid ColumnSpacing="14" Margin="0,2,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="220" />
+                                        <ColumnDefinition Width="260" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox x:Name="TweakCategoryFilterCombo" Grid.Column="0" SelectedIndex="0" SelectionChanged="TweakFilter_Changed" HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Tag="ALL" Content="Todas las categorías" />
+                                        <ComboBoxItem Tag="MouseAndInput" Content="Mouse e Input" />
+                                        <ComboBoxItem Tag="SystemAndCpu" Content="CPU y Scheduler" />
+                                        <ComboBoxItem Tag="GpuAndDisplay" Content="GPU y Display" />
+                                        <ComboBoxItem Tag="NetworkAndTcp" Content="Red y TCP/IP" />
+                                        <ComboBoxItem Tag="IrqAndAudio" Content="IRQ, MSI y Audio" />
+                                        <ComboBoxItem Tag="UsbAndPower" Content="Energía, USB y Memoria" />
+                                        <ComboBoxItem Tag="FpsBoostAndGames" Content="Juegos y FPS" />
+                                    </ComboBox>
+
+                                    <ComboBox x:Name="TweakGateFilterCombo" Grid.Column="1" SelectedIndex="0" SelectionChanged="TweakFilter_Changed" HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Tag="APPLICABLE" Content="Compatibles con este equipo" />
+                                        <ComboBoxItem Tag="RECOMMENDED" Content="Solo recomendados para mi build" />
+                                        <ComboBoxItem Tag="ANTICHEAT_SAFE" Content="Solo seguros para Anticheat" />
+                                        <ComboBoxItem Tag="ALL_INCLUDING_HIDDEN" Content="Mostrar todos (incluir no aplicables)" />
+                                    </ComboBox>
+
+                                    <TextBox x:Name="TweakSearchBox" Grid.Column="2" TextChanged="TweakSearchBox_TextChanged" PlaceholderText="Buscar optimización o clave de registro..." />
+                                </Grid>
+
+                                <!-- Single Rounded Container per Category + Hairline Dividers Between Compact Rows -->
+                                <ItemsControl x:Name="TweaksGroupsItemsControl" HorizontalAlignment="Stretch">
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Spacing="10" Margin="0,0,0,36" HorizontalAlignment="Stretch">
+                                                <TextBlock Text="{Binding SectionTitle}" Style="{StaticResource KruzhMicroLabelStyle}" Margin="2,0,0,2" />
+
+                                                <Border Style="{StaticResource KruzhCategoryGroupCardStyle}"
+                                                        HorizontalAlignment="Stretch"
+                                                        Translation="0,0,12">
+                                                    <Border.Shadow>
+                                                        <ThemeShadow />
+                                                    </Border.Shadow>
+
+                                                    <ItemsControl ItemsSource="{Binding Items}" HorizontalAlignment="Stretch">
+                                                        <ItemsControl.ItemContainerStyle>
+                                                            <Style TargetType="ContentPresenter">
+                                                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                            </Style>
+                                                        </ItemsControl.ItemContainerStyle>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel HorizontalAlignment="Stretch">
+                                                                    <!-- 1px Hairline Divider -->
+                                                                    <Border Height="1"
+                                                                            HorizontalAlignment="Stretch"
+                                                                            Background="{StaticResource KruzhDividerHairlineBrush}"
+                                                                            Visibility="{Binding TopDividerVisibility}" />
+
+                                                                    <!-- Compact Row inside Category Container: [34px icon] [Title + 1-line desc (*)] [ⓘ + Control (Right)] -->
+                                                                    <Grid Background="{Binding RowBackgroundBrush}"
+                                                                          Padding="18,0" MinHeight="60" ColumnSpacing="14"
+                                                                          HorizontalAlignment="Stretch">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                            <ColumnDefinition Width="*" MinWidth="120" />
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                        </Grid.ColumnDefinitions>
+
+                                                                        <Border Grid.ColumnSpan="3" Width="3" Margin="-18,0,0,0"
+                                                                                HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                                                                                Background="{StaticResource KruzhTextPrimaryBrush}" Opacity="0.5"
+                                                                                Visibility="{Binding PendingVisibility}" />
+
+                                                                        <Border Grid.Column="0" Width="34" Height="34" CornerRadius="8"
+                                                                                Background="#07FFFFFF" BorderBrush="#12FFFFFF" BorderThickness="1"
+                                                                                VerticalAlignment="Center">
+                                                                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                                                                      Glyph="{Binding CategoryGlyph}" FontSize="14"
+                                                                                      Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                                        </Border>
+
+                                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                                            <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                                                                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
+                                                                                           Foreground="{StaticResource KruzhTextPrimaryBrush}"
+                                                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                                                <Border Style="{StaticResource KruzhPositivePillStyle}"
+                                                                                        Visibility="{Binding AppliedPillVisibility}" VerticalAlignment="Center">
+                                                                                    <TextBlock Text="Aplicado" FontSize="10" FontWeight="SemiBold"
+                                                                                               Foreground="{StaticResource KruzhPositiveBrush}" />
+                                                                                </Border>
+                                                                                <Border Style="{StaticResource KruzhPendingPillStyle}"
+                                                                                        Visibility="{Binding PendingVisibility}" VerticalAlignment="Center">
+                                                                                    <TextBlock Text="{Binding PendingBadgeText}" FontSize="10" FontWeight="SemiBold"
+                                                                                               Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                                                </Border>
+                                                                            </StackPanel>
+                                                                            <TextBlock Text="{Binding ShortSummary}" FontSize="11.5"
+                                                                                       Foreground="{StaticResource KruzhTextSecondaryBrush}"
+                                                                                       MaxLines="1" TextTrimming="CharacterEllipsis" />
+                                                                        </StackPanel>
+
+                                                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                                                            <Border Width="22" Height="22" CornerRadius="11" Background="Transparent"
+                                                                                    VerticalAlignment="Center" Tag="{Binding}"
+                                                                                    PointerEntered="TweakInfoIcon_PointerEntered"
+                                                                                    PointerExited="TweakInfoIcon_PointerExited"
+                                                                                    Tapped="TweakInfoIcon_Tapped">
+                                                                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE946;"
+                                                                                          FontSize="14" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                                            </Border>
+                                                                            <ToggleSwitch Tag="{Binding Id}" Visibility="{Binding ToggleControlVisibility}"
+                                                                                          IsOn="{Binding DesiredApplied, Mode=OneWay}"
+                                                                                          IsEnabled="{Binding IsApplicableBool}"
+                                                                                          OnContent="" OffContent="" MinWidth="0" Width="40"
+                                                                                          VerticalAlignment="Center" Toggled="TweakCardToggleSwitch_Toggled" />
+                                                                            <Border Visibility="{Binding SegmentedControlVisibility}" Background="#06FFFFFF"
+                                                                                    BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1"
+                                                                                    CornerRadius="6" Padding="2" VerticalAlignment="Center">
+                                                                                <ItemsControl ItemsSource="{Binding Options}">
+                                                                                    <ItemsControl.ItemsPanel>
+                                                                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate>
+                                                                                    </ItemsControl.ItemsPanel>
+                                                                                    <ItemsControl.ItemTemplate>
+                                                                                        <DataTemplate>
+                                                                                            <Button Tag="{Binding CompositeTag}" Content="{Binding ShortLabel}"
+                                                                                                    Background="{Binding SegmentBackground}" BorderBrush="{Binding SegmentBorderBrush}"
+                                                                                                    Foreground="{Binding SegmentForeground}" BorderThickness="1"
+                                                                                                    CornerRadius="4" Padding="9,3" FontSize="11" FontWeight="SemiBold"
+                                                                                                    ToolTipService.ToolTip="{Binding DisplayName}" Click="SegmentedOptionBtn_Click" />
+                                                                                        </DataTemplate>
+                                                                                    </ItemsControl.ItemTemplate>
+                                                                                </ItemsControl>
+                                                                            </Border>
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </Border>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Sticky Bottom Bar for Pending Changes (Solid #121316, Border #212327) -->
+                        <Border x:Name="PendingChangesStickyBar"
+                                Visibility="Collapsed"
+                                VerticalAlignment="Bottom"
+                                HorizontalAlignment="Stretch"
+                                MaxWidth="1280"
+                                Margin="48,0,48,20"
+                                Background="#121316"
+                                BorderBrush="#212327"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="20,13"
+                                Translation="0,0,28">
+                            <Border.Shadow>
+                                <ThemeShadow />
+                            </Border.Shadow>
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                    <Border Width="7" Height="7" CornerRadius="3.5" Background="{StaticResource KruzhTextPrimaryBrush}" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="PendingChangesStatusText"
+                                               Text="1 cambio pendiente · se creará un punto de restauración antes de aplicar"
+                                               FontSize="12.5"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource KruzhTextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                    <Button x:Name="DiscardPendingChangesBtn"
+                                            Click="DiscardPendingChangesBtn_Click"
+                                            Style="{StaticResource KruzhGhostButtonStyle}"
+                                            Content="Descartar" />
+                                    <Button x:Name="ApplyPendingChangesBtn"
+                                            Click="ApplyPendingChangesBtn_Click"
+                                            Style="{StaticResource KruzhPrimaryButtonStyle}"
+                                            Content="Aplicar cambios" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- ======================================================================= -->
+                    <!-- VIEW 3: GPU, NVIDIA INSPECTOR & PCI IRQ / MSI MODE v3                   -->
+                    <!-- ======================================================================= -->
+                    <ScrollViewer
+                        x:Name="ViewIrqMsi"
+                        Visibility="Collapsed"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+
+                        <StackPanel Padding="48,18,48,36" Spacing="28" MaxWidth="1280" HorizontalAlignment="Stretch">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="GPU, MSI Mode v3 e interrupciones PCI" Style="{StaticResource KruzhPageTitleStyle}" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Button Click="ClearShaderCacheBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Limpiar caché de shaders" />
+                                    <Button Click="ScanPciDevicesBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Re-escanear PCI" />
+                                    <Button Click="RevertAllPciIrqMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir PCI" />
+                                    <Button Click="ApplyOptimalIrqPinningBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Balancear IRQ fuera de Core 0" />
+                                    <Button Click="ApplySafeMsiAllBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Aplicar MSI Mode v3 seguro" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="PERFIL DE DRIVER NVIDIA (NVIDIA PROFILE INSPECTOR)" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <Border Style="{StaticResource KruzhCardStyle}" Padding="0">
+                                    <StackPanel>
+                                        <TextBlock x:Name="NvidiaSectionEligibilityText" Text="Verificando GPU..." FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" Margin="20,16" />
+                                        <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
+
+                                        <Grid ColumnSpacing="24" Padding="20,16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Spacing="12">
+                                                <CheckBox x:Name="NipForceP2OffCheck" Content="Desactivar Force P2 State (evita reducción de reloj VRAM)" IsChecked="True" />
+                                                <CheckBox x:Name="NipUltraLowLatencyCheck" Content="Activar Ultra Low Latency + Pre-Rendered Frames = 1" IsChecked="True" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="12">
+                                                <CheckBox x:Name="NipDisableGsyncCheck" Content="Prefer Maximum Performance + G-Sync/V-Sync desactivado" IsChecked="True" />
+                                                <CheckBox x:Name="NipDisableTelemetryCheck" Content="Desactivar telemetría de driver NVIDIA" IsChecked="True" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
+                                        <StackPanel Orientation="Horizontal" Spacing="10" Padding="20,14">
+                                            <Button x:Name="ApplyCustomNipBtn" Click="ApplyCustomNipBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Inyectar perfil .nip" />
+                                            <Button Click="RestoreBaseNipBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Restaurar Base Profile.nip" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="DISPOSITIVOS PCI DETECTADOS EN ENUM\PCI" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <Border Style="{StaticResource KruzhCardStyle}" Padding="0">
+                                    <ItemsControl x:Name="PciDevicesItemsControl">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <Grid ColumnSpacing="16" Padding="20,14" ToolTipService.ToolTip="{Binding PnpInstanceId}">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="110" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="150" />
+                                                            <ColumnDefinition Width="190" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <Border Grid.Column="0" Style="{StaticResource KruzhBadgeOutlineStyle}" VerticalAlignment="Center" HorizontalAlignment="Left">
+                                                            <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </Border>
+
+                                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding FriendlyName}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Text="{Binding SafetyNote}" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" MaxLines="1" TextTrimming="CharacterEllipsis" />
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                            <TextBlock Text="MODO MSI" Style="{StaticResource KruzhMicroLabelStyle}" FontSize="9" />
+                                                            <TextBlock Text="{Binding MsiStatusText}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            <TextBlock Text="{Binding PriorityText}" FontSize="11" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="3" VerticalAlignment="Center">
+                                                            <TextBlock Text="AFINIDAD IRQ" Style="{StaticResource KruzhMicroLabelStyle}" FontSize="9" />
+                                                            <TextBlock Text="{Binding AssignedCoreLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                        </StackPanel>
+
+                                                        <Button Grid.Column="4" Tag="{Binding PnpInstanceId}" Click="EnableSinglePciMsiBtn_Click" IsEnabled="{Binding IsSafeForMsi}" Style="{StaticResource KruzhGhostButtonStyle}" VerticalAlignment="Center" Content="MSI + Alta" />
+                                                    </Grid>
+                                                    <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="AISLAMIENTO DE HILOS DE FONDO (RESERVED CPU SETS)" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Política de kernel ReservedCpuSets" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        <TextBlock Text="Windows ignora ProcessorAffinityMask en Image File Execution Options. KRUZH LATENCY emplea HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel\ReservedCpuSets únicamente cuando existen E-Cores o doble CCD." FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextWrapping="Wrap" />
+                                        <TextBlock x:Name="ReservedCpuSetsStatusText" Text="-" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ======================================================================= -->
+                    <!-- VIEW 4: INSTALADORES (DRIVERS VERIFICADOS & PLANES DE ENERGÍA)          -->
+                    <!-- ======================================================================= -->
+                    <ScrollViewer
+                        x:Name="ViewPowerDrivers"
+                        Visibility="Collapsed"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+
+                        <StackPanel Padding="48,18,48,36" Spacing="28" MaxWidth="1280" HorizontalAlignment="Stretch">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Instaladores de drivers y planes de energía" Style="{StaticResource KruzhPageTitleStyle}" />
+                                    <TextBlock Text="Controladores verificados por SHA-256 para tu hardware y perfiles térmicos/frecuencia generados en tiempo real." Style="{StaticResource KruzhPageSubtitleStyle}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Button Click="ImportCustomPowBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Importar archivo .pow" />
+                                    <Button Click="RestorePreviousPowerPlanBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Restaurar plan Balanced" />
+                                    <Button Click="RefreshDriversManifestBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Consultar manifiesto de drivers" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="CONTROLADORES RECOMENDADOS PARA TU HARDWARE" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <ItemsControl x:Name="DriversItemsControl">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource KruzhCardStyle}" Padding="20,16" Margin="0,0,0,8">
+                                                <Grid ColumnSpacing="16">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Spacing="4">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <Border Style="{StaticResource KruzhBadgeOutlineStyle}">
+                                                                <TextBlock Text="{Binding Vendor}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                            </Border>
+                                                            <TextBlock Text="{Binding HardwareGenerationOrType}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            <Border Style="{StaticResource KruzhBadgeActiveStyle}">
+                                                                <TextBlock Text="{Binding RecommendedVersion}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding TechnicalNotes}" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextWrapping="Wrap" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1" Tag="{Binding RecommendedVersion}" Click="DownloadDriverBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" VerticalAlignment="Center" Content="Descarga asistida" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="PERFILES DE ENERGÍA DINÁMICOS" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <ItemsControl x:Name="PowerPlansItemsControl">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource KruzhSettingsCardStyle}" Margin="0,0,0,12" ToolTipService.ToolTip="{Binding TechnicalDetails}">
+                                                <Grid ColumnSpacing="16">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                            <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            <Border Style="{StaticResource KruzhBadgeOutlineStyle}">
+                                                                <TextBlock Text="{Binding Subtitle}" FontSize="10" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding EvaluationReason}" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" MaxLines="1" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1" Tag="{Binding Kind}" Click="ActivateDynamicPowerPlanBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" VerticalAlignment="Center" Content="Generar y activar" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ======================================================================= -->
+                    <!-- VIEW 5: JUEGOS (BIBLIOTECA CON CARÁTULAS 1:1 ESTILO HONEST PROGRAM)      -->
+                    <!-- ======================================================================= -->
+                    <Grid x:Name="ViewGamesNvidia" Visibility="Collapsed">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Padding="48,18,48,36" Spacing="22" MaxWidth="1280" HorizontalAlignment="Stretch">
+                                <!-- Head: Eyebrow + Title + Subtitle + Buscador -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="3">
+                                        <TextBlock Text="JUEGOS" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                        <TextBlock Text="Biblioteca" Style="{StaticResource KruzhPageTitleStyle}" />
+                                        <TextBlock Text="Tus juegos, listos para jugar y optimizar." Style="{StaticResource KruzhPageSubtitleStyle}" />
+                                    </StackPanel>
+                                    <TextBox Grid.Column="1" x:Name="GamesSearchTextBox" Width="240"
+                                             PlaceholderText="Buscar juego..."
+                                             TextChanged="GamesSearchTextBox_TextChanged"
+                                             Background="{StaticResource KruzhCardSurfaceBrush}"
+                                             BorderBrush="{StaticResource KruzhHairlineBorderBrush}"
+                                             Foreground="{StaticResource KruzhTextPrimaryBrush}"
+                                             CornerRadius="9" Padding="12,8"
+                                             VerticalAlignment="Center" />
+                                </Grid>
+
+                                <!-- Tabs: Todos | Instalados | Optimizados -->
+                                <StackPanel Orientation="Horizontal" Spacing="24" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1" Margin="0,4,0,8">
+                                    <Button x:Name="TabGamesAll" Click="TabGames_Click" Tag="All" Style="{StaticResource KruzhTabButtonStyle}" BorderBrush="{StaticResource KruzhTextPrimaryBrush}" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontWeight="SemiBold" Content="Todos" />
+                                    <Button x:Name="TabGamesInstalled" Click="TabGames_Click" Tag="Installed" Style="{StaticResource KruzhTabButtonStyle}" Content="Instalados" />
+                                    <Button x:Name="TabGamesOptimized" Click="TabGames_Click" Tag="Optimized" Style="{StaticResource KruzhTabButtonStyle}" Content="Optimizados" />
+                                </StackPanel>
+
+                                <!-- Library count label -->
+                                <TextBlock x:Name="GamesLibraryCountText" Text="TU BIBLIOTECA · 5 JUEGOS" Style="{StaticResource KruzhMicroLabelStyle}" Margin="0,0,0,4" />
+
+                                <!-- Grid of Game Cards -->
+                                <GridView x:Name="GamesGridView"
+                                          SelectionMode="None"
+                                          IsItemClickEnabled="True"
+                                          ItemClick="GamesGridView_ItemClick"
+                                          Padding="0">
+                                    <GridView.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="188" ItemHeight="288" />
+                                        </ItemsPanelTemplate>
+                                    </GridView.ItemsPanel>
+                                    <GridView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Width="176" Height="276" Margin="0,0,12,12"
+                                                    CornerRadius="12"
+                                                    BorderBrush="{StaticResource KruzhHairlineBorderBrush}"
+                                                    BorderThickness="1"
+                                                    Background="{StaticResource KruzhCardSurfaceBrush}">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="*" />
+                                                        <RowDefinition Height="38" />
+                                                    </Grid.RowDefinitions>
+
+                                                    <!-- 3:4 Cover Art -->
+                                                    <Border Grid.Row="0" CornerRadius="11,11,0,0" Background="#1B1714">
+                                                        <Grid>
+                                                            <!-- Real cover image if available -->
+                                                            <Image Source="{Binding CoverImagePath}" Stretch="UniformToFill" />
+
+                                                            <!-- Gradient overlay at bottom for name legibility -->
+                                                            <Border CornerRadius="11,11,0,0">
+                                                                <Border.Background>
+                                                                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                                                        <GradientStop Color="#00000000" Offset="0.35" />
+                                                                        <GradientStop Color="#D0000000" Offset="1.00" />
+                                                                    </LinearGradientBrush>
+                                                                </Border.Background>
+                                                            </Border>
+
+                                                            <!-- Game Title / Name pinned to bottom -->
+                                                            <TextBlock Text="{Binding ShortName}" FontSize="13.5" FontWeight="Bold"
+                                                                       Foreground="{StaticResource KruzhTextPrimaryBrush}"
+                                                                       VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                                                                       Margin="12,0,12,10" TextTrimming="CharacterEllipsis" />
+                                                        </Grid>
+                                                    </Border>
+
+                                                    <!-- Bottom Meta Bar -->
+                                                    <Grid Grid.Row="1" Background="#131313" CornerRadius="0,0,11,11" Padding="11,0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Ellipse Grid.Column="0" Width="6" Height="6"
+                                                                 Fill="{Binding StatusDotBrush}"
+                                                                 VerticalAlignment="Center" Margin="0,0,7,0" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding StatusText}"
+                                                                   FontSize="11" Foreground="{StaticResource KruzhTextSecondaryBrush}"
+                                                                   VerticalAlignment="Center" />
+                                                        <Border Grid.Column="2" Visibility="{Binding OptimizedBadgeVisibility}"
+                                                                Background="{StaticResource KruzhPositiveBgBrush}"
+                                                                BorderBrush="{StaticResource KruzhPositiveBorderBrush}"
+                                                                BorderThickness="1" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                                                            <TextBlock Text="OPT" FontSize="9" FontWeight="Bold" Foreground="{StaticResource KruzhPositiveBrush}" />
+                                                        </Border>
+                                                    </Grid>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </GridView.ItemTemplate>
+                                    <GridView.Footer>
+                                        <!-- Card "+ Agregar juego" -->
+                                        <Border Width="176" Height="276" Margin="0,0,12,12"
+                                                CornerRadius="12"
+                                                BorderBrush="#333333" BorderThickness="1"
+                                                Background="Transparent"
+                                                Tapped="AddCustomGameExeBtn_Click">
+                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                                <FontIcon Glyph="&#xE710;" FontSize="24" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                <TextBlock Text="Agregar juego" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </GridView.Footer>
+                                </GridView>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Modal de Optimización del Juego (Estilo Honest CS2 1:1) -->
+                        <Grid x:Name="GameOptimizationModalOverlay" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <Border Background="#CC070707" Tapped="CloseGameModal_Tapped" />
+
+                            <Border Width="640" MaxHeight="780" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Background="{StaticResource KruzhCardSurfaceBrush}"
+                                    BorderBrush="{StaticResource KruzhHairlineBorderBrush}"
+                                    BorderThickness="1" CornerRadius="14" Translation="0,0,32">
+                                <Border.Shadow>
+                                    <ThemeShadow />
+                                </Border.Shadow>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Hero Header -->
+                                    <Border Grid.Row="0" Height="110" CornerRadius="13,13,0,0">
+                                        <Grid>
+                                            <Border x:Name="ModalHeroBackground" Background="#2A1A2E" />
+                                            <Border>
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#99191919" Offset="0.0" />
+                                                        <GradientStop Color="#E6191919" Offset="1.0" />
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                            </Border>
+
+                                            <Grid Padding="22,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Column="0" Width="54" Height="72" CornerRadius="7"
+                                                        BorderBrush="#444444" BorderThickness="1"
+                                                        VerticalAlignment="Center" Margin="0,0,16,0"
+                                                        Background="#2A2410">
+                                                    <Image x:Name="ModalMiniCoverImage" Stretch="UniformToFill" />
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="OPTIMIZACIONES DEL JUEGO" FontSize="9.5" FontWeight="SemiBold"
+                                                               CharacterSpacing="60" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                    <TextBlock x:Name="ModalGameTitleText" Text="CS2" FontSize="22" FontWeight="Bold"
+                                                               Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                </StackPanel>
+
+                                                <Button Grid.Column="2" Click="ModalChangeCoverBtn_Click"
+                                                        Style="{StaticResource KruzhGhostButtonStyle}"
+                                                        Content="Cambiar portada" VerticalAlignment="Center" Margin="0,0,12,0" />
+
+                                                <Button Grid.Column="3" Click="CloseGameModal_Click"
+                                                        Background="Transparent" BorderThickness="0" Padding="8"
+                                                        Foreground="{StaticResource KruzhTextSecondaryBrush}" VerticalAlignment="Center">
+                                                    <FontIcon Glyph="&#xE711;" FontSize="12" />
+                                                </Button>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Modal Body -->
+                                    <ScrollViewer Grid.Row="1" Padding="22,12,22,8" MaxHeight="520">
+                                        <StackPanel Spacing="0">
+                                            <!-- Row 1: Preferencia de GPU -->
+                                            <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Preferencia de GPU" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="GPU de alto rendimiento para este .exe" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" x:Name="ModalGpuPrefToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                            </Grid>
+
+                                            <!-- Row 2: Compatibilidad / FSO off -->
+                                            <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Compatibilidad / FSO off" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Flags de pantalla completa y optimizaciones" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" x:Name="ModalFsoOffToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                            </Grid>
+
+                                            <!-- 2-Column Grid -->
+                                            <Grid ColumnSpacing="32">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0">
+                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Spacing="2">
+                                                            <TextBlock Text="P-cores / afinidad" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            <TextBlock Text="Selección automática por topología" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalPCoresToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                                    </Grid>
+
+                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Spacing="2">
+                                                            <TextBlock Text="Un CCD" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            <TextBlock Text="Solo Ryzen dual-CCD" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalSingleCcdToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                                    </Grid>
+
+                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Spacing="2">
+                                                            <TextBlock Text="Boost de prioridad" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            <TextBlock Text="Foreground boost" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalBoostToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1">
+                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Spacing="2">
+                                                            <TextBlock Text="Prioridad alta (IFEO)" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            <TextBlock Text="Anticheat-safe, por registro" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalIfeoPriorityToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                                    </Grid>
+
+                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Spacing="2">
+                                                            <TextBlock Text="QoS DSCP 46" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            <TextBlock Text="Prioriza el tráfico UDP del juego" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalQosToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                                    </Grid>
+
+                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Spacing="2">
+                                                            <TextBlock Text="Excluir CORE 0" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            <TextBlock Text="Deja el Core 0 a interrupciones" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalExcludeCore0Toggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Executable path section -->
+                                            <StackPanel Margin="0,16,0,8" Spacing="7">
+                                                <TextBlock Text="EJECUTABLE DEL JUEGO (.EXE)" FontSize="9.5" FontWeight="SemiBold"
+                                                           CharacterSpacing="50" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                <Grid ColumnSpacing="10">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Background="#121212" BorderBrush="{StaticResource KruzhHairlineBorderBrush}"
+                                                            BorderThickness="1" CornerRadius="8" Padding="12,9">
+                                                        <TextBlock x:Name="ModalExePathText" Text="-" FontSize="11.5" FontFamily="Consolas"
+                                                                   Foreground="{StaticResource KruzhTextSecondaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </Border>
+                                                    <Button Grid.Column="1" Click="ModalSelectExeBtn_Click"
+                                                            Style="{StaticResource KruzhGhostButtonStyle}" Content="Seleccionar" />
+                                                </Grid>
+                                                <TextBlock x:Name="ModalAnticheatNoteText"
+                                                           Text="Protección anticheat: configurado de forma pasiva en registro (IFEO y QoS)."
+                                                           FontSize="11" Foreground="{StaticResource KruzhPositiveBrush}" Margin="0,4,0,0" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </ScrollViewer>
+
+                                    <!-- Footer -->
+                                    <Grid Grid.Row="2" ColumnSpacing="12" Padding="22,14,22,22" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,1,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0" Click="ModalRevertBtn_Click"
+                                                Style="{StaticResource KruzhGhostButtonStyle}"
+                                                HorizontalAlignment="Stretch" Content="Revertir" Padding="14,12" />
+                                        <Button Grid.Column="1" Click="ModalApplyBtn_Click"
+                                                Style="{StaticResource KruzhPrimaryButtonStyle}"
+                                                HorizontalAlignment="Stretch" Content="Aplicar" Padding="14,12" />
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+
+                    <!-- ======================================================================= -->
+                    <!-- VIEW 6: BIOS / NVRAM ADVISORY (SCEWIN) — 1:1 REWORK ESTILO HONEST        -->
+                    <!-- ======================================================================= -->
+                    <ScrollViewer
+                        x:Name="ViewBiosNvram"
+                        Visibility="Collapsed"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+
+                        <StackPanel Padding="48,18,48,36" Spacing="24" MaxWidth="1280" HorizontalAlignment="Stretch" AllowDrop="True" DragOver="NvramPanel_DragOver" Drop="NvramPanel_Drop">
+                            <!-- Head: Eyebrow + Title + Subtitle + Action Buttons -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="FIRMWARE" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                    <TextBlock Text="BIOS / NVRAM" Style="{StaticResource KruzhPageTitleStyle}" />
+                                    <TextBlock Text="Analizá, revisá y exportá tu configuración de BIOS (AMI Aptio SCEWIN)." Style="{StaticResource KruzhPageSubtitleStyle}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                    <Button Click="VerifyScewinHashBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Verificar SHA-256" />
+                                    <Button Click="ImportNvramFileBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Importar nvram.txt" />
+                                    <Button Click="ExportOptimizedNvramBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Exportar nvram_optimizado.txt" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 2 Columns: Acciones (Left) and Firmware Info (Right) -->
+                            <Grid ColumnSpacing="20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="240" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Left Column: Action Buttons Stack -->
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="01 / REVISAR" FontSize="10" FontWeight="SemiBold" CharacterSpacing="60" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,0,0,10" />
+                                    <Button Click="ImportNvramFileBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Importar nvram.txt" Margin="0,0,0,8" />
+                                    <Button Click="ViewCurrentBiosConfigBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Ver configuración" Margin="0,0,0,8" />
+                                    <Button Click="OpenScewinFolderBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Abrir carpeta" Margin="0,0,0,8" />
+
+                                    <TextBlock Text="02 / EXPORTAR" FontSize="10" FontWeight="SemiBold" CharacterSpacing="60" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,16,0,10" />
+                                    <Button Click="ExportOptimizedNvramBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Exportar optimizado" Margin="0,0,0,8" />
+                                    <Button Click="VerifyScewinHashBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Verificar hash" Margin="0,0,0,8" />
+                                    <Button Click="DownloadScewinBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="Descargar SCEWIN" Margin="0,0,0,8" />
+                                </StackPanel>
+
+                                <!-- Right Column: Firmware Info Card -->
+                                <Border Grid.Column="1" Style="{StaticResource KruzhCardStyle}" Padding="0">
+                                    <StackPanel>
+                                        <!-- Top Header: Chip AMI + Firmware Detectado -->
+                                        <Grid Padding="20,18">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="40" Height="40" CornerRadius="9" Background="#202020" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Margin="0,0,14,0" VerticalAlignment="Center">
+                                                <TextBlock Text="AMI" FontSize="11" FontWeight="Bold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                <TextBlock Text="FIRMWARE DETECTADO" FontSize="9.5" FontWeight="SemiBold" CharacterSpacing="50" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                <TextBlock x:Name="BiosVendorSummaryText" Text="American Megatrends — AMI Aptio V" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
+
+                                        <!-- Rows with Hairline Divider -->
+                                        <Grid Padding="20,13">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Placa" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" x:Name="BiosMotherboardText" Text="-" FontSize="13" FontWeight="Medium" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        </Grid>
+                                        <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
+
+                                        <Grid Padding="20,13">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Versión BIOS" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" x:Name="BiosVersionText" Text="-" FontSize="13" FontWeight="Medium" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        </Grid>
+                                        <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
+
+                                        <Grid Padding="20,13">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Compatibilidad SCEWIN" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" x:Name="BiosScewinCompatibilityText" Text="Compatible ✓" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhPositiveBrush}" />
+                                        </Grid>
+                                        <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
+
+                                        <Grid Padding="20,13">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Parámetros encontrados" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" x:Name="BiosParamsFoundText" Text="35" FontSize="13" FontWeight="Medium" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        </Grid>
+                                        <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
+
+                                        <Grid Padding="20,13">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Óptimos / Sugeridos" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" x:Name="BiosOptimosSugeridosText" Text="31 óptimos · 4 sugeridos" FontSize="13" FontWeight="Medium" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Guide Card: Procedimiento Manual (Clean Text + Inline Code, NO terminal block) -->
+                            <Border Style="{StaticResource KruzhCardStyle}" Padding="20,18">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="PROCEDIMIENTO MANUAL" Style="{StaticResource KruzhMicroLabelStyle}" />
+
+                                    <!-- Step 1 -->
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="20" Height="20" CornerRadius="10" Background="#202020" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0">
+                                            <TextBlock Text="1" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="Backup obligatorio." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
+                                            <TextBlock Text="Abrí CMD como Administrador y ejecutá" Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
+                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
+                                                <TextBlock Text="SCEWIN_64.exe /o /s nvram_backup_original.txt" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
+                                            </Border>
+                                            <TextBlock Text="— guardalo en un pendrive." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Step 2 -->
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="20" Height="20" CornerRadius="10" Background="#202020" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0">
+                                            <TextBlock Text="2" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="Analizá y exportá." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
+                                            <TextBlock Text="Importá tu" Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
+                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
+                                                <TextBlock Text="nvram.txt" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
+                                            </Border>
+                                            <TextBlock Text="acá arriba, revisá los parámetros (fTPM permanece ON) y exportá" Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
+                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
+                                                <TextBlock Text="nvram_optimizado.txt" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Step 3 -->
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="20" Height="20" CornerRadius="10" Background="#202020" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0">
+                                            <TextBlock Text="3" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="Aplicá manualmente." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
+                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
+                                                <TextBlock Text="SCEWIN_64.exe /i /s nvram_optimizado.txt" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
+                                            </Border>
+                                            <TextBlock Text="y luego apagá por completo:" Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
+                                            <Border CornerRadius="5" Background="#131313" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" Padding="6,1">
+                                                <TextBlock Text="shutdown /s /f /t 0" FontFamily="Consolas" FontSize="11.5" Foreground="#CFD2C8" />
+                                            </Border>
+                                            <TextBlock Text="(apagar, no reiniciar)." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Step 4 -->
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="20" Height="20" CornerRadius="10" Background="#202020" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0">
+                                            <TextBlock Text="4" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="Recuperación." FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="12.5" />
+                                            <TextBlock Text="Si no bootea: Clear CMOS (jumper o botón trasero) o reflash con programador SPI CH341A." Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="12.5" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Analyzed Firmware Parameters List -->
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="PARÁMETROS DE FIRMWARE ANALIZADOS" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <Border Style="{StaticResource KruzhCardStyle}" Padding="0">
+                                    <ItemsControl x:Name="NvramFindingsItemsControl">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <Grid ColumnSpacing="16" Padding="18,15">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="170" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <CheckBox Grid.Column="0" IsChecked="{Binding SelectedForExport, Mode=TwoWay}" VerticalAlignment="Center" MinWidth="26" />
+
+                                                        <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                                                            <StackPanel Orientation="Horizontal" Spacing="9">
+                                                                <TextBlock Text="{Binding QuestionName}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                                <Border Background="Transparent" BorderBrush="{Binding ImpactBadgeBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="7,1">
+                                                                    <TextBlock Text="{Binding Impact}" FontSize="9.5" FontWeight="Bold" Foreground="{Binding ImpactBadgeForeground}" />
+                                                                </Border>
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding TechnicalReason}" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextWrapping="Wrap" MaxWidth="580" />
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                            <TextBlock Text="ACTUAL → RECOMENDADO" FontSize="9.5" FontWeight="SemiBold" CharacterSpacing="40" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" />
+                                                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" Margin="0,2,0,0">
+                                                                <TextBlock Text="{Binding CurrentValue}" FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                                <TextBlock Text="→" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                                <TextBlock Text="{Binding RecommendedValue}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+
+                                                        <Button Grid.Column="3" Tag="{Binding}" Click="ToggleNvramParamBtn_Click"
+                                                                Style="{StaticResource KruzhGhostButtonStyle}"
+                                                                VerticalAlignment="Center" Margin="10,0,0,0"
+                                                                Content="{Binding NvramActionButtonText}" />
+                                                    </Grid>
+                                                    <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ======================================================================= -->
+                    <!-- VIEW 7: MONITOR EN VIVO & JOURNAL TRANSACCIONAL                         -->
+                    <!-- ======================================================================= -->
+                    <ScrollViewer
+                        x:Name="ViewMonitorAudit"
+                        Visibility="Collapsed"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+
+                        <StackPanel Padding="48,18,48,36" Spacing="28" MaxWidth="1280" HorizontalAlignment="Stretch">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Monitor en tiempo real y auditoría" Style="{StaticResource KruzhPageTitleStyle}" />
+                                <TextBlock Text="Telemetría de resolución de timer del kernel, carga DPC y reversión transaccional desde el Backup Journal." Style="{StaticResource KruzhPageSubtitleStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="GRÁFICO EN VIVO (TIMER &amp; KERNEL DPC)" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <Button Click="QuickTestInterruptModMediumBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Probar InterruptModeration = Medium" />
+                                        <Button Click="QuickTestInterruptModOffBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Probar InterruptModeration = Off" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <StackPanel Spacing="14">
+                                        <TextBlock x:Name="LiveMonitorStatsText" Text="-" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                        <Border Style="{StaticResource KruzhSubCardStyle}" Height="150" Padding="8">
+                                            <Canvas x:Name="LiveTelemetryCanvas" Height="134">
+                                                <Polyline x:Name="TimerChartPolyline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="1.5" />
+                                                <Polyline x:Name="DpcChartPolyline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="2" />
+                                            </Canvas>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Spacing="12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="REGISTRO TRANSACCIONAL DE CAMBIOS (BACKUP JOURNAL)" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <Button Click="OpenJournalFolderBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Abrir carpeta de Journal" />
+                                        <Button Click="RevertAllFromJournalBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Revertir todo desde el Journal" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <ItemsControl x:Name="JournalEntriesItemsControl">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource KruzhCardStyle}" Padding="18,14" Margin="0,0,0,8">
+                                                <Grid ColumnSpacing="14">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="170" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="210" />
+                                                        <ColumnDefinition Width="210" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{Binding TweakId}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding TargetPath}" FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" FontFamily="Consolas" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding PreviousSerializedValue}" FontSize="11" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Grid.Column="3" Text="{Binding AppliedSerializedValue}" FontSize="11" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ======================================================================= -->
+                    <!-- VIEW 8: CONFIGURACIÓN (PARÁMETROS DE HARDWARE, SPECS & LICENCIA)        -->
+                    <!-- ======================================================================= -->
+                    <ScrollViewer
+                        x:Name="ViewConfig"
+                        Visibility="Collapsed"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+
+                        <StackPanel Padding="48,18,48,36" Spacing="28" MaxWidth="1280" HorizontalAlignment="Stretch">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Configuración" Style="{StaticResource KruzhPageTitleStyle}" />
+                                <TextBlock Text="Parámetros de hardware, topología completa del equipo y activación de licencia comercial." Style="{StaticResource KruzhPageSubtitleStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="PARÁMETROS DE HARDWARE Y PERIFÉRICOS" Style="{StaticResource KruzhMicroLabelStyle}" />
+
+                                <StackPanel Spacing="10">
+                                    <Border Style="{StaticResource KruzhCardStyle}" Padding="20,16">
+                                        <Grid ColumnSpacing="16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon Grid.Column="0" FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE945;" FontSize="18" Foreground="{StaticResource KruzhTextSecondaryBrush}" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="Régimen de frecuencia del procesador" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                <TextBlock Text="Define si tu CPU opera con multiplicador estático (All-Core Overclock fijo sin PBO) o con boost dinámico (AMD PBO + Curve Optimizer / Intel Turbo)." FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <ComboBox x:Name="CpuClockingModeCombo" Grid.Column="2" SelectionChanged="CpuClockingModeCombo_SelectionChanged" MinWidth="320" VerticalAlignment="Center">
+                                                <ComboBoxItem Tag="StaticAllCore" Content="All-Core Overclock Fijo (ej. 4.70 GHz sin PBO)" />
+                                                <ComboBoxItem Tag="DynamicBoost" Content="Boost Dinámico (PBO + Curve Optimizer / Turbo)" />
+                                            </ComboBox>
+                                        </Grid>
+                                    </Border>
+
+                                    <Border Style="{StaticResource KruzhCardStyle}" Padding="20,16">
+                                        <Grid ColumnSpacing="16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon Grid.Column="0" FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE962;" FontSize="18" Foreground="{StaticResource KruzhTextSecondaryBrush}" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="Frecuencia de sondeo del mouse (Polling Rate)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                <TextBlock Text="Ajusta automáticamente el tamaño del buffer MouseDataQueueSize para evitar pérdida de paquetes en sensores 1000, 2000, 4000 u 8000 Hz." FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <ComboBox x:Name="MousePollingHzCombo" Grid.Column="2" SelectionChanged="MousePollingHzCombo_SelectionChanged" MinWidth="240" VerticalAlignment="Center">
+                                                <ComboBoxItem Tag="1000" Content="1000 Hz (Buffer 16)" />
+                                                <ComboBoxItem Tag="2000" Content="2000 Hz (Buffer 32)" />
+                                                <ComboBoxItem Tag="4000" Content="4000 Hz (Buffer 64)" />
+                                                <ComboBoxItem Tag="8000" Content="8000 Hz (Buffer 128)" />
+                                            </ComboBox>
+                                        </Grid>
+                                    </Border>
+
+                                    <TextBlock x:Name="CpuClockingModeExplainText" FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="4,2,0,0" />
+                                    <TextBlock x:Name="MousePollingExplainText" Visibility="Collapsed" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="ESPECIFICACIONES Y TOPOLOGÍA DETALLADA" Style="{StaticResource KruzhMicroLabelStyle}" />
+
+                                <Grid ColumnSpacing="18" RowSpacing="14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource KruzhCardStyle}" Padding="20,16">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="ARQUITECTURA Y DOMINIOS DE CACHÉ" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                            <TextBlock x:Name="HwCpuArchText" Text="-" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock x:Name="HwCcdL3Text" Text="-" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KruzhCardStyle}" Padding="20,16">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="RED Y CHASIS" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                            <TextBlock x:Name="HwNicNameText" Text="-" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock x:Name="HwBatteryText" Text="-" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource KruzhCardStyle}" Padding="20,16">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="FIRMWARE UEFI / BIOS" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                            <TextBlock x:Name="HwBiosText" Text="-" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock x:Name="SidebarChassisBadge" Text="-" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource KruzhCardStyle}" Padding="20,16">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="SEGURIDAD DEL SISTEMA" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                            <TextBlock x:Name="HwSecurityStateText" Text="-" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock Text="KRUZH LATENCY · KRUZH — author" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                            <TextBlock x:Name="SidebarCpuSummary" Visibility="Collapsed" />
+                                            <TextBlock x:Name="SidebarGpuSummary" Visibility="Collapsed" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="LICENCIA COMERCIAL Y HWID" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <StackPanel Spacing="14">
+                                        <Grid ColumnSpacing="14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox x:Name="HwidReadOnlyBox" Grid.Column="0" Header="Hardware ID (HWID)" IsReadOnly="True" FontFamily="Consolas" />
+                                            <TextBox x:Name="LicenseKeyInputBox" Grid.Column="1" Header="Clave de licencia" PlaceholderText="KRUZH-XXXX-XXXX-XXXX" FontFamily="Consolas" />
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                                                <Button Click="ShowEulaModalBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Ver EULA" />
+                                                <Button Click="ActivateLicenseBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Activar licencia" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <TextBlock x:Name="LicenseDetailsStatusText" Text="-" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                </Grid>
+        </NavigationView>
+
+        <!-- Instant Animated Styled Info Popup Overlay (0ms hover/click, #181A1D translucent, 150ms CubicEase) -->
+        <Canvas x:Name="InstantTooltipOverlayCanvas"
+                Grid.Row="0"
+                Grid.RowSpan="2"
+                IsHitTestVisible="False"
+                Canvas.ZIndex="999">
+            <Border x:Name="InstantTooltipCard"
+                    Visibility="Collapsed"
+                    Opacity="0"
+                    Background="#1B1C1F"
+                    BorderBrush="#2A2C30"
+                    BorderThickness="1"
+                    CornerRadius="9"
+                    Padding="12"
+                    MaxWidth="300"
+                    Translation="0,0,32">
+                <Border.Shadow>
+                    <ThemeShadow />
+                </Border.Shadow>
+                <Border.RenderTransform>
+                    <CompositeTransform x:Name="InstantTooltipTransform"
+                                        TranslateY="6"
+                                        ScaleX="0.96"
+                                        ScaleY="0.96"
+                                        CenterX="150"
+                                        CenterY="40" />
+                </Border.RenderTransform>
+                <StackPanel Spacing="6">
+                    <TextBlock x:Name="InstantTooltipTitleText"
+                               FontSize="12.5"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource KruzhTextPrimaryBrush}"
+                               TextWrapping="Wrap" />
+                    <TextBlock x:Name="InstantTooltipDescText"
+                               FontSize="11.5"
+                               Foreground="{StaticResource KruzhTextSecondaryBrush}"
+                               TextWrapping="Wrap" />
+                    <Border Background="#08FFFFFF"
+                            BorderBrush="#12FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="5"
+                            Padding="8,5"
+                            Margin="0,2,0,0">
+                        <TextBlock x:Name="InstantTooltipKeyText"
+                                   FontFamily="Consolas"
+                                   FontSize="10.5"
+                                   Foreground="{StaticResource KruzhTextTertiaryBrush}"
+                                   TextWrapping="Wrap" />
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Canvas>
+
+        <!-- ======================================================================= -->
+        <!-- OVERLAY AL "APLICAR CAMBIOS" (MOCKUP KRUZH_LOADERS 1:1)                  -->
+        <!-- ======================================================================= -->
+        <Grid x:Name="ApplyingChangesOverlay" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <!-- Scrim semitransparente oscuro rgba(7,7,7,0.55) -->
+            <Border Background="#8C070707" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+
+            <!-- Card Central Flotante -->
+            <Border Width="500" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="#141414" BorderBrush="#262626" BorderThickness="1"
+                    CornerRadius="16" Padding="32,28" Translation="0,0,40">
+                <Border.Shadow>
+                    <ThemeShadow />
+                </Border.Shadow>
+                <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                    <!-- Cabecera: Loader + Titulo + Punto de restauracion -->
+                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                        <Grid Width="160" Height="130" HorizontalAlignment="Center">
+                            <Grid x:Name="OverlayFallbackSpinner" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Ellipse Stroke="#222222" StrokeThickness="3" Width="40" Height="40" />
+                                <Canvas Width="40" Height="40">
+                                    <Path Stroke="#63C088" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M 20 0 A 20 20 0 0 1 40 20">
+                                        <Path.RenderTransform>
+                                            <RotateTransform x:Name="OverlaySpinnerRotate" CenterX="20" CenterY="20" />
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </Canvas>
+                            </Grid>
+                            <WebView2 x:Name="OverlayBoxLoaderWebView" Width="160" Height="130"
+                                      IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <TextBlock Text="Aplicando cambios" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource KruzhTextPrimaryBrush}" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="OverlayRestorePointText" Text="Punto de restauración creado ✓"
+                                   FontSize="12" Foreground="{StaticResource KruzhPositiveBrush}" HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Carrusel de 3 líneas de tweaks con degradé superior e inferior -->
+                    <Grid Height="140" Margin="0,6,0,0">
+                        <Border CornerRadius="10" Background="#0C0C0C" BorderBrush="#1C1C1C" BorderThickness="1" Padding="6,4">
+                            <Grid RowSpacing="4">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="40" />
+                                    <RowDefinition Height="44" />
+                                    <RowDefinition Height="40" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Fila 0: Tweak anterior (Listo) -->
+                                <Border Grid.Row="0" CornerRadius="6" Background="Transparent" Padding="12,0" Opacity="0.45">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon Glyph="&#xE73E;" FontSize="12" Foreground="{StaticResource KruzhPositiveBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" x:Name="CarouselPrevTitleText" Text="-"
+                                                   FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="2" x:Name="CarouselPrevStatusText" Text="listo ✓"
+                                                   FontSize="11" Foreground="{StaticResource KruzhPositiveBrush}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Fila 1: TWEAK EN FOCO (ILUMINADA, FONDO #1D1D1D, VERDE #63C088) -->
+                                <Border Grid.Row="1" CornerRadius="8" Background="#1D1D1D" BorderBrush="#2C2C2C" BorderThickness="1" Padding="14,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="7" Height="7" Fill="{StaticResource KruzhPositiveBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" x:Name="CarouselActiveTitleText" Text="Iniciando cambios..."
+                                                   FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="2" Text="aplicando…"
+                                                   FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhPositiveBrush}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Fila 2: Siguiente tweak (En espera) -->
+                                <Border Grid.Row="2" CornerRadius="6" Background="Transparent" Padding="12,0" Opacity="0.45">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon Glyph="&#xE823;" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" x:Name="CarouselNextTitleText" Text="-"
+                                                   FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="2" Text="en espera"
+                                                   FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Mascaras degrade superior e inferior para desvanecimiento sutil -->
+                        <Border Height="18" VerticalAlignment="Top" CornerRadius="10,10,0,0" IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                    <GradientStop Color="#CC0C0C0C" Offset="0.0" />
+                                    <GradientStop Color="#000C0C0C" Offset="1.0" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                        <Border Height="18" VerticalAlignment="Bottom" CornerRadius="0,0,10,10" IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0.5,1" EndPoint="0.5,0">
+                                    <GradientStop Color="#CC0C0C0C" Offset="0.0" />
+                                    <GradientStop Color="#000C0C0C" Offset="1.0" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+
+                    <!-- Barra de progreso fina + Contador N / Total aplicados -->
+                    <StackPanel Spacing="8" Margin="0,4,0,0">
+                        <ProgressBar x:Name="OverlayProgressBar" Value="0" Maximum="100" Height="3"
+                                     Foreground="{StaticResource KruzhPositiveBrush}" Background="#1E1E1E" CornerRadius="2" />
+                        <Grid>
+                            <TextBlock x:Name="OverlayStepDescText" Text="Optimizando parámetros del kernel..."
+                                       FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Left" />
+                            <TextBlock x:Name="OverlayCountText" Text="0 / 0 aplicados"
+                                       FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" />
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,11 @@
+$modules=@{
+    "1"="MouseAccel";"2"="FloatyMouseFix";"3"="USBPower";"4"="NicPowerMgmt";"5"="PowerThrottlingOff";
+    "6"="GpuMsi";"7"="Hdcp";"8"="GpuP0";"9"="NvidiaTweaks";"10"="Hags";"11"="FakeScalingFix";"12"="NvidiaULL";
+    "13"="NetPower";"14"="Nagle";"15"="InterruptModeration";"16"="LsoOff";"17"="RssOptimize";"18"="FlowControlOff";
+    "19"="QosDscp";"20"="EcnOff";"21"="NTPClockFix";
+    "22"="TimerRes";"23"="GameBar";"24"="Copilot";"25"="WinUpdatePause";"26"="UltimatePerf";
+    "27"="Mmcss";"28"="GamePriority";"29"="CoreParking";"30"="SysMain";"31"="VisualFx";
+    "32"="SchedulerFg";"33"="PcoreAffinity";"34"="BCDTweaks";
+    "35"="HidMsi";"36"="UsbIrqAffinity";"37"="IRQSmartBalancer";
+    "38"="BitLocker"
+}

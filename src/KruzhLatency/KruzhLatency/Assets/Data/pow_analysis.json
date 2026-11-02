@@ -1,0 +1,1062 @@
+﻿{
+    "nexus":  {
+                  "Hard disk":  {
+                                    "Turn off hard disk after":  0
+                                },
+                  "Desktop background settings":  {
+                                                      "Slide show":  1
+                                                  },
+                  "PCI Express":  {
+                                      "Link State Power Management":  0
+                                  },
+                  "Battery":  {
+                                  "Critical battery notification":  1,
+                                  "Critical battery level":  5,
+                                  "Reserve battery level":  7,
+                                  "Low battery action":  0,
+                                  "Low battery notification":  1,
+                                  "Low battery level":  10,
+                                  "Critical battery action":  1
+                              },
+                  "Multimedia settings":  {
+                                              "When sharing media":  1,
+                                              "When playing video":  0,
+                                              "Video playback quality bias":  1
+                                          },
+                  "Processor power management":  {
+                                                     "Maximum processor state":  100,
+                                                     "Minimum processor state":  100
+                                                 },
+                  "Power buttons and lid":  {
+                                                "Start menu power button":  0
+                                            },
+                  "Sleep":  {
+                                "Allow wake timers":  1,
+                                "Allow hybrid sleep":  1,
+                                "Hibernate after":  0,
+                                "Sleep after":  0
+                            },
+                  "Internet Explorer":  {
+                                            "JavaScript Timer Frequency":  1
+                                        },
+                  "Display":  {
+                                  "Turn off display after":  0,
+                                  "Display brightness":  100,
+                                  "Dimmed display brightness":  50,
+                                  "Enable adaptive brightness":  0
+                              },
+                  "Wireless Adapter Settings":  {
+                                                    "Power Saving Mode":  0
+                                                },
+                  "USB settings":  {
+                                       "USB selective suspend setting":  0
+                                   }
+              },
+    "FrameSyncBoost":  {
+                           "Hard disk":  {
+                                             "Turn off hard disk after":  0
+                                         },
+                           "Desktop background settings":  {
+                                                               "Slide show":  1
+                                                           },
+                           "PCI Express":  {
+                                               "Link State Power Management":  0
+                                           },
+                           "Battery":  {
+                                           "Critical battery notification":  1,
+                                           "Critical battery level":  5,
+                                           "Reserve battery level":  7,
+                                           "Low battery action":  0,
+                                           "Low battery notification":  1,
+                                           "Low battery level":  10,
+                                           "Critical battery action":  2
+                                       },
+                           "Multimedia settings":  {
+                                                       "When sharing media":  1,
+                                                       "When playing video":  0,
+                                                       "Video playback quality bias":  1
+                                                   },
+                           "Processor power management":  {
+                                                              "Maximum processor state":  100,
+                                                              "Minimum processor state":  100
+                                                          },
+                           "Power buttons and lid":  {
+                                                         "Start menu power button":  2
+                                                     },
+                           "Sleep":  {
+                                         "Allow wake timers":  0,
+                                         "Allow hybrid sleep":  0,
+                                         "Hibernate after":  0,
+                                         "Sleep after":  0
+                                     },
+                           "Internet Explorer":  {
+                                                     "JavaScript Timer Frequency":  1
+                                                 },
+                           "Display":  {
+                                           "Turn off display after":  0,
+                                           "Display brightness":  100,
+                                           "Dimmed display brightness":  50,
+                                           "Enable adaptive brightness":  0
+                                       },
+                           "Wireless Adapter Settings":  {
+                                                             "Power Saving Mode":  0
+                                                         },
+                           "USB settings":  {
+                                                "USB selective suspend setting":  0
+                                            }
+                       },
+    "lawliet":  {
+                    "Hard disk":  {
+                                      "Turn off hard disk after":  0
+                                  },
+                    "Desktop background settings":  {
+                                                        "Slide show":  1
+                                                    },
+                    "PCI Express":  {
+                                        "Link State Power Management":  0
+                                    },
+                    "Battery":  {
+                                    "Critical battery notification":  1,
+                                    "Critical battery level":  5,
+                                    "Reserve battery level":  7,
+                                    "Low battery action":  0,
+                                    "Low battery notification":  1,
+                                    "Low battery level":  10,
+                                    "Critical battery action":  2
+                                },
+                    "Multimedia settings":  {
+                                                "When sharing media":  1,
+                                                "When playing video":  0,
+                                                "Video playback quality bias":  1
+                                            },
+                    "Processor power management":  {
+                                                       "Maximum processor state":  100,
+                                                       "Minimum processor state":  100
+                                                   },
+                    "Power buttons and lid":  {
+                                                  "Start menu power button":  0
+                                              },
+                    "Sleep":  {
+                                  "Allow wake timers":  0,
+                                  "Allow hybrid sleep":  0,
+                                  "Hibernate after":  0,
+                                  "Sleep after":  0
+                              },
+                    "Internet Explorer":  {
+                                              "JavaScript Timer Frequency":  1
+                                          },
+                    "Display":  {
+                                    "Turn off display after":  0,
+                                    "Display brightness":  100,
+                                    "Dimmed display brightness":  50,
+                                    "Enable adaptive brightness":  0
+                                },
+                    "Wireless Adapter Settings":  {
+                                                      "Power Saving Mode":  0
+                                                  },
+                    "USB settings":  {
+                                         "USB selective suspend setting":  0
+                                     }
+                },
+    "atlas":  {
+                  "Hard disk":  {
+                                    "Turn off hard disk after":  0
+                                },
+                  "Desktop background settings":  {
+                                                      "Slide show":  1
+                                                  },
+                  "PCI Express":  {
+                                      "Link State Power Management":  0
+                                  },
+                  "Battery":  {
+                                  "Critical battery notification":  0,
+                                  "Critical battery level":  0,
+                                  "Reserve battery level":  0,
+                                  "Low battery action":  0,
+                                  "Low battery notification":  1,
+                                  "Low battery level":  0,
+                                  "Critical battery action":  2
+                              },
+                  "Multimedia settings":  {
+                                              "When sharing media":  1,
+                                              "When playing video":  0,
+                                              "Video playback quality bias":  1
+                                          },
+                  "Processor power management":  {
+                                                     "Maximum processor state":  100,
+                                                     "Minimum processor state":  100
+                                                 },
+                  "Power buttons and lid":  {
+                                                "Start menu power button":  0
+                                            },
+                  "Sleep":  {
+                                "Allow wake timers":  0,
+                                "Allow hybrid sleep":  1,
+                                "Hibernate after":  0,
+                                "Sleep after":  0
+                            },
+                  "Internet Explorer":  {
+                                            "JavaScript Timer Frequency":  1
+                                        },
+                  "Display":  {
+                                  "Turn off display after":  0,
+                                  "Display brightness":  100,
+                                  "Dimmed display brightness":  100,
+                                  "Enable adaptive brightness":  0
+                              },
+                  "Wireless Adapter Settings":  {
+                                                    "Power Saving Mode":  0
+                                                },
+                  "USB settings":  {
+                                       "USB selective suspend setting":  0
+                                   }
+              },
+    "adamx":  {
+                  "Hard disk":  {
+                                    "Turn off hard disk after":  0
+                                },
+                  "Desktop background settings":  {
+                                                      "Slide show":  1
+                                                  },
+                  "PCI Express":  {
+                                      "Link State Power Management":  0
+                                  },
+                  "Battery":  {
+                                  "Critical battery notification":  1,
+                                  "Critical battery level":  5,
+                                  "Reserve battery level":  10,
+                                  "Low battery action":  0,
+                                  "Low battery notification":  1,
+                                  "Low battery level":  15,
+                                  "Critical battery action":  0
+                              },
+                  "Multimedia settings":  {
+                                              "When sharing media":  1,
+                                              "When playing video":  0,
+                                              "Video playback quality bias":  1
+                                          },
+                  "Processor power management":  {
+                                                     "Maximum processor state":  100,
+                                                     "Minimum processor state":  100
+                                                 },
+                  "Power buttons and lid":  {
+                                                "Start menu power button":  2
+                                            },
+                  "Sleep":  {
+                                "Allow wake timers":  0,
+                                "Allow hybrid sleep":  0,
+                                "Hibernate after":  0,
+                                "Sleep after":  0
+                            },
+                  "Internet Explorer":  {
+                                            "JavaScript Timer Frequency":  1
+                                        },
+                  "Display":  {
+                                  "Turn off display after":  0,
+                                  "Display brightness":  100,
+                                  "Dimmed display brightness":  50,
+                                  "Enable adaptive brightness":  0
+                              },
+                  "Wireless Adapter Settings":  {
+                                                    "Power Saving Mode":  0
+                                                },
+                  "USB settings":  {
+                                       "USB selective suspend setting":  0
+                                   }
+              },
+    "xilly":  {
+                  "Hard disk":  {
+                                    "Turn off hard disk after":  1200
+                                },
+                  "Desktop background settings":  {
+                                                      "Slide show":  0
+                                                  },
+                  "PCI Express":  {
+                                      "Link State Power Management":  0
+                                  },
+                  "Battery":  {
+                                  "Critical battery notification":  1,
+                                  "Critical battery level":  5,
+                                  "Reserve battery level":  7,
+                                  "Low battery action":  0,
+                                  "Low battery notification":  1,
+                                  "Low battery level":  10,
+                                  "Critical battery action":  2
+                              },
+                  "Multimedia settings":  {
+                                              "When sharing media":  1,
+                                              "When playing video":  0,
+                                              "Video playback quality bias":  1
+                                          },
+                  "Processor power management":  {
+                                                     "Maximum processor state":  100,
+                                                     "Minimum processor state":  100
+                                                 },
+                  "Power buttons and lid":  {
+                                                "Start menu power button":  0
+                                            },
+                  "Sleep":  {
+                                "Allow wake timers":  0,
+                                "Allow hybrid sleep":  1,
+                                "Hibernate after":  0,
+                                "Sleep after":  0
+                            },
+                  "Internet Explorer":  {
+                                            "JavaScript Timer Frequency":  1
+                                        },
+                  "Display":  {
+                                  "Turn off display after":  0,
+                                  "Display brightness":  100,
+                                  "Dimmed display brightness":  50,
+                                  "Enable adaptive brightness":  0
+                              },
+                  "Wireless Adapter Settings":  {
+                                                    "Power Saving Mode":  0
+                                                },
+                  "USB settings":  {
+                                       "USB selective suspend setting":  0
+                                   }
+              },
+    "calypto":  {
+                    "Hard disk":  {
+                                      "Turn off hard disk after":  1200
+                                  },
+                    "Desktop background settings":  {
+                                                        "Slide show":  1
+                                                    },
+                    "PCI Express":  {
+                                        "Link State Power Management":  0
+                                    },
+                    "Battery":  {
+                                    "Critical battery notification":  1,
+                                    "Critical battery level":  5,
+                                    "Reserve battery level":  7,
+                                    "Low battery action":  0,
+                                    "Low battery notification":  1,
+                                    "Low battery level":  10,
+                                    "Critical battery action":  2
+                                },
+                    "Multimedia settings":  {
+                                                "When sharing media":  1,
+                                                "When playing video":  0,
+                                                "Video playback quality bias":  1
+                                            },
+                    "Processor power management":  {
+                                                       "Maximum processor state":  100,
+                                                       "Minimum processor state":  100
+                                                   },
+                    "Power buttons and lid":  {
+                                                  "Start menu power button":  0
+                                              },
+                    "Sleep":  {
+                                  "Allow wake timers":  0,
+                                  "Allow hybrid sleep":  0,
+                                  "Hibernate after":  0,
+                                  "Sleep after":  0
+                              },
+                    "Internet Explorer":  {
+                                              "JavaScript Timer Frequency":  1
+                                          },
+                    "Display":  {
+                                    "Turn off display after":  300,
+                                    "Display brightness":  100,
+                                    "Dimmed display brightness":  50,
+                                    "Enable adaptive brightness":  0
+                                },
+                    "Wireless Adapter Settings":  {
+                                                      "Power Saving Mode":  0
+                                                  },
+                    "USB settings":  {
+                                         "USB selective suspend setting":  0
+                                     }
+                },
+    "exmfree":  {
+                    "Hard disk":  {
+                                      "Turn off hard disk after":  0
+                                  },
+                    "Desktop background settings":  {
+                                                        "Slide show":  0
+                                                    },
+                    "PCI Express":  {
+                                        "Link State Power Management":  0
+                                    },
+                    "Battery":  {
+                                    "Critical battery notification":  1,
+                                    "Critical battery level":  5,
+                                    "Reserve battery level":  7,
+                                    "Low battery action":  0,
+                                    "Low battery notification":  1,
+                                    "Low battery level":  10,
+                                    "Critical battery action":  2
+                                },
+                    "Multimedia settings":  {
+                                                "When sharing media":  1,
+                                                "When playing video":  0,
+                                                "Video playback quality bias":  1
+                                            },
+                    "Processor power management":  {
+                                                       "Maximum processor state":  100,
+                                                       "Minimum processor state":  100
+                                                   },
+                    "Power buttons and lid":  {
+                                                  "Start menu power button":  0
+                                              },
+                    "Sleep":  {
+                                  "Allow wake timers":  0,
+                                  "Allow hybrid sleep":  1,
+                                  "Hibernate after":  0,
+                                  "Sleep after":  0
+                              },
+                    "Internet Explorer":  {
+                                              "JavaScript Timer Frequency":  1
+                                          },
+                    "Display":  {
+                                    "Turn off display after":  0,
+                                    "Display brightness":  100,
+                                    "Dimmed display brightness":  50,
+                                    "Enable adaptive brightness":  0
+                                },
+                    "Wireless Adapter Settings":  {
+                                                      "Power Saving Mode":  0
+                                                  },
+                    "USB settings":  {
+                                         "USB selective suspend setting":  0
+                                     }
+                },
+    "kizzimo":  {
+                    "Hard disk":  {
+                                      "Turn off hard disk after":  0
+                                  },
+                    "Desktop background settings":  {
+                                                        "Slide show":  0
+                                                    },
+                    "PCI Express":  {
+                                        "Link State Power Management":  0
+                                    },
+                    "Battery":  {
+                                    "Critical battery notification":  1,
+                                    "Critical battery level":  5,
+                                    "Reserve battery level":  7,
+                                    "Low battery action":  0,
+                                    "Low battery notification":  1,
+                                    "Low battery level":  10,
+                                    "Critical battery action":  2
+                                },
+                    "Multimedia settings":  {
+                                                "When sharing media":  1,
+                                                "When playing video":  0,
+                                                "Video playback quality bias":  1
+                                            },
+                    "Processor power management":  {
+                                                       "Maximum processor state":  100,
+                                                       "Minimum processor state":  100
+                                                   },
+                    "Power buttons and lid":  {
+                                                  "Start menu power button":  0
+                                              },
+                    "Sleep":  {
+                                  "Allow wake timers":  1,
+                                  "Allow hybrid sleep":  0,
+                                  "Hibernate after":  0,
+                                  "Sleep after":  0
+                              },
+                    "Internet Explorer":  {
+                                              "JavaScript Timer Frequency":  1
+                                          },
+                    "Display":  {
+                                    "Turn off display after":  0,
+                                    "Display brightness":  100,
+                                    "Dimmed display brightness":  50,
+                                    "Enable adaptive brightness":  0
+                                },
+                    "Wireless Adapter Settings":  {
+                                                      "Power Saving Mode":  0
+                                                  },
+                    "USB settings":  {
+                                         "USB selective suspend setting":  0
+                                     }
+                },
+    "kirby":  {
+                  "Hard disk":  {
+                                    "Turn off hard disk after":  0
+                                },
+                  "Desktop background settings":  {
+                                                      "Slide show":  0
+                                                  },
+                  "PCI Express":  {
+                                      "Link State Power Management":  0
+                                  },
+                  "Battery":  {
+                                  "Critical battery notification":  1,
+                                  "Critical battery level":  5,
+                                  "Reserve battery level":  7,
+                                  "Low battery action":  0,
+                                  "Low battery notification":  1,
+                                  "Low battery level":  10,
+                                  "Critical battery action":  2
+                              },
+                  "Multimedia settings":  {
+                                              "When sharing media":  1,
+                                              "When playing video":  0,
+                                              "Video playback quality bias":  1
+                                          },
+                  "Processor power management":  {
+                                                     "Maximum processor state":  100,
+                                                     "Minimum processor state":  100
+                                                 },
+                  "Power buttons and lid":  {
+                                                "Start menu power button":  0
+                                            },
+                  "Sleep":  {
+                                "Allow wake timers":  1,
+                                "Allow hybrid sleep":  1,
+                                "Hibernate after":  0,
+                                "Sleep after":  0
+                            },
+                  "Internet Explorer":  {
+                                            "JavaScript Timer Frequency":  1
+                                        },
+                  "Display":  {
+                                  "Turn off display after":  900,
+                                  "Display brightness":  100,
+                                  "Dimmed display brightness":  50,
+                                  "Enable adaptive brightness":  0
+                              },
+                  "Wireless Adapter Settings":  {
+                                                    "Power Saving Mode":  0
+                                                },
+                  "USB settings":  {
+                                       "USB selective suspend setting":  1
+                                   }
+              },
+    "vtrl":  {
+                 "Hard disk":  {
+                                   "Turn off hard disk after":  0
+                               },
+                 "Desktop background settings":  {
+                                                     "Slide show":  0
+                                                 },
+                 "PCI Express":  {
+                                     "Link State Power Management":  0
+                                 },
+                 "Battery":  {
+                                 "Critical battery notification":  1,
+                                 "Critical battery level":  5,
+                                 "Reserve battery level":  7,
+                                 "Low battery action":  0,
+                                 "Low battery notification":  1,
+                                 "Low battery level":  10,
+                                 "Critical battery action":  2
+                             },
+                 "Multimedia settings":  {
+                                             "When sharing media":  1,
+                                             "When playing video":  0,
+                                             "Video playback quality bias":  1
+                                         },
+                 "Processor power management":  {
+                                                    "Maximum processor state":  100,
+                                                    "Minimum processor state":  100
+                                                },
+                 "Power buttons and lid":  {
+                                               "Start menu power button":  0
+                                           },
+                 "Sleep":  {
+                               "Allow wake timers":  1,
+                               "Allow hybrid sleep":  0,
+                               "Hibernate after":  0,
+                               "Sleep after":  0
+                           },
+                 "Internet Explorer":  {
+                                           "JavaScript Timer Frequency":  1
+                                       },
+                 "Display":  {
+                                 "Turn off display after":  0,
+                                 "Display brightness":  100,
+                                 "Dimmed display brightness":  50,
+                                 "Enable adaptive brightness":  0
+                             },
+                 "Wireless Adapter Settings":  {
+                                                   "Power Saving Mode":  0
+                                               },
+                 "USB settings":  {
+                                      "USB selective suspend setting":  0
+                                  }
+             },
+    "sapphire":  {
+                     "Hard disk":  {
+                                       "Turn off hard disk after":  0
+                                   },
+                     "Desktop background settings":  {
+                                                         "Slide show":  1
+                                                     },
+                     "PCI Express":  {
+                                         "Link State Power Management":  0
+                                     },
+                     "Battery":  {
+                                     "Critical battery notification":  0,
+                                     "Critical battery level":  0,
+                                     "Reserve battery level":  0,
+                                     "Low battery action":  0,
+                                     "Low battery notification":  0,
+                                     "Low battery level":  0,
+                                     "Critical battery action":  0
+                                 },
+                     "Multimedia settings":  {
+                                                 "When sharing media":  1,
+                                                 "When playing video":  0,
+                                                 "Video playback quality bias":  1
+                                             },
+                     "Processor power management":  {
+                                                        "Maximum processor state":  100,
+                                                        "Minimum processor state":  100
+                                                    },
+                     "Power buttons and lid":  {
+                                                   "Start menu power button":  0
+                                               },
+                     "Sleep":  {
+                                   "Allow wake timers":  0,
+                                   "Allow hybrid sleep":  0,
+                                   "Hibernate after":  0,
+                                   "Sleep after":  0
+                               },
+                     "Internet Explorer":  {
+                                               "JavaScript Timer Frequency":  1
+                                           },
+                     "Display":  {
+                                     "Turn off display after":  0,
+                                     "Display brightness":  90,
+                                     "Dimmed display brightness":  50,
+                                     "Enable adaptive brightness":  0
+                                 },
+                     "Wireless Adapter Settings":  {
+                                                       "Power Saving Mode":  0
+                                                   },
+                     "USB settings":  {
+                                          "USB selective suspend setting":  0
+                                      }
+                 },
+    "khorvie":  {
+                    "Hard disk":  {
+                                      "Turn off hard disk after":  0
+                                  },
+                    "Desktop background settings":  {
+                                                        "Slide show":  0
+                                                    },
+                    "PCI Express":  {
+                                        "Link State Power Management":  0
+                                    },
+                    "Battery":  {
+                                    "Critical battery notification":  1,
+                                    "Critical battery level":  5,
+                                    "Reserve battery level":  7,
+                                    "Low battery action":  0,
+                                    "Low battery notification":  1,
+                                    "Low battery level":  10,
+                                    "Critical battery action":  2
+                                },
+                    "Multimedia settings":  {
+                                                "When sharing media":  1,
+                                                "When playing video":  0,
+                                                "Video playback quality bias":  1
+                                            },
+                    "Processor power management":  {
+                                                       "Maximum processor state":  100,
+                                                       "Minimum processor state":  100
+                                                   },
+                    "Power buttons and lid":  {
+                                                  "Start menu power button":  0
+                                              },
+                    "Sleep":  {
+                                  "Allow wake timers":  0,
+                                  "Allow hybrid sleep":  1,
+                                  "Hibernate after":  0,
+                                  "Sleep after":  0
+                              },
+                    "Internet Explorer":  {
+                                              "JavaScript Timer Frequency":  1
+                                          },
+                    "Display":  {
+                                    "Turn off display after":  0,
+                                    "Display brightness":  100,
+                                    "Dimmed display brightness":  50,
+                                    "Enable adaptive brightness":  0
+                                },
+                    "Wireless Adapter Settings":  {
+                                                      "Power Saving Mode":  0
+                                                  },
+                    "USB settings":  {
+                                         "USB selective suspend setting":  0
+                                     }
+                },
+    "ancel":  {
+                  "Hard disk":  {
+                                    "Turn off hard disk after":  0
+                                },
+                  "Desktop background settings":  {
+                                                      "Slide show":  0
+                                                  },
+                  "PCI Express":  {
+                                      "Link State Power Management":  0
+                                  },
+                  "Battery":  {
+                                  "Critical battery notification":  1,
+                                  "Critical battery level":  5,
+                                  "Reserve battery level":  7,
+                                  "Low battery action":  0,
+                                  "Low battery notification":  1,
+                                  "Low battery level":  10,
+                                  "Critical battery action":  2
+                              },
+                  "Multimedia settings":  {
+                                              "When sharing media":  1,
+                                              "When playing video":  0,
+                                              "Video playback quality bias":  1
+                                          },
+                  "Processor power management":  {
+                                                     "Maximum processor state":  100,
+                                                     "Minimum processor state":  100
+                                                 },
+                  "Power buttons and lid":  {
+                                                "Start menu power button":  0
+                                            },
+                  "Sleep":  {
+                                "Allow wake timers":  0,
+                                "Allow hybrid sleep":  1,
+                                "Hibernate after":  0,
+                                "Sleep after":  0
+                            },
+                  "Internet Explorer":  {
+                                            "JavaScript Timer Frequency":  1
+                                        },
+                  "Display":  {
+                                  "Turn off display after":  0,
+                                  "Display brightness":  100,
+                                  "Dimmed display brightness":  50,
+                                  "Enable adaptive brightness":  0
+                              },
+                  "Wireless Adapter Settings":  {
+                                                    "Power Saving Mode":  0
+                                                },
+                  "USB settings":  {
+                                       "USB selective suspend setting":  0
+                                   }
+              },
+    "core":  {
+                 "Hard disk":  {
+                                   "Turn off hard disk after":  0
+                               },
+                 "Desktop background settings":  {
+                                                     "Slide show":  0
+                                                 },
+                 "PCI Express":  {
+                                     "Link State Power Management":  0
+                                 },
+                 "Battery":  {
+                                 "Critical battery notification":  1,
+                                 "Critical battery level":  5,
+                                 "Reserve battery level":  7,
+                                 "Low battery action":  0,
+                                 "Low battery notification":  1,
+                                 "Low battery level":  10,
+                                 "Critical battery action":  2
+                             },
+                 "Multimedia settings":  {
+                                             "When sharing media":  1,
+                                             "When playing video":  0,
+                                             "Video playback quality bias":  1
+                                         },
+                 "Processor power management":  {
+                                                    "Maximum processor state":  100,
+                                                    "Minimum processor state":  100
+                                                },
+                 "Power buttons and lid":  {
+                                               "Start menu power button":  0
+                                           },
+                 "Sleep":  {
+                               "Allow wake timers":  1,
+                               "Allow hybrid sleep":  1,
+                               "Hibernate after":  0,
+                               "Sleep after":  0
+                           },
+                 "Internet Explorer":  {
+                                           "JavaScript Timer Frequency":  1
+                                       },
+                 "Display":  {
+                                 "Turn off display after":  0,
+                                 "Display brightness":  100,
+                                 "Dimmed display brightness":  50,
+                                 "Enable adaptive brightness":  0
+                             },
+                 "Wireless Adapter Settings":  {
+                                                   "Power Saving Mode":  0
+                                               },
+                 "USB settings":  {
+                                      "USB selective suspend setting":  0
+                                  }
+             },
+    "kaisen":  {
+                   "Hard disk":  {
+                                     "Turn off hard disk after":  0
+                                 },
+                   "Desktop background settings":  {
+                                                       "Slide show":  0
+                                                   },
+                   "PCI Express":  {
+                                       "Link State Power Management":  0
+                                   },
+                   "Battery":  {
+                                   "Critical battery notification":  1,
+                                   "Critical battery level":  5,
+                                   "Reserve battery level":  7,
+                                   "Low battery action":  0,
+                                   "Low battery notification":  1,
+                                   "Low battery level":  10,
+                                   "Critical battery action":  2
+                               },
+                   "Multimedia settings":  {
+                                               "When sharing media":  1,
+                                               "When playing video":  0,
+                                               "Video playback quality bias":  1
+                                           },
+                   "Processor power management":  {
+                                                      "Maximum processor state":  100,
+                                                      "Minimum processor state":  100
+                                                  },
+                   "Power buttons and lid":  {
+                                                 "Start menu power button":  0
+                                             },
+                   "Sleep":  {
+                                 "Allow wake timers":  1,
+                                 "Allow hybrid sleep":  1,
+                                 "Hibernate after":  0,
+                                 "Sleep after":  0
+                             },
+                   "Internet Explorer":  {
+                                             "JavaScript Timer Frequency":  1
+                                         },
+                   "Display":  {
+                                   "Turn off display after":  0,
+                                   "Display brightness":  36,
+                                   "Dimmed display brightness":  50,
+                                   "Enable adaptive brightness":  0
+                               },
+                   "Wireless Adapter Settings":  {
+                                                     "Power Saving Mode":  0
+                                                 },
+                   "USB settings":  {
+                                        "USB selective suspend setting":  0
+                                    }
+               },
+    "bitsum":  {
+                   "Hard disk":  {
+                                     "Turn off hard disk after":  0
+                                 },
+                   "Desktop background settings":  {
+                                                       "Slide show":  0
+                                                   },
+                   "PCI Express":  {
+                                       "Link State Power Management":  0
+                                   },
+                   "Battery":  {
+                                   "Critical battery notification":  1,
+                                   "Critical battery level":  5,
+                                   "Reserve battery level":  7,
+                                   "Low battery action":  0,
+                                   "Low battery notification":  1,
+                                   "Low battery level":  10,
+                                   "Critical battery action":  2
+                               },
+                   "Multimedia settings":  {
+                                               "When sharing media":  1,
+                                               "When playing video":  0,
+                                               "Video playback quality bias":  1
+                                           },
+                   "Processor power management":  {
+                                                      "Maximum processor state":  100,
+                                                      "Minimum processor state":  100
+                                                  },
+                   "Power buttons and lid":  {
+                                                 "Start menu power button":  0
+                                             },
+                   "Sleep":  {
+                                 "Allow wake timers":  1,
+                                 "Allow hybrid sleep":  1,
+                                 "Hibernate after":  0,
+                                 "Sleep after":  0
+                             },
+                   "Internet Explorer":  {
+                                             "JavaScript Timer Frequency":  1
+                                         },
+                   "Display":  {
+                                   "Turn off display after":  900,
+                                   "Display brightness":  100,
+                                   "Dimmed display brightness":  50,
+                                   "Enable adaptive brightness":  0
+                               },
+                   "Wireless Adapter Settings":  {
+                                                     "Power Saving Mode":  0
+                                                 },
+                   "USB settings":  {
+                                        "USB selective suspend setting":  1
+                                    }
+               },
+    "xos":  {
+                "Hard disk":  {
+                                  "Turn off hard disk after":  0
+                              },
+                "Desktop background settings":  {
+                                                    "Slide show":  1
+                                                },
+                "PCI Express":  {
+                                    "Link State Power Management":  0
+                                },
+                "Battery":  {
+                                "Critical battery notification":  0,
+                                "Critical battery level":  5,
+                                "Reserve battery level":  7,
+                                "Low battery action":  0,
+                                "Low battery notification":  0,
+                                "Low battery level":  10,
+                                "Critical battery action":  0
+                            },
+                "Multimedia settings":  {
+                                            "When sharing media":  1,
+                                            "When playing video":  0,
+                                            "Video playback quality bias":  1
+                                        },
+                "Processor power management":  {
+                                                   "Maximum processor state":  100,
+                                                   "Minimum processor state":  100
+                                               },
+                "Power buttons and lid":  {
+                                              "Start menu power button":  2
+                                          },
+                "Sleep":  {
+                              "Allow wake timers":  0,
+                              "Allow hybrid sleep":  0,
+                              "Hibernate after":  0,
+                              "Sleep after":  0
+                          },
+                "Internet Explorer":  {
+                                          "JavaScript Timer Frequency":  1
+                                      },
+                "Display":  {
+                                "Turn off display after":  0,
+                                "Display brightness":  100,
+                                "Dimmed display brightness":  50,
+                                "Enable adaptive brightness":  0
+                            },
+                "Wireless Adapter Settings":  {
+                                                  "Power Saving Mode":  0
+                                              },
+                "USB settings":  {
+                                     "USB selective suspend setting":  0
+                                 }
+            },
+    "hybred":  {
+                   "Hard disk":  {
+                                     "Turn off hard disk after":  0
+                                 },
+                   "Desktop background settings":  {
+                                                       "Slide show":  1
+                                                   },
+                   "PCI Express":  {
+                                       "Link State Power Management":  0
+                                   },
+                   "Battery":  {
+                                   "Critical battery notification":  1,
+                                   "Critical battery level":  5,
+                                   "Reserve battery level":  7,
+                                   "Low battery action":  0,
+                                   "Low battery notification":  1,
+                                   "Low battery level":  10,
+                                   "Critical battery action":  2
+                               },
+                   "Multimedia settings":  {
+                                               "When sharing media":  1,
+                                               "When playing video":  0,
+                                               "Video playback quality bias":  1
+                                           },
+                   "Processor power management":  {
+                                                      "Maximum processor state":  100,
+                                                      "Minimum processor state":  100
+                                                  },
+                   "Power buttons and lid":  {
+                                                 "Start menu power button":  0
+                                             },
+                   "Sleep":  {
+                                 "Allow wake timers":  0,
+                                 "Allow hybrid sleep":  0,
+                                 "Hibernate after":  0,
+                                 "Sleep after":  0
+                             },
+                   "Internet Explorer":  {
+                                             "JavaScript Timer Frequency":  1
+                                         },
+                   "Display":  {
+                                   "Turn off display after":  0,
+                                   "Display brightness":  100,
+                                   "Dimmed display brightness":  50,
+                                   "Enable adaptive brightness":  0
+                               },
+                   "Wireless Adapter Settings":  {
+                                                     "Power Saving Mode":  0
+                                                 },
+                   "USB settings":  {
+                                        "USB selective suspend setting":  0
+                                    }
+               },
+    "powerx":  {
+                   "Hard disk":  {
+                                     "Turn off hard disk after":  0
+                                 },
+                   "Desktop background settings":  {
+                                                       "Slide show":  1
+                                                   },
+                   "PCI Express":  {
+                                       "Link State Power Management":  0
+                                   },
+                   "Battery":  {
+                                   "Critical battery notification":  1,
+                                   "Critical battery level":  5,
+                                   "Reserve battery level":  7,
+                                   "Low battery action":  0,
+                                   "Low battery notification":  1,
+                                   "Low battery level":  10,
+                                   "Critical battery action":  2
+                               },
+                   "Multimedia settings":  {
+                                               "When sharing media":  1,
+                                               "When playing video":  0,
+                                               "Video playback quality bias":  1
+                                           },
+                   "Processor power management":  {
+                                                      "Maximum processor state":  100,
+                                                      "Minimum processor state":  100
+                                                  },
+                   "Power buttons and lid":  {
+                                                 "Start menu power button":  0
+                                             },
+                   "Sleep":  {
+                                 "Allow wake timers":  0,
+                                 "Allow hybrid sleep":  1,
+                                 "Hibernate after":  0,
+                                 "Sleep after":  0
+                             },
+                   "Internet Explorer":  {
+                                             "JavaScript Timer Frequency":  1
+                                         },
+                   "Display":  {
+                                   "Turn off display after":  0,
+                                   "Display brightness":  100,
+                                   "Dimmed display brightness":  50,
+                                   "Enable adaptive brightness":  0
+                               },
+                   "Wireless Adapter Settings":  {
+                                                     "Power Saving Mode":  0
+                                                 },
+                   "USB settings":  {
+                                        "USB selective suspend setting":  0
+                                    }
+               }
+}
