@@ -487,67 +487,66 @@
                     </ScrollViewer>
 
                     <!-- ======================================================================= -->
-                    <!-- VIEW 2: OPTIMIZACIONES (GROUPED CATEGORY CONTAINERS + STICKY APPLY BAR) -->
+                    <!-- VIEW 2: OPTIMIZACIONES — lista minimalista (título + 1 línea + ⓘ + toggle) -->
+                    <!-- Solo se listan los tweaks APLICABLES a esta PC (filtro fijo "APPLICABLE"). -->
                     <!-- ======================================================================= -->
                     <Grid x:Name="ViewTweaks" Visibility="Collapsed">
                         <ScrollViewer
                             x:Name="TweaksScrollViewer"
                             ViewChanged="TweaksScrollViewer_ViewChanged"
                             VerticalScrollBarVisibility="Auto"
-                            HorizontalScrollBarVisibility="Disabled">
+                            HorizontalScrollBarVisibility="Disabled"
+                            HorizontalScrollMode="Disabled">
 
-                            <StackPanel Padding="32,18,32,110" Spacing="20" MaxWidth="1320" HorizontalAlignment="Stretch">
+                            <StackPanel Padding="48,34,48,120" Spacing="0" MaxWidth="860" HorizontalAlignment="Stretch">
 
-                                <!-- Full-Width Title + Uncut Subtitle -->
-                                <StackPanel Spacing="4" HorizontalAlignment="Stretch">
-                                    <TextBlock Text="Optimizaciones" Style="{StaticResource KruzhPageTitleStyle}" />
-                                    <TextBlock x:Name="TweaksSummaryCounterText"
-                                               Text="-"
-                                               Style="{StaticResource KruzhPageSubtitleStyle}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-
-                                <!-- Dedicated Toolbar Row for Presets & Import/Export (Never overlaps Subtitle) -->
-                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <Button Tag="Minimal" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Perfil Minimal" />
-                                    <Button Tag="Competitivo" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Perfil Competitivo" />
-                                    <Button Tag="Profesional" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Perfil Profesional" />
-                                    <Button Tag="Entusiasta" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" BorderBrush="{StaticResource KruzhDangerMutedBorderBrush}" Foreground="{StaticResource KruzhDangerMutedBrush}" Content="Entusiasta" />
-                                    <Border Width="1" Height="18" Background="{StaticResource KruzhDividerHairlineBrush}" Margin="4,0" VerticalAlignment="Center" />
-                                    <Button x:Name="ImportProfileJsonBtn" Click="ImportProfileJsonBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Importar" />
-                                    <Button x:Name="ExportProfileJsonBtn" Click="ExportProfileJsonBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Exportar" />
-                                </StackPanel>
-
-                                <!-- Discrete Filters Row -->
-                                <Grid ColumnSpacing="14" Margin="0,2,0,6">
+                                <!-- Encabezado -->
+                                <Grid Margin="0,0,0,26">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="220" />
-                                        <ColumnDefinition Width="260" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-
-                                    <ComboBox x:Name="TweakCategoryFilterCombo" Grid.Column="0" SelectedIndex="0" SelectionChanged="TweakFilter_Changed" HorizontalAlignment="Stretch">
-                                        <ComboBoxItem Tag="ALL" Content="Todas las categorías" />
-                                        <ComboBoxItem Tag="MouseAndInput" Content="Mouse e Input" />
-                                        <ComboBoxItem Tag="SystemAndCpu" Content="CPU y Scheduler" />
-                                        <ComboBoxItem Tag="GpuAndDisplay" Content="GPU y Display" />
-                                        <ComboBoxItem Tag="NetworkAndTcp" Content="Red y TCP/IP" />
-                                        <ComboBoxItem Tag="IrqAndAudio" Content="IRQ, MSI y Audio" />
-                                        <ComboBoxItem Tag="UsbAndPower" Content="Energía, USB y Memoria" />
-                                        <ComboBoxItem Tag="FpsBoostAndGames" Content="Juegos y FPS" />
-                                    </ComboBox>
-
-                                    <ComboBox x:Name="TweakGateFilterCombo" Grid.Column="1" SelectedIndex="0" SelectionChanged="TweakFilter_Changed" HorizontalAlignment="Stretch">
-                                        <ComboBoxItem Tag="APPLICABLE" Content="Compatibles con este equipo" />
-                                        <ComboBoxItem Tag="RECOMMENDED" Content="Solo recomendados para mi build" />
-                                        <ComboBoxItem Tag="ANTICHEAT_SAFE" Content="Solo seguros para Anticheat" />
-                                        <ComboBoxItem Tag="ALL_INCLUDING_HIDDEN" Content="Mostrar todos (incluir no aplicables)" />
-                                    </ComboBox>
-
-                                    <TextBox x:Name="TweakSearchBox" Grid.Column="2" TextChanged="TweakSearchBox_TextChanged" PlaceholderText="Buscar optimización o clave de registro..." />
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Optimizaciones" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        <TextBlock x:Name="TweaksSummaryCounterText" Text="-" FontSize="13" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Padding="8"
+                                            Foreground="{StaticResource KruzhTextSecondaryBrush}" ToolTipService.ToolTip="Más opciones">
+                                        <FontIcon Glyph="&#xE712;" FontSize="14" />
+                                        <Button.Flyout>
+                                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                <MenuFlyoutItem x:Name="ImportProfileJsonBtn" Text="Importar perfil…" Click="ImportProfileJsonBtn_Click" />
+                                                <MenuFlyoutItem x:Name="ExportProfileJsonBtn" Text="Exportar perfil…" Click="ExportProfileJsonBtn_Click" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
                                 </Grid>
 
-                                <!-- Single Rounded Container per Category + Hairline Dividers Between Compact Rows -->
+                                <!-- Perfiles (chips de texto) -->
+                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,30">
+                                    <TextBlock Text="Perfil" FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <Button Tag="Minimal" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Normal" />
+                                    <Button Tag="Competitivo" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Competitivo" />
+                                    <Button Tag="Profesional" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Profesional"
+                                            ToolTipService.ToolTip="Máximo rendimiento compatible con FACEIT AC y Vanguard" />
+                                    <Button Tag="Entusiasta" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Entusiasta"
+                                            Foreground="{StaticResource KruzhDangerMutedBrush}"
+                                            ToolTipService.ToolTip="Tweak total: incluye cambios que pueden afectar al anticheat o la seguridad" />
+                                </StackPanel>
+
+                                <!-- Filtros: fuera de la vista (minimalismo). Se mantienen colapsados porque el código los usa:
+                                     categoría = todas, compuerta = solo compatibles con esta PC, sin búsqueda. -->
+                                <Grid Visibility="Collapsed">
+                                    <ComboBox x:Name="TweakCategoryFilterCombo" SelectedIndex="0" SelectionChanged="TweakFilter_Changed">
+                                        <ComboBoxItem Tag="ALL" Content="Todas las categorías" />
+                                    </ComboBox>
+                                    <ComboBox x:Name="TweakGateFilterCombo" SelectedIndex="0" SelectionChanged="TweakFilter_Changed">
+                                        <ComboBoxItem Tag="APPLICABLE" Content="Compatibles con este equipo" />
+                                    </ComboBox>
+                                    <TextBox x:Name="TweakSearchBox" TextChanged="TweakSearchBox_TextChanged" />
+                                </Grid>
+
+                                <!-- Secciones -->
                                 <ItemsControl x:Name="TweaksGroupsItemsControl" HorizontalAlignment="Stretch">
                                     <ItemsControl.ItemContainerStyle>
                                         <Style TargetType="ContentPresenter">
@@ -557,115 +556,76 @@
                                     </ItemsControl.ItemContainerStyle>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel Spacing="10" Margin="0,0,0,36" HorizontalAlignment="Stretch">
-                                                <TextBlock Text="{Binding SectionTitle}" Style="{StaticResource KruzhMicroLabelStyle}" Margin="2,0,0,2" />
+                                            <StackPanel Margin="0,0,0,34" HorizontalAlignment="Stretch">
+                                                <TextBlock Text="{Binding SectionTitle}" FontSize="13" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,0,0,6" />
 
-                                                <Border Style="{StaticResource KruzhCategoryGroupCardStyle}"
-                                                        HorizontalAlignment="Stretch"
-                                                        Translation="0,0,12">
-                                                    <Border.Shadow>
-                                                        <ThemeShadow />
-                                                    </Border.Shadow>
+                                                <ItemsControl ItemsSource="{Binding Items}" HorizontalAlignment="Stretch">
+                                                    <ItemsControl.ItemContainerStyle>
+                                                        <Style TargetType="ContentPresenter">
+                                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                        </Style>
+                                                    </ItemsControl.ItemContainerStyle>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <!-- Fila: [título + 1 línea] ··· [ⓘ] [toggle | opciones] · separador fino abajo -->
+                                                            <Grid Padding="0,18" ColumnSpacing="18" HorizontalAlignment="Stretch"
+                                                                  BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" MinWidth="160" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
 
-                                                    <ItemsControl ItemsSource="{Binding Items}" HorizontalAlignment="Stretch">
-                                                        <ItemsControl.ItemContainerStyle>
-                                                            <Style TargetType="ContentPresenter">
-                                                                <Setter Property="HorizontalAlignment" Value="Stretch" />
-                                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                                            </Style>
-                                                        </ItemsControl.ItemContainerStyle>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <StackPanel HorizontalAlignment="Stretch">
-                                                                    <!-- 1px Hairline Divider -->
-                                                                    <Border Height="1"
-                                                                            HorizontalAlignment="Stretch"
-                                                                            Background="{StaticResource KruzhDividerHairlineBrush}"
-                                                                            Visibility="{Binding TopDividerVisibility}" />
-
-                                                                    <!-- Compact Row inside Category Container: [34px icon] [Title + 1-line desc (*)] [ⓘ + Control (Right)] -->
-                                                                    <Grid Background="{Binding RowBackgroundBrush}"
-                                                                          Padding="18,0" MinHeight="60" ColumnSpacing="14"
-                                                                          HorizontalAlignment="Stretch">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="Auto" />
-                                                                            <ColumnDefinition Width="*" MinWidth="120" />
-                                                                            <ColumnDefinition Width="Auto" />
-                                                                        </Grid.ColumnDefinitions>
-
-                                                                        <Border Grid.ColumnSpan="3" Width="3" Margin="-18,0,0,0"
-                                                                                HorizontalAlignment="Left" VerticalAlignment="Stretch"
-                                                                                Background="{StaticResource KruzhTextPrimaryBrush}" Opacity="0.5"
-                                                                                Visibility="{Binding PendingVisibility}" />
-
-                                                                        <Border Grid.Column="0" Width="34" Height="34" CornerRadius="8"
-                                                                                Background="#07FFFFFF" BorderBrush="#12FFFFFF" BorderThickness="1"
-                                                                                VerticalAlignment="Center">
-                                                                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
-                                                                                      Glyph="{Binding CategoryGlyph}" FontSize="14"
-                                                                                      Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                                        </Border>
-
-                                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                                            <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
-                                                                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
-                                                                                           Foreground="{StaticResource KruzhTextPrimaryBrush}"
-                                                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                                                                <Border Style="{StaticResource KruzhPositivePillStyle}"
-                                                                                        Visibility="{Binding AppliedPillVisibility}" VerticalAlignment="Center">
-                                                                                    <TextBlock Text="Aplicado" FontSize="10" FontWeight="SemiBold"
-                                                                                               Foreground="{StaticResource KruzhPositiveBrush}" />
-                                                                                </Border>
-                                                                                <Border Style="{StaticResource KruzhPendingPillStyle}"
-                                                                                        Visibility="{Binding PendingVisibility}" VerticalAlignment="Center">
-                                                                                    <TextBlock Text="{Binding PendingBadgeText}" FontSize="10" FontWeight="SemiBold"
-                                                                                               Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                                                </Border>
-                                                                            </StackPanel>
-                                                                            <TextBlock Text="{Binding ShortSummary}" FontSize="11.5"
-                                                                                       Foreground="{StaticResource KruzhTextSecondaryBrush}"
-                                                                                       MaxLines="1" TextTrimming="CharacterEllipsis" />
-                                                                        </StackPanel>
-
-                                                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                                                            <Border Width="22" Height="22" CornerRadius="11" Background="Transparent"
-                                                                                    VerticalAlignment="Center" Tag="{Binding}"
-                                                                                    PointerEntered="TweakInfoIcon_PointerEntered"
-                                                                                    PointerExited="TweakInfoIcon_PointerExited"
-                                                                                    Tapped="TweakInfoIcon_Tapped">
-                                                                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE946;"
-                                                                                          FontSize="14" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
-                                                                            </Border>
-                                                                            <ToggleSwitch Tag="{Binding Id}" Visibility="{Binding ToggleControlVisibility}"
-                                                                                          IsOn="{Binding DesiredApplied, Mode=OneWay}"
-                                                                                          IsEnabled="{Binding IsApplicableBool}"
-                                                                                          OnContent="" OffContent="" MinWidth="0" Width="40"
-                                                                                          VerticalAlignment="Center" Toggled="TweakCardToggleSwitch_Toggled" />
-                                                                            <Border Visibility="{Binding SegmentedControlVisibility}" Background="#06FFFFFF"
-                                                                                    BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1"
-                                                                                    CornerRadius="6" Padding="2" VerticalAlignment="Center">
-                                                                                <ItemsControl ItemsSource="{Binding Options}">
-                                                                                    <ItemsControl.ItemsPanel>
-                                                                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate>
-                                                                                    </ItemsControl.ItemsPanel>
-                                                                                    <ItemsControl.ItemTemplate>
-                                                                                        <DataTemplate>
-                                                                                            <Button Tag="{Binding CompositeTag}" Content="{Binding ShortLabel}"
-                                                                                                    Background="{Binding SegmentBackground}" BorderBrush="{Binding SegmentBorderBrush}"
-                                                                                                    Foreground="{Binding SegmentForeground}" BorderThickness="1"
-                                                                                                    CornerRadius="4" Padding="9,3" FontSize="11" FontWeight="SemiBold"
-                                                                                                    ToolTipService.ToolTip="{Binding DisplayName}" Click="SegmentedOptionBtn_Click" />
-                                                                                        </DataTemplate>
-                                                                                    </ItemsControl.ItemTemplate>
-                                                                                </ItemsControl>
-                                                                            </Border>
-                                                                        </StackPanel>
-                                                                    </Grid>
+                                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                        <TextBlock Text="{Binding Title}" FontSize="14.5" FontWeight="SemiBold"
+                                                                                   Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                                        <!-- Cambio pendiente: punto blanco discreto -->
+                                                                        <Ellipse Width="6" Height="6" Fill="{StaticResource KruzhTextPrimaryBrush}" VerticalAlignment="Center"
+                                                                                 Visibility="{Binding PendingVisibility}" ToolTipService.ToolTip="Cambio pendiente de aplicar" />
+                                                                    </StackPanel>
+                                                                    <TextBlock Text="{Binding ShortSummary}" FontSize="12.5"
+                                                                               Foreground="{StaticResource KruzhTextTertiaryBrush}"
+                                                                               MaxLines="1" TextTrimming="CharacterEllipsis" />
                                                                 </StackPanel>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </Border>
+
+                                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                                    <Border Width="22" Height="22" CornerRadius="11" Background="Transparent"
+                                                                            VerticalAlignment="Center" Tag="{Binding}"
+                                                                            PointerEntered="TweakInfoIcon_PointerEntered"
+                                                                            PointerExited="TweakInfoIcon_PointerExited"
+                                                                            Tapped="TweakInfoIcon_Tapped">
+                                                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE946;"
+                                                                                  FontSize="13" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                                    </Border>
+                                                                    <ToggleSwitch Tag="{Binding Id}" Visibility="{Binding ToggleControlVisibility}"
+                                                                                  IsOn="{Binding DesiredApplied, Mode=OneWay}"
+                                                                                  IsEnabled="{Binding IsApplicableBool}"
+                                                                                  OnContent="" OffContent="" MinWidth="0" Width="40"
+                                                                                  VerticalAlignment="Center" Toggled="TweakCardToggleSwitch_Toggled" />
+                                                                    <Border Visibility="{Binding SegmentedControlVisibility}" Background="Transparent"
+                                                                            BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1"
+                                                                            CornerRadius="6" Padding="2" VerticalAlignment="Center">
+                                                                        <ItemsControl ItemsSource="{Binding Options}">
+                                                                            <ItemsControl.ItemsPanel>
+                                                                                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate>
+                                                                            </ItemsControl.ItemsPanel>
+                                                                            <ItemsControl.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <Button Tag="{Binding CompositeTag}" Content="{Binding ShortLabel}"
+                                                                                            Background="{Binding SegmentBackground}" BorderBrush="{Binding SegmentBorderBrush}"
+                                                                                            Foreground="{Binding SegmentForeground}" BorderThickness="1"
+                                                                                            CornerRadius="4" Padding="9,3" FontSize="11" FontWeight="SemiBold"
+                                                                                            ToolTipService.ToolTip="{Binding DisplayName}" Click="SegmentedOptionBtn_Click" />
+                                                                                </DataTemplate>
+                                                                            </ItemsControl.ItemTemplate>
+                                                                        </ItemsControl>
+                                                                    </Border>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -674,18 +634,18 @@
                             </StackPanel>
                         </ScrollViewer>
 
-                        <!-- Sticky Bottom Bar for Pending Changes (Solid #121316, Border #212327) -->
+                        <!-- Barra de cambios pendientes (abajo, centrada con la columna) -->
                         <Border x:Name="PendingChangesStickyBar"
                                 Visibility="Collapsed"
                                 VerticalAlignment="Bottom"
                                 HorizontalAlignment="Stretch"
-                                MaxWidth="1280"
+                                MaxWidth="820"
                                 Margin="48,0,48,20"
-                                Background="#121316"
-                                BorderBrush="#212327"
+                                Background="#121212"
+                                BorderBrush="#242424"
                                 BorderThickness="1"
                                 CornerRadius="10"
-                                Padding="20,13"
+                                Padding="18,12"
                                 Translation="0,0,28">
                             <Border.Shadow>
                                 <ThemeShadow />
@@ -696,13 +656,13 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                    <Border Width="7" Height="7" CornerRadius="3.5" Background="{StaticResource KruzhTextPrimaryBrush}" VerticalAlignment="Center" />
+                                    <Ellipse Width="6" Height="6" Fill="{StaticResource KruzhTextPrimaryBrush}" VerticalAlignment="Center" />
                                     <TextBlock x:Name="PendingChangesStatusText"
-                                               Text="1 cambio pendiente · se creará un punto de restauración antes de aplicar"
+                                               Text="1 cambio pendiente"
                                                FontSize="12.5"
-                                               FontWeight="SemiBold"
                                                Foreground="{StaticResource KruzhTextPrimaryBrush}"
-                                               VerticalAlignment="Center" />
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                                     <Button x:Name="DiscardPendingChangesBtn"

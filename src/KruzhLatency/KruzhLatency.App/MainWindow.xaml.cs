@@ -475,7 +475,9 @@ public sealed partial class MainWindow : Window
         int liveApplied = App.TweakEngine.AllTweaks.Count(t => t.IsApplicableBool && t.IsLiveApplied);
         int hiddenByHw = App.TweakEngine.AllTweaks.Count(t => !t.IsApplicableBool);
         TweaksSummaryCounterText.Text =
-            $"{liveApplied} de {totalApplicable} optimizaciones compatibles aplicadas en el sistema ({hiddenByHw} ocultas por hardware).";
+            hiddenByHw > 0
+                ? $"{liveApplied} de {totalApplicable} activas · {hiddenByHw} no aplican a tu PC y no se muestran."
+                : $"{liveApplied} de {totalApplicable} activas.";
     }
 
     private void RefreshSystemStateBtn_Click(object sender, RoutedEventArgs e)
@@ -700,13 +702,13 @@ public sealed partial class MainWindow : Window
 
             var categoryOrder = new (string Title, Func<DeclarativeTweakItem, bool> Predicate)[]
             {
-                ("MOUSE E INPUT",         t => t.Category == TweakCategory.MouseInput),
-                ("CPU Y SCHEDULER",       t => t.Category == TweakCategory.SystemCpu),
-                ("GPU Y DISPLAY",         t => t.Category == TweakCategory.GpuDisplay),
-                ("RED Y TCP/IP",          t => t.Category == TweakCategory.NetworkDesync),
-                ("IRQ, MSI Y AUDIO",      t => t.Category == TweakCategory.IrqMsiAudio),
-                ("ENERGÍA, USB Y MEMORIA",t => t.Category == TweakCategory.UsbPowerBus || t.Category == TweakCategory.StorageMemory),
-                ("JUEGOS Y FPS",          t => t.Category == TweakCategory.FpsBoostGames)
+                ("Mouse e input",         t => t.Category == TweakCategory.MouseInput),
+                ("Procesador y sistema",  t => t.Category == TweakCategory.SystemCpu),
+                ("GPU y pantalla",        t => t.Category == TweakCategory.GpuDisplay),
+                ("Red",                   t => t.Category == TweakCategory.NetworkDesync),
+                ("Interrupciones y audio", t => t.Category == TweakCategory.IrqMsiAudio),
+                ("Energía, USB y memoria", t => t.Category == TweakCategory.UsbPowerBus || t.Category == TweakCategory.StorageMemory),
+                ("Juegos",                t => t.Category == TweakCategory.FpsBoostGames)
             };
 
             var groups = new List<TweakCategoryGroup>();
@@ -787,8 +789,8 @@ public sealed partial class MainWindow : Window
         if (pendingCount > 0)
         {
             PendingChangesStatusText.Text = pendingCount == 1
-                ? "1 cambio pendiente · se creará un punto de restauración antes de aplicar"
-                : $"{pendingCount} cambios pendientes · se creará un punto de restauración antes de aplicar";
+                ? "1 cambio pendiente · se crea un punto de restauración antes de aplicar"
+                : $"{pendingCount} cambios pendientes · se crea un punto de restauración antes de aplicar";
             PendingChangesStickyBar.Visibility = Visibility.Visible;
         }
         else
