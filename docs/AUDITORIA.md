@@ -67,6 +67,7 @@ Build: `dotnet build` OK, 0 warnings. **No hay tests, no hay git, no hay CI.**
 ## 3. Veredicto por tweak (pensando en CS2 competitivo)
 
 > **Decisión del dueño (2026-11-02), prevalece sobre esta tabla:** se **mantienen todos los tweaks de red** (N01–N08, incluidos N03, N04, N06, N08). Se **quitan** M02, M03, M04 (mouse), G03, G07 (GPU) e I03 (audio). F02 también sale. Ver spec 001 v2.
+> **Presentación (ADR-006):** todo apunta a Independent Flip. G05 rehecho (flip model + FSO activo), G06 fuera de perfiles (solo troubleshooting), F01 ya no desactiva FSO.
 
 Criterio: **¿hay mecanismo documentado + efecto medible en CS2?** CS2 usa UDP, DX11 por defecto, soporta Reflex nativo.
 

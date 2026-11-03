@@ -68,11 +68,6 @@ public sealed class GameTargetItem
     public bool HighCpuAndIoPriority { get; set; } = true;
     public bool QosDscp46 { get; set; } = true;
     public bool HighPerfGpuPreference { get; set; } = true;
-    public bool DisableFullscreenOptimizations { get; set; } = true;
-    public bool UsePCoresAffinity { get; set; } = true;
-    public bool SingleCcdAffinity { get; set; }
-    public bool ForegroundPriorityBoost { get; set; } = true;
-    public bool ExcludeCore0 { get; set; }
     public bool DefenderFolderExclusion { get; set; }
     public bool DisableCfgExploitProtection { get; set; }
 

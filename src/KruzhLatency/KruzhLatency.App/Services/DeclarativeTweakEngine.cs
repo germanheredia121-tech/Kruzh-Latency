@@ -1257,31 +1257,46 @@ public sealed class DeclarativeTweakEngine
             }
         });
 
+        // --- Independent Flip: el objetivo es que el juego presente por flip model y Windows lo promueva a
+        //     Independent Flip (sin composición de DWM). Para eso hacen falta FSO activo y MPO activo:
+        //     por eso este tweak NO desactiva FSO, y "Desactivar MPO" quedó fuera de los perfiles (G06).
         _allTweaks.Add(new DeclarativeTweakItem
         {
             Id = "DirectXIndependentFlipAndFse",
             CodeNumber = "G05",
-            Title = "DXGI Independent Flip + Honor Fullscreen Exclusive (Sin Colisión)",
+            Title = "Independent Flip: Optimizaciones para juegos en ventana (Flip Model) + FSO activo",
             Category = TweakCategory.GpuDisplay,
             CategoryDisplay = "GPU & Display",
-            TechnicalDescription = "Unifica 'Optimizaciones para juegos en ventana' (SwapEffectUpgradeEnable=1;gpupreference=2;) sin pisar HAGS y habilita DXGIHonorFSEWindowsCompatible.",
-            WhatItTouches = @"HKCU\Software\Microsoft\DirectX\UserGpuPreferences\DirectXUserGlobalSettings & GameConfigStore\GameDVR_DXGIHonorFSEWindowsCompatible=1",
-            SourceAttribution = "Microsoft DirectX Blog / BlurBusters",
+            TechnicalDescription = "Activa 'Optimizaciones para juegos en ventana' (DX10/11 usan flip model en vez de blt) para que el juego pueda pasar a Independent Flip y saltear la composición de DWM. Mantiene las Fullscreen Optimizations activas: si un tweak anterior las había apagado (FSEBehavior=2 / HonorFSE=1), las vuelve a encender.",
+            WhatItTouches = @"HKCU\Software\Microsoft\DirectX\UserGpuPreferences\DirectXUserGlobalSettings -> agrega SwapEffectUpgradeEnable=1 (respeta el resto) · HKCU\System\GameConfigStore -> GameDVR_FSEBehavior=0, GameDVR_DXGIHonorFSEWindowsCompatible=0",
+            SourceAttribution = "Microsoft DirectX Dev Blog (Optimizations for windowed games / flip model) · PresentMon (Hardware: Independent Flip)",
             Risk = RiskLevel.Low,
             InMinimal = true,
             InCompetitivo = true,
             InProfesional = true,
+            ApplicableGate = hw => hw.IsWindows11
+                ? ApplicabilityResult.Applicable("Windows 11 detectado")
+                : ApplicabilityResult.NotApplicable($"'Optimizaciones para juegos en ventana' es una función de Windows 11 (Build actual: {hw.WindowsBuild})."),
+            EvaluateGate = _ => EvaluationResult.Recommended("Con FSO y MPO activos, CS2 y VALORANT en pantalla completa/ventana sin bordes pueden presentar en Independent Flip: misma latencia que fullscreen exclusivo, sin sus problemas de Alt-Tab."),
             ReadLiveState = () =>
             {
                 string? s = ReadRegString(RegistryHive.CurrentUser, @"Software\Microsoft\DirectX\UserGpuPreferences", "DirectXUserGlobalSettings");
-                return s != null && s.Contains("SwapEffectUpgradeEnable=1", StringComparison.OrdinalIgnoreCase);
+                bool flipModel = s != null && s.Contains("SwapEffectUpgradeEnable=1", StringComparison.OrdinalIgnoreCase);
+                bool fsoDisabled = ReadRegDword(RegistryHive.CurrentUser, @"System\GameConfigStore", "GameDVR_FSEBehavior") == 2 ||
+                                   ReadRegDword(RegistryHive.CurrentUser, @"System\GameConfigStore", "GameDVR_DXGIHonorFSEWindowsCompatible") == 1;
+                return flipModel && !fsoDisabled;
             },
             ApplyAction = _ =>
             {
-                _audit.SetRegistryValue("DirectXIndependentFlipAndFse", RegistryHive.CurrentUser, @"Software\Microsoft\DirectX\UserGpuPreferences", "DirectXUserGlobalSettings", "SwapEffectUpgradeEnable=1;gpupreference=2;", RegistryValueKind.String);
-                _audit.SetRegistryValue("DirectXIndependentFlipAndFse", RegistryHive.CurrentUser, @"System\GameConfigStore", "GameDVR_DXGIHonorFSEWindowsCompatible", 1, RegistryValueKind.DWord);
-                _audit.SetRegistryValue("DirectXIndependentFlipAndFse", RegistryHive.CurrentUser, @"System\GameConfigStore", "GameDVR_FSEBehavior", 2, RegistryValueKind.DWord);
-                return (true, "DXGI Independent Flip + Honor FSE aplicados sin colisión.");
+                const string dxPath = @"Software\Microsoft\DirectX\UserGpuPreferences";
+                string current = ReadRegString(RegistryHive.CurrentUser, dxPath, "DirectXUserGlobalSettings") ?? string.Empty;
+                _audit.SetRegistryValue("DirectXIndependentFlipAndFse", RegistryHive.CurrentUser, dxPath, "DirectXUserGlobalSettings",
+                    MergeDirectXGlobalSetting(current, "SwapEffectUpgradeEnable", "1"), RegistryValueKind.String);
+
+                // FSO activo (valores por defecto de Windows) — deshace lo que dejaba la versión anterior de este tweak.
+                _audit.SetRegistryValue("DirectXIndependentFlipAndFse", RegistryHive.CurrentUser, @"System\GameConfigStore", "GameDVR_FSEBehavior", 0, RegistryValueKind.DWord);
+                _audit.SetRegistryValue("DirectXIndependentFlipAndFse", RegistryHive.CurrentUser, @"System\GameConfigStore", "GameDVR_DXGIHonorFSEWindowsCompatible", 0, RegistryValueKind.DWord);
+                return (true, "Flip model en ventana activado y Fullscreen Optimizations activas (camino a Independent Flip).");
             }
         });
 
@@ -1289,25 +1304,24 @@ public sealed class DeclarativeTweakEngine
         {
             Id = "DisableMpo",
             CodeNumber = "G06",
-            Title = "Desactivar MPO (Multi-Plane Overlay — OverlayTestMode = 5)",
+            Title = "Desactivar MPO (solo para solucionar flickering / pantallas negras)",
             Category = TweakCategory.GpuDisplay,
             CategoryDisplay = "GPU & Display",
-            TechnicalDescription = "Evita que DWM reserve planos de hardware separados para overlays que causan flickering o imagen cortada.",
+            TechnicalDescription = "Apaga los Multi-Plane Overlays de DWM. Úsalo SOLO si tenés flickering o pantallas negras con tu driver: sin MPO el juego no puede usar Independent Flip por hardware, así que en una PC sana empeora la latencia de presentación.",
             WhatItTouches = @"HKLM\SOFTWARE\Microsoft\Windows\Dwm -> OverlayTestMode = 5",
-            SourceAttribution = "NVIDIA Support Hotfix KB / BlurBusters",
+            SourceAttribution = "NVIDIA Support (MPO flicker workaround) · Microsoft Docs (Multiplane overlay support)",
             Risk = RiskLevel.Low,
             RequiresReboot = true,
             InMinimal = false,
-            InCompetitivo = true,
-            InProfesional = true,
-            EvaluateGate = hw => hw.IsWindows11_24H2Plus
-                ? EvaluationResult.Neutral("En Windows 11 24H2 (Build 26100+), Microsoft corrigió el manejo de MPO en DWM; activalo solo si notás flickering con Alt-Tab.")
-                : EvaluationResult.Recommended("Recomendado en Windows 10 y Windows 11 22H2/23H2 para eliminar micro-stutters de composición."),
+            InCompetitivo = false,
+            InProfesional = false,
+            InEntusiasta = false, // ningún perfil lo activa: es una solución puntual de problemas, no una optimización
+            EvaluateGate = _ => EvaluationResult.NotRecommended("No recomendado: desactivar MPO impide Independent Flip por hardware. Solo para solucionar flickering o pantallas negras."),
             ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\Dwm", "OverlayTestMode") == 5,
             ApplyAction = _ =>
             {
                 _audit.SetRegistryValue("DisableMpo", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\Dwm", "OverlayTestMode", 5, RegistryValueKind.DWord);
-                return (true, "MPO desactivado (OverlayTestMode = 5).");
+                return (true, "MPO desactivado (OverlayTestMode = 5). Revertilo si no tenías flickering.");
             }
         });
 
@@ -1894,11 +1908,11 @@ public sealed class DeclarativeTweakEngine
         {
             Id = "GameIfeoHighPriority",
             CodeNumber = "F01",
-            Title = "Prioridad CPU/IO Alta por IFEO + Preferencia GPU + FSO Off (CS2 / Valorant / Custom)",
+            Title = "Prioridad CPU/IO Alta por IFEO (CS2 / VALORANT)",
             Category = TweakCategory.FpsBoostGames,
             CategoryDisplay = "FPS Boost & Juegos",
-            TechnicalDescription = "Configura CpuPriorityClass=3 e IoPriority=3 en la subclave correcta IFEO\\<exe>\\PerfOptions (100% Anticheat-Safe, sin watcher), fuerza GPU de Alto Rendimiento y desactiva FSO.",
-            WhatItTouches = @"IFEO\<exe>\PerfOptions (CpuPriorityClass=3, IoPriority=3), DirectX\UserGpuPreferences, AppCompatFlags\Layers",
+            TechnicalDescription = "Configura CpuPriorityClass=3 (alta) e IoPriority=3 en IFEO\\<exe>\\PerfOptions: Windows prioriza el juego frente a procesos de fondo. No toca FSO (en Windows 11 conviene dejarlo activo para Independent Flip).",
+            WhatItTouches = @"IFEO\<exe>\PerfOptions (CpuPriorityClass=3, IoPriority=3)",
             SourceAttribution = "BoringBoredom PC-Tuning §11.42",
             Risk = RiskLevel.Low,
             InMinimal = true,
@@ -1914,14 +1928,6 @@ public sealed class DeclarativeTweakEngine
                         string ifeoPerf = $@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\{game.ExecutableName}\PerfOptions";
                         _audit.SetRegistryValue("GameIfeoHighPriority", RegistryHive.LocalMachine, ifeoPerf, "CpuPriorityClass", 3, RegistryValueKind.DWord);
                         _audit.SetRegistryValue("GameIfeoHighPriority", RegistryHive.LocalMachine, ifeoPerf, "IoPriority", 3, RegistryValueKind.DWord);
-                    }
-                    if (game.HighPerfGpuPreference && !string.IsNullOrWhiteSpace(game.FullExePath))
-                    {
-                        _audit.SetRegistryValue("GameIfeoHighPriority", RegistryHive.CurrentUser, @"Software\Microsoft\DirectX\UserGpuPreferences", game.FullExePath, "GpuPreference=2;", RegistryValueKind.String);
-                    }
-                    if (game.DisableFullscreenOptimizations && !string.IsNullOrWhiteSpace(game.FullExePath))
-                    {
-                        _audit.SetRegistryValue("GameIfeoHighPriority", RegistryHive.CurrentUser, @"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers", game.FullExePath, "~ DisableDXMaximizedWindowedMode", RegistryValueKind.String);
                     }
                 }
                 return (true, $"Optimizaciones por ejecutable aplicadas a {TargetGames.Count} juegos.");
@@ -2119,6 +2125,20 @@ public sealed class DeclarativeTweakEngine
         }
         catch { }
         return null;
+    }
+
+    /// <summary>
+    /// Fija una clave dentro de DirectXUserGlobalSettings ("Clave=Valor;Clave=Valor;") respetando el resto
+    /// (ej. VRROptimizeEnable, AutoHDREnable que el usuario haya configurado en Windows). Antes se sobrescribía todo.
+    /// </summary>
+    internal static string MergeDirectXGlobalSetting(string current, string key, string value)
+    {
+        var pairs = current
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(p => !p.StartsWith(key + "=", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        pairs.Add($"{key}={value}");
+        return string.Join(";", pairs) + ";";
     }
 
     private static int? ReadRegDword(RegistryHive hive, string subKey, string name)
