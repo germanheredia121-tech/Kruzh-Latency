@@ -101,9 +101,58 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 | U5 | Optimizaciones minimalista | ✅ |
 | U6 | GPU minimalista y dinámica por fabricante | ✅ |
 | U7 | Monitor legible (4 indicadores, 1 gráfico, cambios aplicados en lenguaje humano) | ✅ |
-| U8 | Quitar del catálogo los placebo de mouse/GPU/audio (M02-M04, G03, G07, I03, F02) — es T31 | pendiente |
+| U8 | Quitar del catálogo los placebo de mouse/GPU/audio (M02-M04, G03, I03, F02) — es T31. **G07 (HDCP) se mantiene** por decisión del dueño (spec 002) | pendiente |
 | U9 | Ronda 3: sidebar LeftCompact, titlebar unificada, overlay en toda acción, B2, Agregar juego inline, Interrupciones en Optimizaciones, import .nip | ✅ |
 | U10 | Monitor: drivers con más latencia (ETW DPC/ISR por driver, base de T70) | ✅ verificado por el usuario |
 | U11 | Ronda 4: ancho de vistas fijo, sidebar que empuja con cierre animado, modal propio, medición DPC continua | ✅ |
 | U12 | Optimizaciones: pestañas Tweaks · Servicios · Device Manager (catálogo dinámico por PC, perfiles aplican todo) — adelanta T40 y parte de F6 | ✅ |
 | U13 | Debloat de apps AppX (pestaña aparte) — T41 | pendiente |
+
+## Spec 002 — DPC al mínimo: Red, Device Manager, USB, GPU y Pantalla
+Spec: [specs/002-dpc-red-dispositivos-pantalla.md](specs/002-dpc-red-dispositivos-pantalla.md) · ADR-007 (nunca-tocar + Rescate) · ADR-008 (timer y MPO) · ADR-009 (EDID)
+`[P]` = paralelizable dentro de la fase.
+
+### Fase A — Base (secuencial, bloquea todo)
+| ID | Tarea | Deps | Hecho cuando |
+|---|---|---|---|
+| A1 | Fix B3: topología de CPU con structs (`PROCESSOR_RELATIONSHIP` mask en offset 32) | – | test con buffers grabados; máscaras no vacías |
+| A2 | `DeviceInventory` en Infra (SetupAPI/CfgMgr32): presentes + no presentes, padre/hijo, IDs, clase, bus/device/function, problem code, driver, servicio | T25 | fixture del árbol del autor exportado y cargado en tests |
+| A3 | Fixtures reales del autor: árbol de dispositivos (JSON), EDID del GS25F2, opciones de la RTL8125 (`Ndi\Params`) | A2 | archivos en `KruzhLatency.Core.Tests/Fixtures` |
+| A4 | Lista de nunca-tocar en Core (ADR-007) + tests contra el fixture | A2, A3 | ningún bridge/GPU activa/USB del mouse/NIC con enlace/audio default/TPM sale como "deshabilitable" |
+| A5 | `System.Management` en Infra + adaptador WMI (`MSPower_DeviceEnable`, SystemRestore real) | – | test de integración marcado |
+
+### Fase B — Reglas y módulos `[P]` (después de A)
+| ID | Tarea | Deps | Hecho cuando |
+|---|---|---|---|
+| B1 [P] | Motor de reglas de dispositivos: hermanos de GPU (audio fn1, xHCI USB-C, UCSI), NVPCF/Virtual Audio, nodos XInput/HID game controller de teclados, Wi-Fi con Ethernet conectado, 2ª NIC sin enlace, HPET/Wavetable/RRAS/Print Queue/Voice Clarity/MIDI 2.0 | A4 | tests con fixture: detecta lo del chat |
+| B2 [P] | Fantasmas: listado por categoría + `pnputil /remove-device` (desde Competitivo, restore point antes) | A2 | test con fixture; UI avisa que es irreversible |
+| B3 [P] | Dispositivos con error: Code 43 (deshabilitar + aviso físico), Code 28 (link driver chipset) | A2 | test con fixture (RAID Controller, Unknown USB Device) |
+| B4 [P] | Red por chip: tabla RTL8125/RTL8111/I225/I226/I219/Killer, solo keywords y valores permitidos, Speed/Duplex = negociada, reinicio inmediato del adaptador | A3 | tests con `Ndi\Params` del fixture |
+| B5 [P] | Red: detección de filtros NDIS (cFos, MSI LAN Manager, Dragon Center) y driver NetAdapterCx vs NDIS → recomendación con link | A2 | test con fixture |
+| B6 [P] | USB/HID: EnhancedPowerManagement + AllowIdleIrpInD3 en todo USB; casilla "permitir apagar" off vía WMI; consejo de puerto CPU vs chipset | A2, A5 | lectura posterior confirma valores |
+| B7 [P] | GPU: HDCP off (G07 vuelve), MPO estable `OverlayMinFPS=0` (ADR-008), PROCTHROTTLEMIN 100 en el plan | – | tweaks en catálogo con Source |
+| B8 [P] | Timer (ADR-008): fuera de perfiles en W11; experimentales en Entusiasta; limpiar `useplatformclock` | – | presets actualizados |
+| B9 [P] | Hyper-V/VBS off solo Entusiasta + modal anticheat genérico para todo ítem con impacto | – | todo ítem con `AnticheatGate` inseguro abre modal |
+| B10 [P] | Rescate (ADR-007): reactiva lo deshabilitado por KRUZH | A2 | prueba manual en VM |
+
+### Fase C — Pantalla
+| ID | Tarea | Deps | Hecho cuando |
+|---|---|---|---|
+| C1 | Parser EDID en Core: base, Established/Standard/Detailed, CTA-861 (data blocks), DisplayID 1.3/2.0 (Type I/VII), Hz exactos | A3 | fixture GS25F2: 200.000 vs 200.003 Hz |
+| C2 [P] | Infra: monitores reales/fantasma, EDID y `EDID_OVERRIDE` del registro, modo actual (QueryDisplayConfig), cálculo DSC | A2 | lectura en la PC del autor |
+| C3 [P] | Sidebar "Pantalla" (ícono monitor): análisis completo del EDID (timings, data blocks, extensiones) | C1, C2 | revisión manual |
+| C4 | Limpieza: monitores fantasma + `GraphicsDrivers\Configuration/Connectivity` con export previo, reinicio | C2, B2 | revisión manual |
+| C5 | Modo manual: guía de CRU generada con datos reales + panel NVIDIA + OSD + recuperación + Verificar | C3 | revisión manual |
+| C6 | Modo automático: generador de EDID (Core, tests) + escritura `EDID_OVERRIDE` + auto-rollback por tarea programada (60 s) | C1, C5 | tests del generador + prueba en VM |
+
+### Fase D — Monitor con diagnóstico
+| ID | Tarea | Deps | Hecho cuando |
+|---|---|---|---|
+| D1 | Objetivos (pico ≤ 250–300 µs, promedio < 8 µs) y mapeo driver → causa → botón "Arreglar" | B1, B4, B6 | cada driver alto tiene acción |
+| D2 | Mientras mide: sin gráfico en vivo + sugerencia de minimizar | – | dxgkrnl de la propia app no suma |
+
+### Orden sugerido
+1. A1 → A2 → A3 → A4 (+ A5 en paralelo)
+2. B1 · B4 · B7 en paralelo → B2 · B3 · B5 · B6 → B8 · B9 · B10
+3. C1 → C2 → C3 → C4 → C5 → C6
+4. D1 · D2

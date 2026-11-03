@@ -7,7 +7,7 @@ Límite duro (ADR-004): nunca inyectar ni leer/escribir archivos o memoria de lo
 .NET 8, WinUI 3 (Windows App SDK 1.5, unpackaged, self-contained x64), CommunityToolkit.Mvvm, xUnit.
 
 ## Documentos (leer antes de codear)
-- Spec: `specs/001-kruzh-latency-mvp.md` · Plan: `docs/PLAN.md` · Tareas: `tasks.md`
+- Specs: `specs/001-kruzh-latency-mvp.md`, `specs/002-dpc-red-dispositivos-pantalla.md` · Plan: `docs/PLAN.md` · Tareas: `tasks.md`
 - Bugs conocidos y veredicto por tweak: `docs/AUDITORIA.md`
 - Decisiones: `docs/decisions/` (respetarlas; si una tarea las contradice, frenar y preguntar)
 
@@ -29,5 +29,5 @@ Antes de decir "listo": build + tests en verde.
 - La descripción de un tweak sale de sus operaciones; no escribir texto que prometa algo que el código no hace.
 - No agregar tweaks sin `Source` y sin cumplir ADR-002.
 - NO ejecutar la app ni tests de integración en la máquina de desarrollo sin que el usuario lo pida: modifican el sistema real.
-- No instalar paquetes NuGet nuevos sin preguntar. Aprobados: `Microsoft.Diagnostics.Tracing.TraceEvent` (solo en Infra, para ETW).
+- No instalar paquetes NuGet nuevos sin preguntar. Aprobados: `Microsoft.Diagnostics.Tracing.TraceEvent` y `System.Management` (solo en Infra: ETW y WMI).
 - `research/` es material de referencia: no se compila ni se modifica.

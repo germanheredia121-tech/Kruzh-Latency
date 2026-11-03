@@ -22,3 +22,6 @@ desktop.ini
 # Artefactos de makepri (por si algun build viejo los deja en la raiz del proyecto)
 pri-stage/
 priconfig.xml
+
+# Conversaciones privadas de referencia (no se versionan)
+chat.md
