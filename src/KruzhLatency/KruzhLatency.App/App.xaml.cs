@@ -47,6 +47,8 @@ public partial class App : Application
                 {
                     splash.SetStatusText("Iniciando servicios de auditoría...");
                     AuditService = new TransactionalAuditService();
+                    // B2: limpiar entradas "*_Rev" de v3 (revertirlas re-aplicaba tweaks).
+                    AuditService.DiscardEntries(TransactionalAuditService.IsLegacyFallbackEntry);
                     LicenseService = new AntiTamperAndLicenseService();
 
                     splash.SetStatusText("Detectando perfil de hardware...");

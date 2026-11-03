@@ -649,6 +649,9 @@ public sealed class DeclarativeTweakEngine
                     msg = detailOs;
                 }
             }
+            // B2: los fallbacks escriben con ids "*_Rev"; esas entradas no deben quedar en el journal
+            // (revertirlas después volvería a aplicar el tweak).
+            _audit.DiscardEntries(TransactionalAuditService.IsLegacyFallbackEntry);
             return (reverted, msg);
         }
         catch (Exception ex)

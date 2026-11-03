@@ -37,6 +37,29 @@ public sealed class TransactionalAuditService
         }
     }
 
+    /// <summary>
+    /// Descarta entradas del journal SIN restaurarlas. Se usa para las entradas "*_Rev" que dejaban los fallbacks de
+    /// revert de v3 (bug B2): su "valor original" es el valor tweakeado, así que revertirlas re-aplicaba el tweak.
+    /// </summary>
+    public int DiscardEntries(Func<string, bool> tweakIdPredicate)
+    {
+        lock (_sync)
+        {
+            var keys = _journal.TweakBackups.Keys.Where(tweakIdPredicate).ToList();
+            foreach (var k in keys)
+            {
+                _journal.TweakBackups.Remove(k);
+            }
+            if (keys.Count > 0)
+            {
+                SaveJournalLocked();
+            }
+            return keys.Count;
+        }
+    }
+
+    public static bool IsLegacyFallbackEntry(string tweakId) => tweakId.EndsWith("_Rev", StringComparison.Ordinal);
+
     /// <summary>Cambios ACTIVOS (con backup pendiente de revertir), agrupados por tweak: cantidad de valores y fecha del último.</summary>
     public IReadOnlyList<(string TweakId, int ValueCount, DateTime LastChangeUtc)> GetActiveBackupSummary()
     {

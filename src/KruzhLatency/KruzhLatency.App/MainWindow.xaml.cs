@@ -258,7 +258,10 @@ public sealed partial class MainWindow : Window
         else if (targetTag == "IrqMsi")
         {
             RefreshGpuPageUi();
-            RefreshPciAndMsiUi();
+        }
+        else if (targetTag == "Tweaks")
+        {
+            RefreshPciAndMsiUi(); // "Interrupciones (avanzado)" vive al final de Optimizaciones
         }
         else if (targetTag == "GamesNvidia")
         {
@@ -864,6 +867,7 @@ public sealed partial class MainWindow : Window
         try
         {
             // 1. Overlay: velo con blur + box-loader + carrusel de 3 líneas
+            OverlayTitleText.Text = "Aplicando cambios";
             ApplyingChangesOverlay.Visibility = Visibility.Visible;
             StartOverlaySpinnerAnimation();
 
@@ -1032,6 +1036,115 @@ public sealed partial class MainWindow : Window
                 "Reinicio recomendado",
                 "Algunos cambios a nivel de kernel/BCD requieren reiniciar la PC para surtir efecto total.");
         }
+    }
+
+    // ========================================================================================
+    // RUNNER COMÚN CON OVERLAY: toda acción que toca el sistema muestra el box-loader + carrusel y su resultado.
+    // ========================================================================================
+
+    /// <summary>Un paso visible en el carrusel. <see cref="Run"/> se ejecuta en background y nunca debe tocar la UI.</summary>
+    private sealed record OverlayStep(string Title, Func<(bool Success, string Detail)> Run, bool RequiresReboot = false);
+
+    private sealed record OverlayStepResult(OverlayStep Step, bool Success, string Detail);
+
+    /// <summary>
+    /// Ejecuta los pasos uno por uno mostrando el overlay (cajas + carrusel + barra). Cada paso corre en background,
+    /// un fallo no corta el resto, y al terminar el carrusel muestra el resultado. Devuelve el resultado de cada paso.
+    /// </summary>
+    private async Task<IReadOnlyList<OverlayStepResult>> RunStepsWithOverlayAsync(string heading, string subtitle, IReadOnlyList<OverlayStep> steps)
+    {
+        var results = new List<OverlayStepResult>();
+        if (steps.Count == 0 || _isApplyingBatch) return results;
+
+        _isApplyingBatch = true;
+        _telemetryTimer.Stop();
+        try
+        {
+            ApplyingChangesOverlay.Visibility = Visibility.Visible;
+            StartOverlaySpinnerAnimation();
+            OverlayTitleText.Text = heading;
+            OverlayRestorePointText.Text = subtitle;
+            OverlayProgressBar.Value = 0;
+            OverlayCountText.Text = $"0 / {steps.Count}";
+            OverlayStepDescText.Text = heading + "…";
+
+            string Title(int i) => i >= 0 && i < steps.Count ? steps[i].Title : (i == steps.Count ? "(Fin)" : string.Empty);
+            SetCarouselRows("(Inicio)", string.Empty, false, Title(0), Title(1), Title(2));
+
+            string lastTitle = "(Inicio)";
+            string lastStatus = string.Empty;
+            bool lastFailed = false;
+
+            for (int i = 0; i < steps.Count; i++)
+            {
+                var step = steps[i];
+                var watch = Stopwatch.StartNew();
+                if (i > 0)
+                {
+                    int idx = i;
+                    string pt = lastTitle, ps = lastStatus;
+                    bool pf = lastFailed;
+                    await SlideCarouselUpAsync(Title(idx + 1), () => SetCarouselRows(pt, ps, pf, Title(idx), Title(idx + 1), Title(idx + 2)));
+                }
+
+                (bool ok, string detail) outcome;
+                try
+                {
+                    outcome = await Task.Run(step.Run);
+                }
+                catch (Exception ex)
+                {
+                    App.LogError($"Overlay step {step.Title}", ex);
+                    outcome = (false, $"Error inesperado: {ex.Message}");
+                }
+
+                results.Add(new OverlayStepResult(step, outcome.ok, outcome.detail));
+                lastTitle = step.Title;
+                lastStatus = outcome.ok ? "listo ✓" : "falló ✗";
+                lastFailed = !outcome.ok;
+                OverlayProgressBar.Value = (double)(i + 1) / steps.Count * 100.0;
+                OverlayCountText.Text = $"{i + 1} / {steps.Count}";
+
+                int remaining = MinCarouselStepMs - (int)watch.ElapsedMilliseconds;
+                if (remaining > 0) await Task.Delay(remaining);
+            }
+
+            int failed = results.Count(r => !r.Success);
+            bool needsReboot = results.Any(r => r.Success && r.Step.RequiresReboot);
+            string final = failed == 0
+                ? (needsReboot ? "Listo · reiniciá la PC para que tome efecto" : "¡Listo!")
+                : $"Terminado con {failed} error(es)";
+            string ft = lastTitle, fs = lastStatus;
+            bool ff = lastFailed;
+            await SlideCarouselUpAsync(string.Empty, () =>
+            {
+                SetCarouselRows(ft, fs, ff, final, string.Empty, string.Empty);
+                CarouselActiveStatusText.Text = string.Empty;
+                CarouselNextStatusText.Text = string.Empty;
+            });
+            OverlayStepDescText.Text = failed == 0 ? "Cambios verificados." : "Revisá el detalle de los errores.";
+            await Task.Delay(900);
+        }
+        finally
+        {
+            ApplyingChangesOverlay.Visibility = Visibility.Collapsed;
+            StopOverlaySpinnerAnimation();
+            _isApplyingBatch = false;
+            _telemetryTimer.Start();
+        }
+
+        var failures = results.Where(r => !r.Success).ToList();
+        if (failures.Count > 0)
+        {
+            await ShowSimpleInfoModalAsync(
+                $"{failures.Count} acción(es) no se completaron",
+                string.Join("\n", failures.Select(f => $"• {f.Step.Title}: {f.Detail}")) +
+                "\n\nDetalle técnico en %LOCALAPPDATA%\\KruzhLatency\\errors.log");
+        }
+        SetStatus(failures.Count == 0
+            ? $"{heading}: {results.Count} acción(es) completadas."
+            : $"{heading}: {results.Count - failures.Count} completadas, {failures.Count} con error.");
+        return results;
     }
 
     private Storyboard? _overlaySpinnerStoryboard;
@@ -1585,6 +1698,26 @@ public sealed partial class MainWindow : Window
         tab.Background = isActive ? new SolidColorBrush(Windows.UI.Color.FromArgb(255, 14, 14, 14)) : TransparentBrush;
     }
 
+    /// <summary>Paso de overlay que APLICA un tweak del catálogo y verifica releyendo el estado real.</summary>
+    private static OverlayStep ApplyTweakStep(DeclarativeTweakItem item)
+    {
+        string optionKey = item.SelectedOptionKey; // se lee en UI; el paso corre en background
+        return new OverlayStep(item.Title, () =>
+        {
+            var (ok, detail) = DeclarativeTweakEngine.RunApplyAction(item, optionKey);
+            if (!ok) return (false, detail);
+            bool verified;
+            try { verified = item.ReadLiveState(); } catch { verified = false; }
+            return (true, verified
+                ? "Aplicado y verificado."
+                : (item.RequiresReboot ? "Aplicado: toma efecto al reiniciar." : "Aplicado, pero no se pudo verificar el estado."));
+        }, item.RequiresReboot);
+    }
+
+    /// <summary>Paso de overlay que REVIERTE un tweak del catálogo a sus valores originales (journal).</summary>
+    private static OverlayStep RevertTweakStep(DeclarativeTweakItem item) =>
+        new(item.Title, () => App.TweakEngine.RunRevertActions(item), item.RequiresReboot);
+
     private async void GpuDriverToggle_Toggled(object sender, RoutedEventArgs e)
     {
         if (_isHandlingToggleChange || _isApplyingGpuSetting) return;
@@ -1593,38 +1726,21 @@ public sealed partial class MainWindow : Window
         if (item == null || ts.IsOn == item.IsLiveApplied) return;
 
         _isApplyingGpuSetting = true;
-        ts.IsEnabled = false;
         try
         {
-            TweakExecutionReport report;
             if (ts.IsOn)
             {
                 var early = App.TweakEngine.PreCheckApply(item);
                 if (early != null)
                 {
-                    report = early;
+                    SetStatus(early.Message);
+                    return;
                 }
-                else
-                {
-                    string optionKey = item.SelectedOptionKey;
-                    var (ok, detail) = await Task.Run(() => DeclarativeTweakEngine.RunApplyAction(item, optionKey));
-                    report = App.TweakEngine.CompleteApply(item, ok, detail);
-                }
+                await RunStepsWithOverlayAsync("Aplicando cambios", "Ajuste del driver", new[] { ApplyTweakStep(item) });
             }
             else
             {
-                var (ok, detail) = await Task.Run(() => App.TweakEngine.RunRevertActions(item));
-                report = App.TweakEngine.CompleteRevert(item, ok, detail);
-            }
-
-            SetStatus(report.Message);
-            if (!report.Success)
-            {
-                await ShowSimpleInfoModalAsync("No se pudo aplicar", $"{item.Title}: {report.Message}");
-            }
-            else if (item.RequiresReboot)
-            {
-                SetStatus($"{report.Message} · Reiniciá la PC para que tome efecto.");
+                await RunStepsWithOverlayAsync("Revirtiendo cambios", "Volviendo al valor original", new[] { RevertTweakStep(item) });
             }
         }
         catch (Exception ex)
@@ -1633,8 +1749,8 @@ public sealed partial class MainWindow : Window
         }
         finally
         {
-            ts.IsEnabled = true;
             _isApplyingGpuSetting = false;
+            RefreshLiveTweaksStateInPlace();
             RefreshGpuPageUi();
             RefreshJournalAndLicenseUi();
         }
@@ -1647,13 +1763,18 @@ public sealed partial class MainWindow : Window
 
     private void GpuProfileCard_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
-        if (sender is Border b && b.Tag as string != _selectedGpuProfile) b.BorderBrush = GpuProfileHoverBorder;
+        if (sender is Border b && !IsSelectedGpuCard(b)) b.BorderBrush = GpuProfileHoverBorder;
     }
 
     private void GpuProfileCard_PointerExited(object sender, PointerRoutedEventArgs e)
     {
-        if (sender is Border b && b.Tag as string != _selectedGpuProfile) b.BorderBrush = GpuProfileIdleBorder;
+        if (sender is Border b && !IsSelectedGpuCard(b)) b.BorderBrush = GpuProfileIdleBorder;
     }
+
+    private bool IsSelectedGpuCard(Border card) =>
+        string.Equals(card.Tag as string,
+            _selectedGpuProfile != null && _selectedGpuProfile.StartsWith("Custom:", StringComparison.Ordinal) ? "Custom" : _selectedGpuProfile,
+            StringComparison.Ordinal);
 
     private void UpdateGpuProfileSelectionUi(string? selected)
     {
@@ -1662,10 +1783,12 @@ public sealed partial class MainWindow : Window
         {
             (GpuProfileCompetitive, GpuProfileCompetitiveCheck),
             (GpuProfileCompetitiveGsync, GpuProfileCompetitiveGsyncCheck),
-            (GpuProfileDefault, GpuProfileDefaultCheck)
+            (GpuProfileDefault, GpuProfileDefaultCheck),
+            (GpuProfileCustom, GpuProfileCustomCheck)
         })
         {
-            bool isSel = string.Equals(card.Tag as string, selected, StringComparison.Ordinal);
+            string? normalized = selected != null && selected.StartsWith("Custom:", StringComparison.Ordinal) ? "Custom" : selected;
+            bool isSel = string.Equals(card.Tag as string, normalized, StringComparison.Ordinal);
             card.BorderBrush = isSel ? GpuProfileSelectedBorder : GpuProfileIdleBorder;
             check.Background = isSel ? GpuProfileSelectedBorder : TransparentBrush;
             if (check.Child is UIElement tick) tick.Visibility = isSel ? Visibility.Visible : Visibility.Collapsed;
@@ -1676,6 +1799,7 @@ public sealed partial class MainWindow : Window
             "Competitive" => "Competitivo aplicado.",
             "CompetitiveGsync" => "Competitivo + G-SYNC aplicado.",
             "Default" => "Perfil base de NVIDIA (predeterminado).",
+            { } s when s.StartsWith("Custom:", StringComparison.Ordinal) => $"Perfil personalizado aplicado: {s[7..]}.",
             _ => "Ningún perfil seleccionado."
         };
     }
@@ -1684,62 +1808,73 @@ public sealed partial class MainWindow : Window
     {
         if (sender is not Border card || card.Tag is not string profile) return;
         if (App.HardwareService.CurrentProfile.GpuVendor != GpuVendorKind.Nvidia) return;
-        if (profile == _selectedGpuProfile || _isApplyingGpuSetting) return;
+        if (_isApplyingGpuSetting) return;
+
+        string title;
+        Func<(bool Success, string Detail)> run;
+        string profileToSave = profile;
+
+        if (profile == "Custom")
+        {
+            // Importar un .nip propio (exportado desde NVIDIA Profile Inspector).
+            string? nipPath = Win32DialogService.ShowOpenFileDialog(
+                GetWindowHandle(),
+                "Importar perfil de NVIDIA (.nip)",
+                "Perfil NVIDIA Profile Inspector (*.nip)\0*.nip\0");
+            if (string.IsNullOrWhiteSpace(nipPath) || !File.Exists(nipPath)) return;
+            title = $"Perfil personalizado · {Path.GetFileNameWithoutExtension(nipPath)}";
+            run = () => ImportNvidiaProfileFile(nipPath);
+            profileToSave = $"Custom:{Path.GetFileNameWithoutExtension(nipPath)}";
+        }
+        else
+        {
+            if (profile == _selectedGpuProfile) return;
+            (title, run) = profile switch
+            {
+                "Competitive" => ("Perfil Competitivo", (Func<(bool, string)>)(() => App.NvidiaDriversService.ApplyCompleteNvidiaNipProfile(
+                    forceP2Off: true, disableTelemetry: true, enableReflexLowLatency: true, gsyncCompetitiveOff: true))),
+                "CompetitiveGsync" => ("Perfil Competitivo + G-SYNC", () => App.NvidiaDriversService.ApplyCompleteNvidiaNipProfile(
+                    forceP2Off: true, disableTelemetry: true, enableReflexLowLatency: true, gsyncCompetitiveOff: false)),
+                _ => ("Perfil predeterminado de NVIDIA", () => ImportNvidiaProfileFile(Path.Combine(AppContext.BaseDirectory, "Assets", "Tools", "Base Profile.nip")))
+            };
+        }
 
         _isApplyingGpuSetting = true;
-        GpuProfileCardsGrid.IsHitTestVisible = false;
-        GpuProfileStatusText.Text = "Aplicando perfil del driver…";
         try
         {
-            var (ok, msg) = await Task.Run(() => profile switch
+            var results = await RunStepsWithOverlayAsync("Aplicando perfil del driver", "NVIDIA Profile Inspector", new[] { new OverlayStep(title, run) });
+            if (results.Count == 1 && results[0].Success)
             {
-                "Competitive" => App.NvidiaDriversService.ApplyCompleteNvidiaNipProfile(
-                    forceP2Off: true, disableTelemetry: true, enableReflexLowLatency: true, gsyncCompetitiveOff: true),
-                "CompetitiveGsync" => App.NvidiaDriversService.ApplyCompleteNvidiaNipProfile(
-                    forceP2Off: true, disableTelemetry: true, enableReflexLowLatency: true, gsyncCompetitiveOff: false),
-                _ => RestoreBaseNvidiaProfile()
-            });
-
-            SetStatus(msg);
-            if (ok)
-            {
-                SaveGpuProfile(profile);
-                UpdateGpuProfileSelectionUi(profile);
-            }
-            else
-            {
-                UpdateGpuProfileSelectionUi(_selectedGpuProfile);
-                await ShowSimpleInfoModalAsync("No se pudo aplicar el perfil", msg);
+                SaveGpuProfile(profileToSave);
+                UpdateGpuProfileSelectionUi(profileToSave);
             }
         }
         catch (Exception ex)
         {
             App.LogError($"GPU profile {profile}", ex);
-            UpdateGpuProfileSelectionUi(_selectedGpuProfile);
         }
         finally
         {
             _isApplyingGpuSetting = false;
-            GpuProfileCardsGrid.IsHitTestVisible = true;
         }
     }
 
-    /// <summary>Restaura el Base Profile de NVIDIA que viene con la app (estaba buscándolo en Assets\Data; vive en Assets\Tools).</summary>
-    private static (bool Success, string Message) RestoreBaseNvidiaProfile()
+    /// <summary>
+    /// Importa un .nip en el driver con NVIDIA Profile Inspector y valida exit code + timeout.
+    /// (El "Predeterminado" buscaba Base Profile.nip en Assets\Data; vive en Assets\Tools.)
+    /// </summary>
+    private static (bool Success, string Message) ImportNvidiaProfileFile(string nipPath)
     {
         string? inspector = App.NvidiaDriversService.FindNvidiaProfileInspectorExe();
-        string baseNip = Path.Combine(AppContext.BaseDirectory, "Assets", "Tools", "Base Profile.nip");
-        if (string.IsNullOrEmpty(inspector) || !File.Exists(baseNip))
-        {
-            return (false, "No se encontró nvidiaProfileInspector.exe o Base Profile.nip en Assets\\Tools.");
-        }
+        if (string.IsNullOrEmpty(inspector)) return (false, "No se encontró nvidiaProfileInspector.exe en Assets\\Tools.");
+        if (!File.Exists(nipPath)) return (false, $"No se encontró el archivo {Path.GetFileName(nipPath)}.");
 
         try
         {
             using var proc = Process.Start(new ProcessStartInfo
             {
                 FileName = inspector,
-                Arguments = $"\"{baseNip}\" -silent",
+                Arguments = $"\"{nipPath}\" -silent",
                 CreateNoWindow = true,
                 UseShellExecute = false
             });
@@ -1750,7 +1885,7 @@ public sealed partial class MainWindow : Window
                 return (false, "NVIDIA Profile Inspector no respondió a tiempo.");
             }
             return proc.ExitCode == 0
-                ? (true, "Perfil base de NVIDIA restaurado.")
+                ? (true, $"Perfil {Path.GetFileName(nipPath)} importado en el driver.")
                 : (false, $"NVIDIA Profile Inspector terminó con código {proc.ExitCode}.");
         }
         catch (Exception ex)
@@ -1777,44 +1912,61 @@ public sealed partial class MainWindow : Window
         SetStatus("Bus PCI (HKLM\\SYSTEM\\CurrentControlSet\\Enum\\PCI) re-escaneado.");
     }
 
-    private void ApplySafeMsiAllBtn_Click(object sender, RoutedEventArgs e)
+    private async void ApplySafeMsiAllBtn_Click(object sender, RoutedEventArgs e)
     {
-        var (_, summary) = App.IrqMsiService.ApplySafePciMsiMode();
-        RefreshPciAndMsiUi();
-        RefreshTweaksListUi();
-        UpdateScoreRingAndCounters();
-        SetStatus(summary);
+        await RunStepsWithOverlayAsync("Aplicando cambios", "Modo MSI en dispositivos compatibles",
+            new[] { new OverlayStep("Activar MSI seguro", () => App.IrqMsiService.ApplySafePciMsiMode(), RequiresReboot: true) });
+        AfterPciChange();
     }
 
-    private void ApplyOptimalIrqPinningBtn_Click(object sender, RoutedEventArgs e)
+    private async void ApplyOptimalIrqPinningBtn_Click(object sender, RoutedEventArgs e)
     {
-        var (_, summary) = App.IrqMsiService.ApplyOptimalPciIrqAffinity();
-        RefreshPciAndMsiUi();
-        RefreshTweaksListUi();
-        UpdateScoreRingAndCounters();
-        SetStatus(summary);
+        await RunStepsWithOverlayAsync("Aplicando cambios", "Afinidad de interrupciones",
+            new[] { new OverlayStep("Balancear interrupciones fuera del Core 0", () => App.IrqMsiService.ApplyOptimalPciIrqAffinity(), RequiresReboot: true) });
+        AfterPciChange();
     }
 
-    private void RevertAllPciIrqMsiBtn_Click(object sender, RoutedEventArgs e)
+    private async void RevertAllPciIrqMsiBtn_Click(object sender, RoutedEventArgs e)
     {
-        App.AuditService.RevertTweakFromJournal("PciMsiModeV3", out string msiMsg);
-        App.AuditService.RevertTweakFromJournal("PciIrqSmartBalancer", out string irqMsg);
-        RefreshPciAndMsiUi();
-        RefreshTweaksListUi();
-        SetStatus($"PCI MSI/IRQ revertido: {msiMsg} · {irqMsg}");
+        await RunStepsWithOverlayAsync("Revirtiendo cambios", "Interrupciones y MSI", new[]
+        {
+            new OverlayStep("Modo MSI", () =>
+            {
+                bool ok = App.AuditService.RevertTweakFromJournal("PciMsiModeV3", out string m);
+                return (true, ok ? m : "No había cambios de MSI para revertir.");
+            }, RequiresReboot: true),
+            new OverlayStep("Afinidad de interrupciones", () =>
+            {
+                bool ok = App.AuditService.RevertTweakFromJournal("PciIrqSmartBalancer", out string m);
+                return (true, ok ? m : "No había cambios de afinidad para revertir.");
+            }, RequiresReboot: true)
+        });
+        AfterPciChange();
     }
 
-    private void EnableSinglePciMsiBtn_Click(object sender, RoutedEventArgs e)
+    private async void EnableSinglePciMsiBtn_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not string pnpId) return;
         string msiPath = $@"SYSTEM\CurrentControlSet\Enum\{pnpId}\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties";
         string affPath = $@"SYSTEM\CurrentControlSet\Enum\{pnpId}\Device Parameters\Interrupt Management\Affinity Policy";
 
-        App.AuditService.SetRegistryValue("PciMsiModeV3", Microsoft.Win32.RegistryHive.LocalMachine, msiPath, "MSISupported", 1, Microsoft.Win32.RegistryValueKind.DWord);
-        App.AuditService.SetRegistryValue("PciMsiModeV3", Microsoft.Win32.RegistryHive.LocalMachine, affPath, "DevicePriority", 3, Microsoft.Win32.RegistryValueKind.DWord);
+        await RunStepsWithOverlayAsync("Aplicando cambios", "Modo MSI", new[]
+        {
+            new OverlayStep("MSI + prioridad alta", () =>
+            {
+                App.AuditService.SetRegistryValue("PciMsiModeV3", Microsoft.Win32.RegistryHive.LocalMachine, msiPath, "MSISupported", 1, Microsoft.Win32.RegistryValueKind.DWord);
+                App.AuditService.SetRegistryValue("PciMsiModeV3", Microsoft.Win32.RegistryHive.LocalMachine, affPath, "DevicePriority", 3, Microsoft.Win32.RegistryValueKind.DWord);
+                return (true, "MSI activado y prioridad alta: toma efecto al reiniciar.");
+            }, RequiresReboot: true)
+        });
+        AfterPciChange();
+    }
 
+    private void AfterPciChange()
+    {
         RefreshPciAndMsiUi();
-        SetStatus($"MSI Mode = 1 y DevicePriority = High aplicados en {pnpId}.");
+        RefreshLiveTweaksStateInPlace();
+        RefreshJournalAndLicenseUi();
     }
 
     // ========================================================================================
@@ -2108,26 +2260,12 @@ public sealed partial class MainWindow : Window
         bool qos = ModalQosToggle.IsOn;
         bool gpuPref = ModalGpuPrefRow.Visibility == Visibility.Visible && ModalGpuPrefToggle.IsOn;
 
-        ModalApplyBtn.IsEnabled = false;
-        ModalRevertBtn.IsEnabled = false;
-        try
-        {
-            var (ok, detail) = await Task.Run(() => App.GameOptimizer.Apply(game, priority, qos, gpuPref));
-            SetStatus(detail);
-            if (!ok)
-            {
-                await ShowSimpleInfoModalAsync("No se pudo aplicar", detail);
-            }
-        }
-        finally
-        {
-            ModalApplyBtn.IsEnabled = true;
-            ModalRevertBtn.IsEnabled = true;
-            GameOptimizationModalOverlay.Visibility = Visibility.Collapsed;
-            _selectedGameForModal = null;
-            RefreshGamesAndNvidiaUi();
-            RefreshJournalAndLicenseUi();
-        }
+        GameOptimizationModalOverlay.Visibility = Visibility.Collapsed;
+        _selectedGameForModal = null;
+        await RunStepsWithOverlayAsync("Aplicando cambios", game.Name,
+            new[] { new OverlayStep($"Optimizaciones de {game.Name}", () => App.GameOptimizer.Apply(game, priority, qos, gpuPref)) });
+        RefreshGamesAndNvidiaUi();
+        RefreshJournalAndLicenseUi();
     }
 
     private async void ModalRevertBtn_Click(object sender, RoutedEventArgs e)
@@ -2135,26 +2273,12 @@ public sealed partial class MainWindow : Window
         if (_selectedGameForModal == null) return;
         var game = _selectedGameForModal;
 
-        ModalApplyBtn.IsEnabled = false;
-        ModalRevertBtn.IsEnabled = false;
-        try
-        {
-            var (ok, detail) = await Task.Run(() => App.GameOptimizer.Revert(game));
-            SetStatus(detail);
-            if (!ok)
-            {
-                await ShowSimpleInfoModalAsync("No se pudo revertir", detail);
-            }
-        }
-        finally
-        {
-            ModalApplyBtn.IsEnabled = true;
-            ModalRevertBtn.IsEnabled = true;
-            GameOptimizationModalOverlay.Visibility = Visibility.Collapsed;
-            _selectedGameForModal = null;
-            RefreshGamesAndNvidiaUi();
-            RefreshJournalAndLicenseUi();
-        }
+        GameOptimizationModalOverlay.Visibility = Visibility.Collapsed;
+        _selectedGameForModal = null;
+        await RunStepsWithOverlayAsync("Revirtiendo cambios", game.Name,
+            new[] { new OverlayStep($"Optimizaciones de {game.Name}", () => App.GameOptimizer.Revert(game)) });
+        RefreshGamesAndNvidiaUi();
+        RefreshJournalAndLicenseUi();
     }
 
     private void AddCustomGameExeBtn_Click(object sender, RoutedEventArgs e)
@@ -2216,25 +2340,9 @@ public sealed partial class MainWindow : Window
 
     private async void ClearShaderCacheBtn_Click(object sender, RoutedEventArgs e)
     {
-        ClearShaderCacheBtn.IsEnabled = false;
-        ClearShaderCacheBtn.Content = "Limpiando…";
-        try
-        {
-            // Borra miles de archivos: fuera del hilo de UI.
-            var (_, msg) = await Task.Run(() => App.NvidiaDriversService.ClearShaderCaches());
-            SetStatus(msg);
-            ClearShaderCacheBtn.Content = "Listo ✓";
-            await Task.Delay(1500);
-        }
-        catch (Exception ex)
-        {
-            App.LogError("Clear shader cache", ex);
-        }
-        finally
-        {
-            ClearShaderCacheBtn.Content = "Limpiar";
-            ClearShaderCacheBtn.IsEnabled = true;
-        }
+        // Borra miles de archivos: corre en background dentro del overlay.
+        await RunStepsWithOverlayAsync("Limpiando caché", "Caché de shaders de DirectX / NVIDIA / AMD",
+            new[] { new OverlayStep("Limpiar caché de shaders", () => App.NvidiaDriversService.ClearShaderCaches()) });
     }
 
     // ========================================================================================
@@ -2586,38 +2694,28 @@ public sealed partial class MainWindow : Window
         return utc.ToLocalTime().ToString("dd/MM/yyyy");
     }
 
+    /// <summary>Paso de overlay que revierte una entrada del journal (tweak del catálogo, juego, o id suelto).</summary>
+    private static OverlayStep BuildJournalRevertStep(string tweakId)
+    {
+        var item = App.TweakEngine.AllTweaks.FirstOrDefault(t => t.Id == tweakId);
+        if (item != null)
+        {
+            return RevertTweakStep(item);
+        }
+        return new OverlayStep(JournalTitleFor(tweakId), () =>
+        {
+            bool reverted = App.AuditService.RevertTweakFromJournal(tweakId, out string msg);
+            return (reverted, msg);
+        });
+    }
+
     private async void RevertSingleJournalEntryBtn_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not string tweakId) return;
-        btn.IsEnabled = false;
-        try
-        {
-            var item = App.TweakEngine.AllTweaks.FirstOrDefault(t => t.Id == tweakId);
-            if (item != null)
-            {
-                var (ok, detail) = await Task.Run(() => App.TweakEngine.RunRevertActions(item));
-                var report = App.TweakEngine.CompleteRevert(item, ok, detail);
-                SetStatus(report.Message);
-            }
-            else
-            {
-                var (ok, msg) = await Task.Run(() =>
-                {
-                    bool reverted = App.AuditService.RevertTweakFromJournal(tweakId, out string m);
-                    return (reverted, m);
-                });
-                SetStatus(msg);
-            }
-        }
-        catch (Exception ex)
-        {
-            App.LogError($"Revert journal {tweakId}", ex);
-        }
-        finally
-        {
-            RefreshJournalAndLicenseUi();
-            RefreshLiveTweaksStateInPlace();
-        }
+        await RunStepsWithOverlayAsync("Revirtiendo cambios", "Restaurando los valores originales", new[] { BuildJournalRevertStep(tweakId) });
+        RefreshLiveTweaksStateInPlace();
+        RefreshGamesAndNvidiaUi();
+        RefreshJournalAndLicenseUi();
     }
 
     private void RefreshJournalAndLicenseUi()
@@ -2659,24 +2757,31 @@ public sealed partial class MainWindow : Window
 
     private async void RevertAllFromJournalBtn_Click(object sender, RoutedEventArgs e)
     {
+        var active = App.AuditService.GetActiveBackupSummary();
+        if (active.Count == 0)
+        {
+            await ShowSimpleInfoModalAsync("Nada para revertir", "No hay cambios de KRUZH LATENCY aplicados en esta PC.");
+            return;
+        }
+
         var confirm = new ContentDialog
         {
-            Title = "Revertir todos los cambios desde el Journal",
-            Content = "¿Deseás restaurar todos los valores originales registrados en el Journal de Auditoría? No se eliminará ninguna rama del registro.",
+            Title = "Revertir todos los cambios",
+            Content = $"Se van a restaurar los valores originales de {active.Count} optimización(es). Algunos cambios necesitan reiniciar la PC.",
             PrimaryButtonText = "Revertir todo",
             CloseButtonText = "Cancelar",
             DefaultButton = ContentDialogButton.Close,
             XamlRoot = RootGrid.XamlRoot
         };
-
         if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
 
-        App.AuditService.RevertAllFromJournal(out string summary);
-        App.TweakEngine.RefreshAll();
+        var steps = active.Select(a => BuildJournalRevertStep(a.TweakId)).ToList();
+        await RunStepsWithOverlayAsync("Revirtiendo cambios", "Restaurando los valores originales", steps);
+
+        RefreshLiveTweaksStateInPlace();
         RefreshTweaksListUi();
-        UpdateScoreRingAndCounters();
+        RefreshGamesAndNvidiaUi();
         RefreshJournalAndLicenseUi();
-        SetStatus(summary);
     }
 
     private async void ActivateLicenseBtn_Click(object sender, RoutedEventArgs e)

@@ -9,7 +9,8 @@
     Title="KRUZH LATENCY">
 
     <!-- Solid Opaque Root Grid (#0E0F11) - Honest Program Style -->
-    <Grid x:Name="RootGrid" Background="{StaticResource KruzhBgBrush}">
+    <!-- Fondo sólido igual al del contenido: la barra de título queda unificada (antes el degradé #121212 la diferenciaba). -->
+    <Grid x:Name="RootGrid" Background="#0F0F0F">
         <Grid.RowDefinitions>
             <RowDefinition Height="38" />
             <RowDefinition Height="*" />
@@ -24,14 +25,15 @@
                 FontSize="12"
                 FontWeight="Normal"
                 Foreground="{StaticResource KruzhTextSecondaryBrush}"
-                VerticalAlignment="Center" />
+                VerticalAlignment="Center"
+                Visibility="Collapsed" />
         </Grid>
 
         <!-- ==================== NATIVE EXPANDABLE NAVIGATIONVIEW ==================== -->
         <NavigationView
             x:Name="MainNavView"
             Grid.Row="1"
-            PaneDisplayMode="Left"
+            PaneDisplayMode="LeftCompact"
             IsPaneToggleButtonVisible="True"
             OpenPaneLength="240"
             CompactPaneLength="48"
@@ -584,9 +586,6 @@
                                                                         <Ellipse Width="6" Height="6" Fill="{StaticResource KruzhTextPrimaryBrush}" VerticalAlignment="Center"
                                                                                  Visibility="{Binding PendingVisibility}" ToolTipService.ToolTip="Cambio pendiente de aplicar" />
                                                                     </StackPanel>
-                                                                    <TextBlock Text="{Binding ShortSummary}" FontSize="12.5"
-                                                                               Foreground="{StaticResource KruzhTextTertiaryBrush}"
-                                                                               MaxLines="1" TextTrimming="CharacterEllipsis" />
                                                                 </StackPanel>
 
                                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
@@ -631,6 +630,46 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
+                                <!-- Interrupciones (avanzado): lista PCI / MSI. Se reemplaza por el auto-tune MSI (T70-T72). -->
+                            <Expander Margin="0,10,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                      Background="Transparent" BorderBrush="{StaticResource KruzhHairlineBorderBrush}">
+                                <Expander.Header>
+                                    <StackPanel Spacing="2" Padding="0,8">
+                                        <TextBlock Text="Interrupciones (avanzado)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        <TextBlock Text="Modo MSI y prioridad por dispositivo. El ajuste automático por medición llega en una próxima versión." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Expander.Header>
+                                <StackPanel Spacing="14">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Click="ApplySafeMsiAllBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Activar MSI seguro" />
+                                        <Button Click="ScanPciDevicesBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Re-escanear" />
+                                        <Button Click="RevertAllPciIrqMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir" />
+                                    </StackPanel>
+                                    <ItemsControl x:Name="PciDevicesItemsControl">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnSpacing="16" Padding="0,12" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1" ToolTipService.ToolTip="{Binding PnpInstanceId}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding FriendlyName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Category}" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                        <TextBlock Text="{Binding MsiStatusText}" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" />
+                                                        <TextBlock Text="{Binding PriorityText}" FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2" Tag="{Binding PnpInstanceId}" Click="EnableSinglePciMsiBtn_Click" IsEnabled="{Binding IsSafeForMsi}"
+                                                            Style="{StaticResource KruzhGhostButtonStyle}" Content="MSI" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Expander>
                             </StackPanel>
                         </ScrollViewer>
 
@@ -861,6 +900,20 @@
                                                 </Border>
                                             </Grid>
                                         </Border>
+
+                                        <!-- Importar un .nip propio (Profile Inspector). Queda seleccionada si se aplicó un perfil personalizado. -->
+                                        <Border x:Name="GpuProfileCustom" Grid.Row="1" Grid.Column="1" Tag="Custom" Style="{StaticResource KruzhSelectableCardStyle}"
+                                                Tapped="GpuProfileCard_Tapped" PointerEntered="GpuProfileCard_PointerEntered" PointerExited="GpuProfileCard_PointerExited" Loaded="GameCard_Loaded">
+                                            <Grid>
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="Importar .nip" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Aplicá tu propio perfil de NVIDIA Profile Inspector" FontSize="12.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                </StackPanel>
+                                                <Border x:Name="GpuProfileCustomCheck" Width="16" Height="16" BorderThickness="1" BorderBrush="#5A5A5A" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                                    <FontIcon Glyph="&#xE73E;" FontSize="11" Foreground="#000000" Visibility="Collapsed" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
                                     </Grid>
 
                                     <Rectangle Height="1" Fill="{StaticResource KruzhDividerHairlineBrush}" Margin="0,24,0,16" />
@@ -869,46 +922,6 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Avanzado: interrupciones (lista PCI / MSI). Se reemplaza por el auto-tune MSI (T70-T72). -->
-                            <Expander Margin="0,40,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                      Background="Transparent" BorderBrush="{StaticResource KruzhHairlineBorderBrush}">
-                                <Expander.Header>
-                                    <StackPanel Spacing="2" Padding="0,8">
-                                        <TextBlock Text="Interrupciones (avanzado)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                        <TextBlock Text="Modo MSI y prioridad por dispositivo. El ajuste automático por medición llega en una próxima versión." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Expander.Header>
-                                <StackPanel Spacing="14">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Click="ApplySafeMsiAllBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Activar MSI seguro" />
-                                        <Button Click="ScanPciDevicesBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Re-escanear" />
-                                        <Button Click="RevertAllPciIrqMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir" />
-                                    </StackPanel>
-                                    <ItemsControl x:Name="PciDevicesItemsControl">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid ColumnSpacing="16" Padding="0,12" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1" ToolTipService.ToolTip="{Binding PnpInstanceId}">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel Spacing="2" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding FriendlyName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Text="{Binding Category}" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                        <TextBlock Text="{Binding MsiStatusText}" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" />
-                                                        <TextBlock Text="{Binding PriorityText}" FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" />
-                                                    </StackPanel>
-                                                    <Button Grid.Column="2" Tag="{Binding PnpInstanceId}" Click="EnableSinglePciMsiBtn_Click" IsEnabled="{Binding IsSafeForMsi}"
-                                                            Style="{StaticResource KruzhGhostButtonStyle}" Content="MSI" VerticalAlignment="Center" />
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Expander>
 
                             <TextBlock Text="Aplicá solo los ajustes adecuados para tu uso." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,28,0,0" />
                         </StackPanel>
@@ -1926,7 +1939,7 @@
                                       IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
 
-                        <TextBlock Text="Aplicando cambios" FontSize="18" FontWeight="SemiBold"
+                        <TextBlock x:Name="OverlayTitleText" Text="Aplicando cambios" FontSize="18" FontWeight="SemiBold"
                                    Foreground="{StaticResource KruzhTextPrimaryBrush}" HorizontalAlignment="Center" />
                         <TextBlock x:Name="OverlayRestorePointText" Text="Punto de restauración creado ✓"
                                    FontSize="12" Foreground="{StaticResource KruzhPositiveBrush}" HorizontalAlignment="Center" />
