@@ -113,6 +113,12 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
+                <NavigationViewItem x:Name="NavDisplayItem" Tag="Display" Content="Pantalla" ToolTipService.ToolTip="Pantalla: EDID, Hz exactos y guía de CRU">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE7FB;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
                 <NavigationViewItem x:Name="NavMonitorAuditItem" Tag="MonitorAudit" Content="Monitor" ToolTipService.ToolTip="Monitor en Vivo y Auditoría">
                     <NavigationViewItem.Icon>
                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE9D2;" />
@@ -1804,6 +1810,30 @@
                             </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
+                    <!-- ======================================================================= -->
+                    <!-- PANTALLA (spec 002 / F16): EDID decodificado, señal actual y Hz exactos  -->
+                    <!-- ======================================================================= -->
+                    <ScrollViewer
+                        x:Name="ViewDisplay"
+                        Visibility="Collapsed"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Padding="48,18,48,36" Spacing="22" MaxWidth="1100" HorizontalAlignment="Stretch">
+                            <Grid>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Pantalla" Style="{StaticResource KruzhPageTitleStyle}" />
+                                    <TextBlock Text="Lo que tu monitor declara (EDID), la señal que sale hoy por el cable y los Hz exactos de cada modo."
+                                               Style="{StaticResource KruzhPageSubtitleStyle}" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="DisplayRefreshBtn_Click"
+                                        Style="{StaticResource KruzhGhostButtonStyle}" Content="Volver a leer" />
+                            </Grid>
+                            <TextBlock x:Name="DisplayStatusText" Text="Leyendo monitores…" FontSize="12.5"
+                                       Foreground="{StaticResource KruzhTextTertiaryBrush}" Visibility="Collapsed" />
+                            <StackPanel x:Name="DisplayMonitorsPanel" Spacing="22" />
+                        </StackPanel>
+                    </ScrollViewer>
+
                     <!-- ======================================================================= -->
                     <!-- VIEW 8: CONFIGURACIÓN (PARÁMETROS DE HARDWARE, SPECS & LICENCIA)        -->
                     <!-- ======================================================================= -->

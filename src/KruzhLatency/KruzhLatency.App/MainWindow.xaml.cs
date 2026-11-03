@@ -84,7 +84,7 @@ public sealed partial class MainWindow : Window
     // ========================================================================================
     private void FitAllViewsToViewport()
     {
-        foreach (var sv in new[] { ViewDashboard, TweaksScrollViewer, ViewIrqMsi, ViewPowerDrivers, GamesScrollViewer, ViewBiosNvram, ViewMonitorAudit, ViewConfig })
+        foreach (var sv in new[] { ViewDashboard, TweaksScrollViewer, ViewIrqMsi, ViewPowerDrivers, GamesScrollViewer, ViewBiosNvram, ViewMonitorAudit, ViewDisplay, ViewConfig })
         {
             FitContentToViewport(sv);
         }
@@ -333,6 +333,7 @@ public sealed partial class MainWindow : Window
         ViewGamesNvidia.Visibility = targetTag == "GamesNvidia" ? Visibility.Visible : Visibility.Collapsed;
         ViewBiosNvram.Visibility = targetTag == "BiosNvram" ? Visibility.Visible : Visibility.Collapsed;
         ViewMonitorAudit.Visibility = targetTag == "MonitorAudit" ? Visibility.Visible : Visibility.Collapsed;
+        ViewDisplay.Visibility = targetTag == "Display" ? Visibility.Visible : Visibility.Collapsed;
         ViewConfig.Visibility = targetTag == "Config" ? Visibility.Visible : Visibility.Collapsed;
 
         TitleBarPageNameText.Text = targetTag switch
@@ -344,6 +345,7 @@ public sealed partial class MainWindow : Window
             "GamesNvidia" => "Juegos",
             "BiosNvram" => "BIOS",
             "MonitorAudit" => "Monitor",
+            "Display" => "Pantalla",
             "Config" => "Configuración",
             _ => "Inicio"
         };
@@ -363,6 +365,10 @@ public sealed partial class MainWindow : Window
         else if (targetTag == "GamesNvidia")
         {
             RefreshGamesAndNvidiaUi();
+        }
+        else if (targetTag == "Display")
+        {
+            _ = RefreshDisplayUiAsync();
         }
         else if (targetTag == "BiosNvram")
         {
