@@ -72,16 +72,60 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    // Sidebar: el pane se abre con la animación de recorte de WinUI, pero la marca y el texto de licencia pasaban
+    // de Collapsed a Visible de golpe (y como el pane tiene el mismo color que el contenido, eso era lo único que se
+    // veía: un "pop"). Ahora acompañan la apertura con un fundido y se van con un fundido corto al cerrar.
+    private const int PaneFadeInMs = 220;
+    private const int PaneFadeInDelayMs = 90;
+    private const int PaneFadeOutMs = 90;
+
     private void MainNavView_PaneOpening(NavigationView sender, object args)
     {
-        if (PaneBrandHeaderPanel != null) PaneBrandHeaderPanel.Visibility = Visibility.Visible;
-        if (HeaderLicenseText != null) HeaderLicenseText.Visibility = Visibility.Visible;
+        FadePaneElement(PaneBrandHeaderPanel, show: true);
+        FadePaneElement(HeaderLicenseText, show: true);
     }
 
     private void MainNavView_PaneClosing(NavigationView sender, NavigationViewPaneClosingEventArgs args)
     {
-        if (PaneBrandHeaderPanel != null) PaneBrandHeaderPanel.Visibility = Visibility.Collapsed;
-        if (HeaderLicenseText != null) HeaderLicenseText.Visibility = Visibility.Collapsed;
+        FadePaneElement(PaneBrandHeaderPanel, show: false);
+        FadePaneElement(HeaderLicenseText, show: false);
+    }
+
+    private static void FadePaneElement(UIElement? element, bool show)
+    {
+        if (element == null) return;
+        try
+        {
+            if (show)
+            {
+                element.Opacity = 0;
+                element.Visibility = Visibility.Visible;
+            }
+
+            var fade = new DoubleAnimation
+            {
+                To = show ? 1 : 0,
+                BeginTime = show ? TimeSpan.FromMilliseconds(PaneFadeInDelayMs) : TimeSpan.Zero,
+                Duration = new Duration(TimeSpan.FromMilliseconds(show ? PaneFadeInMs : PaneFadeOutMs)),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(fade, element);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+
+            var sb = new Storyboard();
+            sb.Children.Add(fade);
+            if (!show)
+            {
+                // Al terminar el fundido se colapsa: en modo compacto (48px) no debe quedar texto recortado.
+                sb.Completed += (_, _) => element.Visibility = Visibility.Collapsed;
+            }
+            sb.Begin();
+        }
+        catch
+        {
+            element.Opacity = 1;
+            element.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 
     private void ConfigureMicaAndCustomTitleBar()
