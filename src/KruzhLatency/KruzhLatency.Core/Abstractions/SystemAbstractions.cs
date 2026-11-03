@@ -155,6 +155,19 @@ public sealed record DeviceRestartResult(bool Restarted, uint ProblemCodeAfter, 
     public bool IsHealthy => Restarted && ProblemCodeAfter == 0;
 }
 
+/// <summary>
+/// Casilla "Permitir que el equipo apague este dispositivo para ahorrar energía" (WMI root\wmi MSPower_DeviceEnable).
+/// Es la misma que muestra la pestaña Administración de energía del Administrador de dispositivos.
+/// </summary>
+public interface IDevicePowerManagement
+{
+    /// <summary>null si el dispositivo no expone la casilla.</summary>
+    bool? GetAllowPowerOff(string instanceId);
+
+    /// <summary>Lanza si el dispositivo no expone la casilla o WMI rechaza el cambio.</summary>
+    void SetAllowPowerOff(string instanceId, bool allow);
+}
+
 // ---------------------------------------------------------------------------------------------
 // Reloj (para timestamps testeables en el journal)
 // ---------------------------------------------------------------------------------------------
@@ -175,6 +188,7 @@ public interface ISystemContext
     IBcdStore Bcd { get; }
     IProcessRunner Processes { get; }
     IDeviceManager Devices { get; }
+    IDevicePowerManagement DevicePower { get; }
     IRestorePoint RestorePoints { get; }
     IClock Clock { get; }
 }

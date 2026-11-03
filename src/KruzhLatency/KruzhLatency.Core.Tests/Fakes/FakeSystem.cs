@@ -152,6 +152,21 @@ public sealed class FakeRestorePoint : IRestorePoint
     }
 }
 
+public sealed class FakeDevicePower : IDevicePowerManagement
+{
+    private readonly Dictionary<string, bool> _allow = new(StringComparer.OrdinalIgnoreCase);
+
+    public void Expose(string instanceId, bool allowPowerOff) => _allow[instanceId] = allowPowerOff;
+
+    public bool? GetAllowPowerOff(string instanceId) => _allow.TryGetValue(instanceId, out var v) ? v : null;
+
+    public void SetAllowPowerOff(string instanceId, bool allow)
+    {
+        if (!_allow.ContainsKey(instanceId)) throw new InvalidOperationException($"{instanceId} no expone la casilla de energía.");
+        _allow[instanceId] = allow;
+    }
+}
+
 public sealed class FakeClock : IClock
 {
     public DateTimeOffset UtcNow { get; set; } = new(2026, 11, 2, 12, 0, 0, TimeSpan.Zero);
@@ -169,6 +184,7 @@ public sealed class FakeSystemContext : ISystemContext
     public FakeBcdStore FakeBcd { get; } = new();
     public FakeProcessRunner FakeProcesses { get; } = new();
     public FakeDeviceManager FakeDevices { get; } = new();
+    public FakeDevicePower FakeDevicePower { get; } = new();
     public FakeRestorePoint FakeRestorePoints { get; } = new();
     public FakeClock FakeClock { get; } = new();
 
@@ -178,6 +194,7 @@ public sealed class FakeSystemContext : ISystemContext
     public IBcdStore Bcd => FakeBcd;
     public IProcessRunner Processes => FakeProcesses;
     public IDeviceManager Devices => FakeDevices;
+    public IDevicePowerManagement DevicePower => FakeDevicePower;
     public IRestorePoint RestorePoints => FakeRestorePoints;
     public IClock Clock => FakeClock;
 }

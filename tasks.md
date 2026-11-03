@@ -115,11 +115,11 @@ Spec: [specs/002-dpc-red-dispositivos-pantalla.md](specs/002-dpc-red-dispositivo
 ### Fase A — Base (secuencial, bloquea todo)
 | ID | Tarea | Deps | Hecho cuando |
 |---|---|---|---|
-| A1 | Fix B3: topología de CPU con structs (`PROCESSOR_RELATIONSHIP` mask en offset 32) | – | test con buffers grabados; máscaras no vacías |
-| A2 | `DeviceInventory` en Infra (SetupAPI/CfgMgr32): presentes + no presentes, padre/hijo, IDs, clase, bus/device/function, problem code, driver, servicio | T25 | fixture del árbol del autor exportado y cargado en tests |
-| A3 | Fixtures reales del autor: árbol de dispositivos (JSON), EDID del GS25F2, opciones de la RTL8125 (`Ndi\Params`) | A2 | archivos en `KruzhLatency.Core.Tests/Fixtures` |
-| A4 | Lista de nunca-tocar en Core (ADR-007) + tests contra el fixture | A2, A3 | ningún bridge/GPU activa/USB del mouse/NIC con enlace/audio default/TPM sale como "deshabilitable" |
-| A5 | `System.Management` en Infra + adaptador WMI (`MSPower_DeviceEnable`, SystemRestore real) | – | test de integración marcado |
+| A1 ✅ | Fix B3: topología de CPU con structs (`PROCESSOR_RELATIONSHIP` mask en offset 32) | – | test con buffers grabados; máscaras no vacías |
+| A2 ✅ | `DeviceInventory` en Infra (SetupAPI/CfgMgr32): presentes + no presentes, padre/hijo, IDs, clase, bus/device/function, problem code, driver, servicio | T25 | fixture del árbol del autor exportado y cargado en tests |
+| A3 ✅ | Fixtures reales del autor: árbol de dispositivos (JSON), EDID del GS25F2, opciones de la RTL8125 (`Ndi\Params`) | A2 | archivos en `KruzhLatency.Core.Tests/Fixtures` |
+| A4 ✅ | Lista de nunca-tocar en Core (ADR-007) + tests contra el fixture | A2, A3 | ningún bridge/GPU activa/USB del mouse/NIC con enlace/audio default/TPM sale como "deshabilitable" |
+| A5 ✅ | `System.Management` en Infra + adaptador WMI (`MSPower_DeviceEnable`, SystemRestore real) | – | test de integración marcado |
 
 ### Fase B — Reglas y módulos `[P]` (después de A)
 | ID | Tarea | Deps | Hecho cuando |

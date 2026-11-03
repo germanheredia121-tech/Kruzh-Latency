@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KruzhLatency.Core.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KruzhLatency.App", "KruzhLatency.App\KruzhLatency.App.csproj", "{FB8F98AD-81EB-4731-BFF0-8A764264B7A3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KruzhLatency.Infra.Tests", "KruzhLatency.Infra.Tests\KruzhLatency.Infra.Tests.csproj", "{E64F13F8-2453-478C-BE03-DEF232B57DAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{FB8F98AD-81EB-4731-BFF0-8A764264B7A3}.Debug|Any CPU.Build.0 = Debug|x64
 		{FB8F98AD-81EB-4731-BFF0-8A764264B7A3}.Release|Any CPU.ActiveCfg = Release|x64
 		{FB8F98AD-81EB-4731-BFF0-8A764264B7A3}.Release|Any CPU.Build.0 = Release|x64
+		{E64F13F8-2453-478C-BE03-DEF232B57DAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E64F13F8-2453-478C-BE03-DEF232B57DAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E64F13F8-2453-478C-BE03-DEF232B57DAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E64F13F8-2453-478C-BE03-DEF232B57DAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
