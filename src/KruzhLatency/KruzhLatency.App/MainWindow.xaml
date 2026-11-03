@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:KruzhLatency.Controls"
     mc:Ignorable="d"
     Title="KRUZH LATENCY">
 
@@ -1056,7 +1057,7 @@
                                           SelectionMode="None"
                                           IsItemClickEnabled="True"
                                           ItemClick="GamesGridView_ItemClick"
-                                          Padding="0">
+                                          Padding="0,8,0,0">
                                     <!-- Sin el fondo gris de hover/pressed del contenedor (era más grande que la card y se veía corrido).
                                          El hover lo hace la card misma (GameCard_PointerEntered/Exited). -->
                                     <GridView.Resources>
@@ -1078,7 +1079,9 @@
                                             <ItemsWrapGrid Orientation="Horizontal" ItemWidth="188" ItemHeight="288" />
                                         </ItemsPanelTemplate>
                                     </GridView.ItemsPanel>
-                                    <GridView.ItemTemplate>
+                                    <GridView.ItemTemplateSelector>
+                                    <controls:GameTileTemplateSelector>
+                                        <controls:GameTileTemplateSelector.GameTemplate>
                                         <DataTemplate>
                                             <Border Width="176" Height="276" Margin="0,0,12,12"
                                                     CornerRadius="12"
@@ -1144,26 +1147,29 @@
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
-                                    </GridView.ItemTemplate>
-                                    <GridView.Footer>
-                                        <!-- Card "+ Agregar juego" -->
-                                        <Border x:Name="AddGameCard" Width="176" Height="276" Margin="0,0,12,12"
-                                                CornerRadius="12"
-                                                BorderBrush="#333333" BorderThickness="1"
-                                                Background="Transparent"
-                                                Tapped="AddCustomGameExeBtn_Click"
-                                                PointerEntered="GameCard_PointerEntered"
-                                                PointerExited="GameCard_PointerExited"
-                                                Loaded="GameCard_Loaded">
-                                            <Border.TranslationTransition>
-                                                <Vector3Transition Duration="0:0:0.15" />
-                                            </Border.TranslationTransition>
-                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
-                                                <FontIcon x:Name="AddGameIcon" Glyph="&#xE710;" FontSize="24" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
-                                                <TextBlock x:Name="AddGameText" Text="Agregar juego" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
-                                            </StackPanel>
-                                        </Border>
-                                    </GridView.Footer>
+                                        </controls:GameTileTemplateSelector.GameTemplate>
+                                        <controls:GameTileTemplateSelector.AddTemplate>
+                                            <!-- "+ Agregar juego": último ítem de la grilla, al lado del último juego (antes era Footer y quedaba abajo). -->
+                                            <DataTemplate>
+                                                <Border Tag="AddGame" Width="176" Height="276" Margin="0,0,12,12"
+                                                        CornerRadius="12"
+                                                        BorderBrush="#333333" BorderThickness="1"
+                                                        Background="Transparent"
+                                                        PointerEntered="GameCard_PointerEntered"
+                                                        PointerExited="GameCard_PointerExited"
+                                                        Loaded="GameCard_Loaded">
+                                                    <Border.TranslationTransition>
+                                                        <Vector3Transition Duration="0:0:0.15" />
+                                                    </Border.TranslationTransition>
+                                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                                        <FontIcon Glyph="&#xE710;" FontSize="24" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                        <TextBlock Text="Agregar juego" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </controls:GameTileTemplateSelector.AddTemplate>
+                                    </controls:GameTileTemplateSelector>
+                                    </GridView.ItemTemplateSelector>
                                 </GridView>
                             </StackPanel>
                         </ScrollViewer>

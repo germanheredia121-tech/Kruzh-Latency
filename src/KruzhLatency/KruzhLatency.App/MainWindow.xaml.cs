@@ -2084,7 +2084,8 @@ public sealed partial class MainWindow : Window
 
         var list = filtered.ToList();
         GamesGridView.ItemsSource = null;
-        GamesGridView.ItemsSource = list;
+        // "Agregar juego" va como último ítem, al lado del último juego.
+        GamesGridView.ItemsSource = list.Cast<object>().Append(AddGameTile.Instance).ToList();
         GamesLibraryCountText.Text = $"TU BIBLIOTECA · {all.Count} JUEGOS";
     }
 
@@ -2134,11 +2135,10 @@ public sealed partial class MainWindow : Window
         if (sender is not Border card) return;
         card.BorderBrush = GameCardHoverBorderBrush;
         card.Translation = new System.Numerics.Vector3(0, -3, 0);
-        if (ReferenceEquals(card, AddGameCard))
+        if (IsAddGameCard(card))
         {
             card.Background = AddCardHoverBackgroundBrush;
-            AddGameIcon.Foreground = (Brush)Application.Current.Resources["KruzhTextPrimaryBrush"];
-            AddGameText.Foreground = (Brush)Application.Current.Resources["KruzhTextPrimaryBrush"];
+            SetAddCardForeground(card, (Brush)Application.Current.Resources["KruzhTextPrimaryBrush"]);
         }
     }
 
@@ -2146,12 +2146,11 @@ public sealed partial class MainWindow : Window
     {
         if (sender is not Border card) return;
         card.Translation = System.Numerics.Vector3.Zero;
-        if (ReferenceEquals(card, AddGameCard))
+        if (IsAddGameCard(card))
         {
             card.BorderBrush = AddCardIdleBorderBrush;
             card.Background = TransparentBrush;
-            AddGameIcon.Foreground = (Brush)Application.Current.Resources["KruzhTextTertiaryBrush"];
-            AddGameText.Foreground = (Brush)Application.Current.Resources["KruzhTextTertiaryBrush"];
+            SetAddCardForeground(card, (Brush)Application.Current.Resources["KruzhTextTertiaryBrush"]);
         }
         else
         {
@@ -2159,8 +2158,25 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private static bool IsAddGameCard(Border card) => string.Equals(card.Tag as string, "AddGame", StringComparison.Ordinal);
+
+    private static void SetAddCardForeground(Border card, Brush brush)
+    {
+        if (card.Child is not Panel panel) return;
+        foreach (var child in panel.Children)
+        {
+            if (child is FontIcon icon) icon.Foreground = brush;
+            else if (child is TextBlock text) text.Foreground = brush;
+        }
+    }
+
     private void GamesGridView_ItemClick(object sender, ItemClickEventArgs e)
     {
+        if (e.ClickedItem is AddGameTile)
+        {
+            AddCustomGameExeBtn_Click(sender, new RoutedEventArgs());
+            return;
+        }
         if (e.ClickedItem is not GameTargetItem game) return;
         _selectedGameForModal = game;
 
