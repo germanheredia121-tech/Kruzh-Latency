@@ -71,10 +71,25 @@ internal static class WindowReveal
 
         void OnRendering(object? sender, object e)
         {
-            bool loaded = window.Content is not FrameworkElement fe || fe.IsLoaded;
-            if (loaded && ++frames >= FramesBeforeReveal) Reveal();
+            try
+            {
+                bool loaded = window.Content is not FrameworkElement fe || fe.IsLoaded;
+                if (loaded && ++frames >= FramesBeforeReveal) Reveal();
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                Detach(); // la ventana se cerró antes de mostrarse
+            }
         }
 
+        void Detach()
+        {
+            revealed = true;
+            CompositionTarget.Rendering -= OnRendering;
+            timer.Stop();
+        }
+
+        window.Closed += (_, _) => Detach();
         CompositionTarget.Rendering += OnRendering;
         timer.Interval = SafetyTimeout; // nunca dejar una ventana invisible si algo no renderiza
         timer.IsRepeating = false;

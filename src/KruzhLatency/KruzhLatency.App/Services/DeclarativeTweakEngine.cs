@@ -281,9 +281,19 @@ public sealed partial class DeclarativeTweakItem : ObservableObject
 
     public void RefreshGatesAndLiveState(HardwareProfile hw)
     {
-        Applicability = ApplicableGate(hw);
-        Evaluation = EvaluateGate(hw);
-        Anticheat = AnticheatGate(hw);
+        // Un ítem que no puede leer su estado (WMI/BCD sin permiso, driver raro) queda "no aplicable"
+        // con el motivo, pero nunca tira abajo el arranque ni el refresco de los demás.
+        try
+        {
+            Applicability = ApplicableGate(hw);
+            Evaluation = EvaluateGate(hw);
+            Anticheat = AnticheatGate(hw);
+        }
+        catch (Exception ex)
+        {
+            App.LogError($"Gates {Id}", ex);
+            Applicability = ApplicabilityResult.NotApplicable($"No se pudo leer el estado en esta PC ({ex.GetType().Name}).");
+        }
         try
         {
             IsLiveApplied = Applicability.IsApplicable && ReadLiveState();
@@ -2244,7 +2254,7 @@ public sealed partial class DeclarativeTweakEngine
         {
             return new WmiBcdStore().Read(element);
         }
-        catch (Exception ex) when (ex is System.Management.ManagementException or UnauthorizedAccessException or InvalidOperationException)
+        catch (Exception ex) when (ex is System.Management.ManagementException or UnauthorizedAccessException or InvalidOperationException or System.Runtime.InteropServices.COMException)
         {
             return null;
         }

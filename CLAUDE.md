@@ -4,7 +4,7 @@ Optimizador de latencia para CS2 y VALORANT (FACEIT AC / Vanguard).
 Límite duro (ADR-004): nunca inyectar ni leer/escribir archivos o memoria de los juegos; por juego solo `.nip`, IFEO, CPU sets, GPU pref, FSO. Windows 10/11, app de escritorio que corre como admin y modifica registro, servicios, BCD y powercfg.
 
 ## Stack
-.NET 8, WinUI 3 (Windows App SDK 1.5, unpackaged, self-contained x64), CommunityToolkit.Mvvm, xUnit.
+.NET 8, WinUI 3 (Windows App SDK 1.8, unpackaged, self-contained x64), CommunityToolkit.Mvvm, xUnit.
 
 ## Documentos (leer antes de codear)
 - Specs: `specs/001-kruzh-latency-mvp.md`, `specs/002-dpc-red-dispositivos-pantalla.md` · Plan: `docs/PLAN.md` · Tareas: `tasks.md`
