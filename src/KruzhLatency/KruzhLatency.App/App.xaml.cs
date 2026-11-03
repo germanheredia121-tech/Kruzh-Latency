@@ -35,6 +35,9 @@ public partial class App : Application
     /// <summary>Una sola instancia: abrirla dos veces duplicaba sesiones ETW y escrituras al sistema.</summary>
     private static System.Threading.Mutex? _singleInstance;
 
+    /// <summary>true cuando la ventana principal ya está visible; antes de eso cualquier error fatal cierra el proceso.</summary>
+    private static volatile bool _startupCompleted;
+
     private static bool AcquireSingleInstance()
     {
         _singleInstance = new System.Threading.Mutex(true, @"Local\KruzhLatency.SingleInstance", out bool createdNew);
@@ -107,7 +110,11 @@ public partial class App : Application
                             MainAppWindow = new MainWindow();
                             // La principal se abre encubierta y al frente; el splash se cierra cuando ya se ve
                             // (antes quedaba detrás de otras ventanas y parecía que no abría).
-                            Controls.WindowReveal.ActivateWithoutFlash(MainAppWindow, () => splash.Close());
+                            Controls.WindowReveal.ActivateWithoutFlash(MainAppWindow, () =>
+                            {
+                                _startupCompleted = true;
+                                splash.Close();
+                            });
                         }
                         catch (Exception ex)
                         {
@@ -176,5 +183,12 @@ public partial class App : Application
             MessageBoxW(IntPtr.Zero, $"{context}:\n{ex.Message}\n\nDetalle guardado en:\n{logPath}", "KRUZH LATENCY — Diagnóstico", 0x10);
         }
         catch { }
+
+        // Si la ventana principal todavía no se mostró, no hay app usable: un error acá dejaba el proceso vivo
+        // sin ninguna ventana ni ícono en la barra de tareas (y con el mutex tomado). Se cierra el proceso.
+        if (!_startupCompleted)
+        {
+            Environment.Exit(1);
+        }
     }
 }
