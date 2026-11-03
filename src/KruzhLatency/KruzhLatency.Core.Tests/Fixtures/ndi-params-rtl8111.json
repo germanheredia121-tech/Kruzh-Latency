@@ -1,0 +1,360 @@
+{
+  "driverDesc": "Realtek PCIe GbE Family Controller",
+  "driverVersion": "10.79.50.1003",
+  "componentId": "PCI\\VEN_10EC&DEV_8168&SUBSYS_7C911462&REV_15",
+  "params": [
+    {
+      "keyword": "*EEE",
+      "paramDesc": "Energy-Efficient Ethernet",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "*FlowControl",
+      "paramDesc": "Flow Control",
+      "type": "enum",
+      "default": "3",
+      "enum": {
+        "0": "Disabled",
+        "3": "Rx & Tx Enabled"
+      },
+      "current": "3"
+    },
+    {
+      "keyword": "*InterruptModeration",
+      "paramDesc": "Interrupt Moderation",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "*IPChecksumOffloadIPv4",
+      "paramDesc": "IPv4 Checksum Offload",
+      "type": "enum",
+      "default": "3",
+      "enum": {
+        "0": "Disabled",
+        "1": "Tx Enabled",
+        "2": "Rx Enabled",
+        "3": "Rx & Tx Enabled"
+      },
+      "current": "3"
+    },
+    {
+      "keyword": "*JumboPacket",
+      "paramDesc": "Jumbo Frame",
+      "type": "enum",
+      "default": "1514",
+      "enum": {
+        "1514": "Disabled",
+        "4088": "4088 Bytes",
+        "9014": "9014 Bytes"
+      },
+      "current": "1514"
+    },
+    {
+      "keyword": "*LsoV2IPv4",
+      "paramDesc": "Large Send Offload v2 (IPv4)",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "*LsoV2IPv6",
+      "paramDesc": "Large Send Offload v2 (IPv6)",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "*ModernStandbyWoLMagicPacket",
+      "paramDesc": "Wake on magic packet when system is in the S0ix power state",
+      "type": "enum",
+      "default": "0",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "0"
+    },
+    {
+      "keyword": "*NumRssQueues",
+      "paramDesc": "Maximum Number of RSS Queues",
+      "type": "enum",
+      "default": "4",
+      "enum": {
+        "1": "1 Queue",
+        "2": "2 Queues",
+        "4": "4 Queues"
+      },
+      "current": "4"
+    },
+    {
+      "keyword": "*PMARPOffload",
+      "paramDesc": "ARP Offload",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "*PMNSOffload",
+      "paramDesc": "NS Offload",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "*PriorityVLANTag",
+      "paramDesc": "Priority & VLAN",
+      "type": "enum",
+      "default": "3",
+      "enum": {
+        "0": "Priority & VLAN Disabled",
+        "1": "Priority Enabled",
+        "2": "VLAN Enabled",
+        "3": "Priority & VLAN Enabled"
+      },
+      "current": "3"
+    },
+    {
+      "keyword": "*ReceiveBuffers",
+      "paramDesc": "Receive Buffers",
+      "type": "int",
+      "default": "512",
+      "min": "32",
+      "max": "512",
+      "step": "8",
+      "current": "512"
+    },
+    {
+      "keyword": "*RSS",
+      "paramDesc": "Receive Side Scaling",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "*SpeedDuplex",
+      "paramDesc": "Speed & Duplex",
+      "type": "enum",
+      "default": "0",
+      "enum": {
+        "0": "Auto Negotiation",
+        "1": "10 Mbps Half Duplex",
+        "2": "10 Mbps Full Duplex",
+        "3": "100 Mbps Half Duplex",
+        "4": "100 Mbps Full Duplex",
+        "6": "1.0 Gbps Full Duplex"
+      },
+      "current": "0"
+    },
+    {
+      "keyword": "*TCPChecksumOffloadIPv4",
+      "paramDesc": "TCP Checksum Offload (IPv4)",
+      "type": "enum",
+      "default": "3",
+      "enum": {
+        "0": "Disabled",
+        "1": "Tx Enabled",
+        "2": "Rx Enabled",
+        "3": "Rx & Tx Enabled"
+      },
+      "current": "3"
+    },
+    {
+      "keyword": "*TCPChecksumOffloadIPv6",
+      "paramDesc": "TCP Checksum Offload (IPv6)",
+      "type": "enum",
+      "default": "3",
+      "enum": {
+        "0": "Disabled",
+        "1": "Tx Enabled",
+        "2": "Rx Enabled",
+        "3": "Rx & Tx Enabled"
+      },
+      "current": "3"
+    },
+    {
+      "keyword": "*TransmitBuffers",
+      "paramDesc": "Transmit Buffers",
+      "type": "int",
+      "default": "128",
+      "min": "32",
+      "max": "128",
+      "step": "8",
+      "current": "128"
+    },
+    {
+      "keyword": "*UDPChecksumOffloadIPv4",
+      "paramDesc": "UDP Checksum Offload (IPv4)",
+      "type": "enum",
+      "default": "3",
+      "enum": {
+        "0": "Disabled",
+        "1": "Tx Enabled",
+        "2": "Rx Enabled",
+        "3": "Rx & Tx Enabled"
+      },
+      "current": "3"
+    },
+    {
+      "keyword": "*UDPChecksumOffloadIPv6",
+      "paramDesc": "UDP Checksum Offload (IPv6)",
+      "type": "enum",
+      "default": "3",
+      "enum": {
+        "0": "Disabled",
+        "1": "Tx Enabled",
+        "2": "Rx Enabled",
+        "3": "Rx & Tx Enabled"
+      },
+      "current": "3"
+    },
+    {
+      "keyword": "*WakeOnMagicPacket",
+      "paramDesc": "Wake on Magic Packet",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "*WakeOnPattern",
+      "paramDesc": "Wake on pattern match",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "AdvancedEEE",
+      "paramDesc": "Advanced EEE",
+      "type": "enum",
+      "default": "0",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "0"
+    },
+    {
+      "keyword": "AutoDisableGigabit",
+      "paramDesc": "Auto Disable Gigabit",
+      "type": "enum",
+      "default": "0",
+      "enum": {
+        "0": "Disabled",
+        "1": "Re-Link, Battery",
+        "2": "Re-Link, Battery or AC"
+      },
+      "current": "0"
+    },
+    {
+      "keyword": "EnableGreenEthernet",
+      "paramDesc": "Green Ethernet",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "GigaLite",
+      "paramDesc": "Gigabit Lite",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "NetworkAddress",
+      "paramDesc": "Network Address",
+      "type": "edit",
+      "default": ""
+    },
+    {
+      "keyword": "PowerSavingMode",
+      "paramDesc": "Power Saving Mode",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "RegVlanid",
+      "paramDesc": "VLAN ID",
+      "type": "int",
+      "default": "0",
+      "min": "0",
+      "max": "4094",
+      "step": "1",
+      "current": "0"
+    },
+    {
+      "keyword": "S5WakeOnLan",
+      "paramDesc": "Shutdown Wake-On-Lan",
+      "type": "enum",
+      "default": "1",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "current": "1"
+    },
+    {
+      "keyword": "WolShutdownLinkSpeed",
+      "paramDesc": "WOL & Shutdown Link Speed",
+      "type": "enum",
+      "default": "0",
+      "enum": {
+        "0": "10 Mbps First",
+        "1": "100 Mbps First",
+        "2": "Not Speed Down"
+      },
+      "current": "0"
+    }
+  ]
+}
