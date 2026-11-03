@@ -257,6 +257,7 @@ public sealed partial class MainWindow : Window
         }
         else if (targetTag == "IrqMsi")
         {
+            RefreshGpuPageUi();
             RefreshPciAndMsiUi();
         }
         else if (targetTag == "GamesNvidia")
@@ -1518,24 +1519,256 @@ public sealed partial class MainWindow : Window
     }
 
     // ========================================================================================
-    // VIEW 3: IRQ, MSI MODE v3 & RESERVED CPU SETS
+    // VIEW 3: GPU — ajustes de driver de la GPU detectada + perfil del driver (.nip) + interrupciones (avanzado)
     // ========================================================================================
     private void RefreshPciAndMsiUi()
     {
         var devices = App.IrqMsiService.EnumeratePciDevices();
         PciDevicesItemsControl.ItemsSource = devices;
+    }
 
+    /// <summary>Tweaks de driver que se muestran en la página GPU (solo los aplicables a la GPU detectada).</summary>
+    private static readonly string[] GpuDriverTweakIds = { "GpuHardwareSchedulingHags", "GpuDynamicP0State", "AmdRadeonUlpsOff" };
+
+    private const string GpuProfileRegistryValue = "NvidiaDriverProfile";
+    private bool _isApplyingGpuSetting;
+
+    private void RefreshGpuPageUi()
+    {
         var hw = App.HardwareService.CurrentProfile;
-        if (hw.IsIntelHybrid || hw.IsDualCcdRyzen)
+        bool isNvidia = hw.GpuVendor == GpuVendorKind.Nvidia;
+        bool isAmd = hw.GpuVendor == GpuVendorKind.Amd;
+
+        GpuVendorBadgeText.Text = hw.GpuVendor switch
         {
-            ReservedCpuSetsStatusText.Text =
-                $"Compatible con {hw.CpuName}: máscara de núcleos reservados para tareas de fondo = 0x{hw.ReservedBackgroundCpuMask:X} (E-Cores / CCD secundario).";
-        }
-        else
+            GpuVendorKind.Nvidia => "NVIDIA",
+            GpuVendorKind.Amd => "AMD",
+            GpuVendorKind.Intel => "INTEL",
+            _ => "GPU"
+        };
+        GpuDetectedNameText.Text = string.IsNullOrWhiteSpace(hw.GpuName) ? "GPU no detectada" : hw.GpuName;
+        GpuDetectedDetailText.Text = string.IsNullOrWhiteSpace(hw.GpuDriverVersion) || hw.GpuDriverVersion == "N/A"
+            ? "GPU detectada"
+            : $"GPU detectada · driver {hw.GpuDriverVersion}";
+
+        SetGpuVendorTab(GpuTabNvidia, GpuTabNvidiaText, GpuTabNvidiaLock, GpuTabNvidiaUnderline, isNvidia);
+        SetGpuVendorTab(GpuTabAmd, GpuTabAmdText, GpuTabAmdLock, GpuTabAmdUnderline, isAmd);
+
+        // Ajustes del driver: solo los aplicables (HAGS para todas; P0 solo NVIDIA; ULPS solo AMD — lo deciden los gates).
+        _isHandlingToggleChange = true;
+        try
         {
-            ReservedCpuSetsStatusText.Text =
-                $"No aplicable en {hw.CpuName}: procesador Single-CCD uniforme sin E-Cores. El motor omite el aislamiento para no restar hilos físicos al juego.";
+            var settings = App.TweakEngine.AllTweaks
+                .Where(t => GpuDriverTweakIds.Contains(t.Id) && t.IsApplicableBool)
+                .ToList();
+            GpuDriverSettingsItemsControl.ItemsSource = null;
+            GpuDriverSettingsItemsControl.ItemsSource = settings;
+            GpuDriverSettingsEmptyText.Visibility = settings.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         }
+        finally
+        {
+            _isHandlingToggleChange = false;
+        }
+
+        // Perfil del driver: solo NVIDIA (Profile Inspector).
+        GpuProfileCardsGrid.Opacity = isNvidia ? 1 : 0.35;
+        GpuProfileCardsGrid.IsHitTestVisible = isNvidia;
+        GpuProfileSubtitleText.Text = isNvidia ? "Seleccioná un perfil por vez" : "Los perfiles de driver son exclusivos de NVIDIA.";
+        UpdateGpuProfileSelectionUi(isNvidia ? ReadSavedGpuProfile() : null);
+    }
+
+    private static void SetGpuVendorTab(Border tab, TextBlock text, UIElement lockPanel, UIElement underline, bool isActive)
+    {
+        text.Foreground = (Brush)Application.Current.Resources[isActive ? "KruzhTextPrimaryBrush" : "KruzhTextTertiaryBrush"];
+        lockPanel.Visibility = isActive ? Visibility.Collapsed : Visibility.Visible;
+        underline.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
+        tab.Background = isActive ? new SolidColorBrush(Windows.UI.Color.FromArgb(255, 14, 14, 14)) : TransparentBrush;
+    }
+
+    private async void GpuDriverToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_isHandlingToggleChange || _isApplyingGpuSetting) return;
+        if (sender is not ToggleSwitch ts || ts.Tag is not string id) return;
+        var item = App.TweakEngine.AllTweaks.FirstOrDefault(t => t.Id == id);
+        if (item == null || ts.IsOn == item.IsLiveApplied) return;
+
+        _isApplyingGpuSetting = true;
+        ts.IsEnabled = false;
+        try
+        {
+            TweakExecutionReport report;
+            if (ts.IsOn)
+            {
+                var early = App.TweakEngine.PreCheckApply(item);
+                if (early != null)
+                {
+                    report = early;
+                }
+                else
+                {
+                    string optionKey = item.SelectedOptionKey;
+                    var (ok, detail) = await Task.Run(() => DeclarativeTweakEngine.RunApplyAction(item, optionKey));
+                    report = App.TweakEngine.CompleteApply(item, ok, detail);
+                }
+            }
+            else
+            {
+                var (ok, detail) = await Task.Run(() => App.TweakEngine.RunRevertActions(item));
+                report = App.TweakEngine.CompleteRevert(item, ok, detail);
+            }
+
+            SetStatus(report.Message);
+            if (!report.Success)
+            {
+                await ShowSimpleInfoModalAsync("No se pudo aplicar", $"{item.Title}: {report.Message}");
+            }
+            else if (item.RequiresReboot)
+            {
+                SetStatus($"{report.Message} · Reiniciá la PC para que tome efecto.");
+            }
+        }
+        catch (Exception ex)
+        {
+            App.LogError($"GPU toggle {id}", ex);
+        }
+        finally
+        {
+            ts.IsEnabled = true;
+            _isApplyingGpuSetting = false;
+            RefreshGpuPageUi();
+            RefreshJournalAndLicenseUi();
+        }
+    }
+
+    private static readonly SolidColorBrush GpuProfileIdleBorder = new(Windows.UI.Color.FromArgb(255, 42, 42, 42));
+    private static readonly SolidColorBrush GpuProfileHoverBorder = new(Windows.UI.Color.FromArgb(255, 90, 90, 90));
+    private static readonly SolidColorBrush GpuProfileSelectedBorder = new(Windows.UI.Color.FromArgb(255, 242, 242, 242));
+    private string? _selectedGpuProfile;
+
+    private void GpuProfileCard_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is Border b && b.Tag as string != _selectedGpuProfile) b.BorderBrush = GpuProfileHoverBorder;
+    }
+
+    private void GpuProfileCard_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is Border b && b.Tag as string != _selectedGpuProfile) b.BorderBrush = GpuProfileIdleBorder;
+    }
+
+    private void UpdateGpuProfileSelectionUi(string? selected)
+    {
+        _selectedGpuProfile = selected;
+        foreach (var (card, check) in new[]
+        {
+            (GpuProfileCompetitive, GpuProfileCompetitiveCheck),
+            (GpuProfileCompetitiveGsync, GpuProfileCompetitiveGsyncCheck),
+            (GpuProfileDefault, GpuProfileDefaultCheck)
+        })
+        {
+            bool isSel = string.Equals(card.Tag as string, selected, StringComparison.Ordinal);
+            card.BorderBrush = isSel ? GpuProfileSelectedBorder : GpuProfileIdleBorder;
+            check.Background = isSel ? GpuProfileSelectedBorder : TransparentBrush;
+            if (check.Child is UIElement tick) tick.Visibility = isSel ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        GpuProfileStatusText.Text = selected switch
+        {
+            "Competitive" => "Competitivo aplicado.",
+            "CompetitiveGsync" => "Competitivo + G-SYNC aplicado.",
+            "Default" => "Perfil base de NVIDIA (predeterminado).",
+            _ => "Ningún perfil seleccionado."
+        };
+    }
+
+    private async void GpuProfileCard_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (sender is not Border card || card.Tag is not string profile) return;
+        if (App.HardwareService.CurrentProfile.GpuVendor != GpuVendorKind.Nvidia) return;
+        if (profile == _selectedGpuProfile || _isApplyingGpuSetting) return;
+
+        _isApplyingGpuSetting = true;
+        GpuProfileCardsGrid.IsHitTestVisible = false;
+        GpuProfileStatusText.Text = "Aplicando perfil del driver…";
+        try
+        {
+            var (ok, msg) = await Task.Run(() => profile switch
+            {
+                "Competitive" => App.NvidiaDriversService.ApplyCompleteNvidiaNipProfile(
+                    forceP2Off: true, disableTelemetry: true, enableReflexLowLatency: true, gsyncCompetitiveOff: true),
+                "CompetitiveGsync" => App.NvidiaDriversService.ApplyCompleteNvidiaNipProfile(
+                    forceP2Off: true, disableTelemetry: true, enableReflexLowLatency: true, gsyncCompetitiveOff: false),
+                _ => RestoreBaseNvidiaProfile()
+            });
+
+            SetStatus(msg);
+            if (ok)
+            {
+                SaveGpuProfile(profile);
+                UpdateGpuProfileSelectionUi(profile);
+            }
+            else
+            {
+                UpdateGpuProfileSelectionUi(_selectedGpuProfile);
+                await ShowSimpleInfoModalAsync("No se pudo aplicar el perfil", msg);
+            }
+        }
+        catch (Exception ex)
+        {
+            App.LogError($"GPU profile {profile}", ex);
+            UpdateGpuProfileSelectionUi(_selectedGpuProfile);
+        }
+        finally
+        {
+            _isApplyingGpuSetting = false;
+            GpuProfileCardsGrid.IsHitTestVisible = true;
+        }
+    }
+
+    /// <summary>Restaura el Base Profile de NVIDIA que viene con la app (estaba buscándolo en Assets\Data; vive en Assets\Tools).</summary>
+    private static (bool Success, string Message) RestoreBaseNvidiaProfile()
+    {
+        string? inspector = App.NvidiaDriversService.FindNvidiaProfileInspectorExe();
+        string baseNip = Path.Combine(AppContext.BaseDirectory, "Assets", "Tools", "Base Profile.nip");
+        if (string.IsNullOrEmpty(inspector) || !File.Exists(baseNip))
+        {
+            return (false, "No se encontró nvidiaProfileInspector.exe o Base Profile.nip en Assets\\Tools.");
+        }
+
+        try
+        {
+            using var proc = Process.Start(new ProcessStartInfo
+            {
+                FileName = inspector,
+                Arguments = $"\"{baseNip}\" -silent",
+                CreateNoWindow = true,
+                UseShellExecute = false
+            });
+            if (proc == null) return (false, "No se pudo iniciar NVIDIA Profile Inspector.");
+            if (!proc.WaitForExit(15000))
+            {
+                try { proc.Kill(); } catch { }
+                return (false, "NVIDIA Profile Inspector no respondió a tiempo.");
+            }
+            return proc.ExitCode == 0
+                ? (true, "Perfil base de NVIDIA restaurado.")
+                : (false, $"NVIDIA Profile Inspector terminó con código {proc.ExitCode}.");
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Error ejecutando NVIDIA Profile Inspector: {ex.Message}");
+        }
+    }
+
+    private static string? ReadSavedGpuProfile()
+    {
+        using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\KruzhLatency");
+        return key?.GetValue(GpuProfileRegistryValue) as string;
+    }
+
+    private static void SaveGpuProfile(string profile)
+    {
+        using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\KruzhLatency", writable: true);
+        key?.SetValue(GpuProfileRegistryValue, profile, Microsoft.Win32.RegistryValueKind.String);
     }
 
     private void ScanPciDevicesBtn_Click(object sender, RoutedEventArgs e)
@@ -1701,18 +1934,6 @@ public sealed partial class MainWindow : Window
         GamesGridView.ItemsSource = null;
         GamesGridView.ItemsSource = list;
         GamesLibraryCountText.Text = $"TU BIBLIOTECA · {all.Count} JUEGOS";
-
-        var hw = App.HardwareService.CurrentProfile;
-        if (hw.GpuVendor == GpuVendorKind.Nvidia)
-        {
-            NvidiaSectionEligibilityText.Text = $"GPU NVIDIA detectada: {hw.GpuName} ({hw.GpuGeneration}) · Inyección de perfil .nip habilitada.";
-            ApplyCustomNipBtn.IsEnabled = true;
-        }
-        else
-        {
-            NvidiaSectionEligibilityText.Text = $"No aplicable: Tu GPU es {hw.GpuName} ({hw.GpuVendor}). Los perfiles .nip exclusivos de NVIDIA permanecen deshabilitados.";
-            ApplyCustomNipBtn.IsEnabled = false;
-        }
     }
 
     private void TabGames_Click(object sender, RoutedEventArgs e)
@@ -1993,36 +2214,27 @@ public sealed partial class MainWindow : Window
         SetStatus($"Optimización por juego aplicada a {App.TweakEngine.TargetGames.Count} ejecutables ({applied} módulos activos).");
     }
 
-    private void ApplyCustomNipBtn_Click(object sender, RoutedEventArgs e)
+    private async void ClearShaderCacheBtn_Click(object sender, RoutedEventArgs e)
     {
-        var (_, msg) = App.NvidiaDriversService.ApplyCompleteNvidiaNipProfile(
-            forceP2Off: NipForceP2OffCheck.IsChecked == true,
-            disableTelemetry: NipDisableTelemetryCheck.IsChecked == true,
-            enableReflexLowLatency: NipUltraLowLatencyCheck.IsChecked == true,
-            gsyncCompetitiveOff: NipDisableGsyncCheck.IsChecked == true);
-
-        SetStatus(msg);
-    }
-
-    private void RestoreBaseNipBtn_Click(object sender, RoutedEventArgs e)
-    {
-        string? inspector = App.NvidiaDriversService.FindNvidiaProfileInspectorExe();
-        string baseNip = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Data", "Base Profile.nip");
-        if (!string.IsNullOrEmpty(inspector) && File.Exists(baseNip))
+        ClearShaderCacheBtn.IsEnabled = false;
+        ClearShaderCacheBtn.Content = "Limpiando…";
+        try
         {
-            TransactionalAuditService.RunHiddenProcess(inspector, $"\"{baseNip}\" -silent");
-            SetStatus("Base Profile.nip restaurado en el driver NVIDIA.");
+            // Borra miles de archivos: fuera del hilo de UI.
+            var (_, msg) = await Task.Run(() => App.NvidiaDriversService.ClearShaderCaches());
+            SetStatus(msg);
+            ClearShaderCacheBtn.Content = "Listo ✓";
+            await Task.Delay(1500);
         }
-        else
+        catch (Exception ex)
         {
-            SetStatus("No se encontró nvidiaProfileInspector.exe o Base Profile.nip en Assets.");
+            App.LogError("Clear shader cache", ex);
         }
-    }
-
-    private void ClearShaderCacheBtn_Click(object sender, RoutedEventArgs e)
-    {
-        var (_, msg) = App.NvidiaDriversService.ClearShaderCaches();
-        SetStatus(msg);
+        finally
+        {
+            ClearShaderCacheBtn.Content = "Limpiar";
+            ClearShaderCacheBtn.IsEnabled = true;
+        }
     }
 
     // ========================================================================================

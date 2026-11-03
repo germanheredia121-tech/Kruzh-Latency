@@ -318,5 +318,14 @@
         <Setter Property="MaxWidth" Value="300" />
         <Setter Property="FontSize" Value="12" />
     </Style>
+    <!-- Tarjeta seleccionable (perfiles de GPU): borde fino, sin relleno; el estado seleccionado lo pinta el código -->
+    <Style x:Key="KruzhSelectableCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="#2A2A2A" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="18,16" />
+        <Setter Property="MinHeight" Value="78" />
+    </Style>
 
 </ResourceDictionary>

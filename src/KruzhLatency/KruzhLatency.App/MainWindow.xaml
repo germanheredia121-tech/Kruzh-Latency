@@ -679,117 +679,238 @@
                     </Grid>
 
                     <!-- ======================================================================= -->
-                    <!-- VIEW 3: GPU, NVIDIA INSPECTOR & PCI IRQ / MSI MODE v3                   -->
+                    <!-- VIEW 3: GPU — ajustes de driver de la GPU detectada + perfil del driver  -->
+                    <!-- Todo se arma según la GPU detectada: lo que no aplica, no se muestra.    -->
                     <!-- ======================================================================= -->
                     <ScrollViewer
                         x:Name="ViewIrqMsi"
                         Visibility="Collapsed"
                         VerticalScrollBarVisibility="Auto"
-                        HorizontalScrollBarVisibility="Disabled">
+                        HorizontalScrollBarVisibility="Disabled"
+                        HorizontalScrollMode="Disabled">
+                        <StackPanel Padding="48,34,48,40" Spacing="0" MaxWidth="1180" HorizontalAlignment="Stretch">
 
-                        <StackPanel Padding="48,18,48,36" Spacing="28" MaxWidth="1280" HorizontalAlignment="Stretch">
-                            <Grid>
+                            <!-- Encabezado + tarjeta de GPU detectada -->
+                            <Grid Margin="0,0,0,28" ColumnSpacing="24">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="GPU, MSI Mode v3 e interrupciones PCI" Style="{StaticResource KruzhPageTitleStyle}" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <Button Click="ClearShaderCacheBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Limpiar caché de shaders" />
-                                    <Button Click="ScanPciDevicesBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Re-escanear PCI" />
-                                    <Button Click="RevertAllPciIrqMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir PCI" />
-                                    <Button Click="ApplyOptimalIrqPinningBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Balancear IRQ fuera de Core 0" />
-                                    <Button Click="ApplySafeMsiAllBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Aplicar MSI Mode v3 seguro" />
+                                <StackPanel Spacing="6" VerticalAlignment="Center">
+                                    <TextBlock Text="HARDWARE" FontSize="10.5" FontWeight="SemiBold" CharacterSpacing="80" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                    <TextBlock Text="GPU" FontSize="30" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                    <TextBlock Text="Ajustes de driver para tu placa de video." FontSize="13" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
                                 </StackPanel>
+                                <Border Grid.Column="1" VerticalAlignment="Center" MinWidth="340" Padding="16,14"
+                                        Background="#0C0C0C" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" CornerRadius="6">
+                                    <Grid ColumnSpacing="16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="70" Height="44" CornerRadius="4" Background="#161616" BorderBrush="#2A2A2A" BorderThickness="1">
+                                            <TextBlock x:Name="GpuVendorBadgeText" Text="GPU" FontSize="12" FontWeight="Bold" CharacterSpacing="40"
+                                                       Foreground="{StaticResource KruzhTextPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock x:Name="GpuDetectedNameText" Text="-" FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="320" />
+                                            <TextBlock x:Name="GpuDetectedDetailText" Text="GPU detectada" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
                             </Grid>
 
-                            <StackPanel Spacing="12">
-                                <TextBlock Text="PERFIL DE DRIVER NVIDIA (NVIDIA PROFILE INSPECTOR)" Style="{StaticResource KruzhMicroLabelStyle}" />
-                                <Border Style="{StaticResource KruzhCardStyle}" Padding="0">
-                                    <StackPanel>
-                                        <TextBlock x:Name="NvidiaSectionEligibilityText" Text="Verificando GPU..." FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" Margin="20,16" />
-                                        <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
-
-                                        <Grid ColumnSpacing="24" Padding="20,16">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" Spacing="12">
-                                                <CheckBox x:Name="NipForceP2OffCheck" Content="Desactivar Force P2 State (evita reducción de reloj VRAM)" IsChecked="True" />
-                                                <CheckBox x:Name="NipUltraLowLatencyCheck" Content="Activar Ultra Low Latency + Pre-Rendered Frames = 1" IsChecked="True" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Spacing="12">
-                                                <CheckBox x:Name="NipDisableGsyncCheck" Content="Prefer Maximum Performance + G-Sync/V-Sync desactivado" IsChecked="True" />
-                                                <CheckBox x:Name="NipDisableTelemetryCheck" Content="Desactivar telemetría de driver NVIDIA" IsChecked="True" />
-                                            </StackPanel>
-                                        </Grid>
-
-                                        <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
-                                        <StackPanel Orientation="Horizontal" Spacing="10" Padding="20,14">
-                                            <Button x:Name="ApplyCustomNipBtn" Click="ApplyCustomNipBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Inyectar perfil .nip" />
-                                            <Button Click="RestoreBaseNipBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Restaurar Base Profile.nip" />
+                            <!-- Pestañas por fabricante: solo la de tu GPU está habilitada -->
+                            <Grid ColumnSpacing="0" HorizontalAlignment="Left" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="GpuTabNvidia" Width="330" Height="52" Padding="22,0" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1,1,0,1">
+                                    <Grid>
+                                        <TextBlock Text="NVIDIA" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" x:Name="GpuTabNvidiaText" />
+                                        <StackPanel x:Name="GpuTabNvidiaLock" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed">
+                                            <FontIcon Glyph="&#xE72E;" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                            <TextBlock Text="No compatible" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
                                         </StackPanel>
-                                    </StackPanel>
+                                        <Border x:Name="GpuTabNvidiaUnderline" Height="2" VerticalAlignment="Bottom" Margin="0,0,0,-1" HorizontalAlignment="Left" Width="180" Background="{StaticResource KruzhTextPrimaryBrush}" Visibility="Collapsed" />
+                                    </Grid>
                                 </Border>
-                            </StackPanel>
+                                <Border Grid.Column="1" x:Name="GpuTabAmd" Width="330" Height="52" Padding="22,0" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <TextBlock Text="AMD" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" x:Name="GpuTabAmdText" />
+                                        <StackPanel x:Name="GpuTabAmdLock" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed">
+                                            <FontIcon Glyph="&#xE72E;" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                            <TextBlock Text="No compatible" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <Border x:Name="GpuTabAmdUnderline" Height="2" VerticalAlignment="Bottom" Margin="0,0,0,-1" HorizontalAlignment="Left" Width="180" Background="{StaticResource KruzhTextPrimaryBrush}" Visibility="Collapsed" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                            <TextBlock Text="Los ajustes son exclusivos de la GPU detectada." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,0,0,30" />
 
-                            <StackPanel Spacing="12">
-                                <TextBlock Text="DISPOSITIVOS PCI DETECTADOS EN ENUM\PCI" Style="{StaticResource KruzhMicroLabelStyle}" />
-                                <Border Style="{StaticResource KruzhCardStyle}" Padding="0">
-                                    <ItemsControl x:Name="PciDevicesItemsControl">
+                            <!-- Dos columnas: ajustes del driver | perfil del driver -->
+                            <Grid ColumnSpacing="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="1.2*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Izquierda: ajustes del driver (se generan según la GPU) -->
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="AJUSTES DEL DRIVER" FontSize="14" FontWeight="SemiBold" CharacterSpacing="20" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                    <TextBlock Text="Energía y funcionamiento" FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,4,0,12" />
+
+                                    <ItemsControl x:Name="GpuDriverSettingsItemsControl">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <StackPanel>
-                                                    <Grid ColumnSpacing="16" Padding="20,14" ToolTipService.ToolTip="{Binding PnpInstanceId}">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="110" />
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="150" />
-                                                            <ColumnDefinition Width="190" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <Border Grid.Column="0" Style="{StaticResource KruzhBadgeOutlineStyle}" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                            <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                        </Border>
-
-                                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding FriendlyName}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
-                                                            <TextBlock Text="{Binding SafetyNote}" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" MaxLines="1" TextTrimming="CharacterEllipsis" />
-                                                        </StackPanel>
-
-                                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                            <TextBlock Text="MODO MSI" Style="{StaticResource KruzhMicroLabelStyle}" FontSize="9" />
-                                                            <TextBlock Text="{Binding MsiStatusText}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                            <TextBlock Text="{Binding PriorityText}" FontSize="11" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                        </StackPanel>
-
-                                                        <StackPanel Grid.Column="3" VerticalAlignment="Center">
-                                                            <TextBlock Text="AFINIDAD IRQ" Style="{StaticResource KruzhMicroLabelStyle}" FontSize="9" />
-                                                            <TextBlock Text="{Binding AssignedCoreLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                        </StackPanel>
-
-                                                        <Button Grid.Column="4" Tag="{Binding PnpInstanceId}" Click="EnableSinglePciMsiBtn_Click" IsEnabled="{Binding IsSafeForMsi}" Style="{StaticResource KruzhGhostButtonStyle}" VerticalAlignment="Center" Content="MSI + Alta" />
-                                                    </Grid>
-                                                    <Rectangle Fill="{StaticResource KruzhDividerHairlineBrush}" Height="1" />
-                                                </StackPanel>
+                                                <Grid Padding="0,18" ColumnSpacing="14" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Title}" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding ShortSummary}" FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" MaxLines="1" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <Border Grid.Column="1" Width="22" Height="22" CornerRadius="11" Background="Transparent" VerticalAlignment="Center" Tag="{Binding}"
+                                                            PointerEntered="TweakInfoIcon_PointerEntered" PointerExited="TweakInfoIcon_PointerExited" Tapped="TweakInfoIcon_Tapped">
+                                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE946;" FontSize="13" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                    </Border>
+                                                    <ToggleSwitch Grid.Column="2" Tag="{Binding Id}" IsOn="{Binding IsLiveApplied, Mode=OneWay}"
+                                                                  OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center"
+                                                                  Toggled="GpuDriverToggle_Toggled" />
+                                                </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </Border>
-                            </StackPanel>
 
-                            <StackPanel Spacing="12">
-                                <TextBlock Text="AISLAMIENTO DE HILOS DE FONDO (RESERVED CPU SETS)" Style="{StaticResource KruzhMicroLabelStyle}" />
-                                <Border Style="{StaticResource KruzhCardStyle}">
-                                    <StackPanel Spacing="6">
-                                        <TextBlock Text="Política de kernel ReservedCpuSets" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                        <TextBlock Text="Windows ignora ProcessorAffinityMask en Image File Execution Options. KRUZH LATENCY emplea HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel\ReservedCpuSets únicamente cuando existen E-Cores o doble CCD." FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextWrapping="Wrap" />
-                                        <TextBlock x:Name="ReservedCpuSetsStatusText" Text="-" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" Margin="0,4,0,0" />
+                                    <!-- Acción: limpiar caché de shaders -->
+                                    <Grid Padding="0,18" ColumnSpacing="14" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="Limpiar caché de shaders" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock Text="Útil después de actualizar el driver. El primer arranque del juego recompila." FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" x:Name="ClearShaderCacheBtn" Click="ClearShaderCacheBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Limpiar" MinWidth="100" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <TextBlock x:Name="GpuDriverSettingsEmptyText" Visibility="Collapsed" Margin="0,16,0,0" TextWrapping="Wrap"
+                                               FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}"
+                                               Text="No hay ajustes de driver aplicables a esta GPU." />
+                                </StackPanel>
+
+                                <Rectangle Grid.Column="1" Width="1" Fill="{StaticResource KruzhDividerHairlineBrush}" />
+
+                                <!-- Derecha: perfil del driver (.nip), de a uno -->
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="PERFIL DEL DRIVER" FontSize="14" FontWeight="SemiBold" CharacterSpacing="20" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                    <TextBlock x:Name="GpuProfileSubtitleText" Text="Seleccioná un perfil por vez" FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,4,0,14" />
+
+                                    <Grid x:Name="GpuProfileCardsGrid" ColumnSpacing="12" RowSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <Border x:Name="GpuProfileCompetitive" Grid.Row="0" Grid.Column="0" Tag="Competitive" Style="{StaticResource KruzhSelectableCardStyle}"
+                                                Tapped="GpuProfileCard_Tapped" PointerEntered="GpuProfileCard_PointerEntered" PointerExited="GpuProfileCard_PointerExited" Loaded="GameCard_Loaded">
+                                            <Grid>
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="Competitivo" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Máximo rendimiento, sin V-Sync ni G-SYNC" FontSize="12.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                </StackPanel>
+                                                <Border x:Name="GpuProfileCompetitiveCheck" Width="16" Height="16" BorderThickness="1" BorderBrush="#5A5A5A" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                                    <FontIcon Glyph="&#xE73E;" FontSize="11" Foreground="#000000" Visibility="Collapsed" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+
+                                        <Border x:Name="GpuProfileCompetitiveGsync" Grid.Row="0" Grid.Column="1" Tag="CompetitiveGsync" Style="{StaticResource KruzhSelectableCardStyle}"
+                                                Tapped="GpuProfileCard_Tapped" PointerEntered="GpuProfileCard_PointerEntered" PointerExited="GpuProfileCard_PointerExited" Loaded="GameCard_Loaded">
+                                            <Grid>
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="Competitivo + G-SYNC" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Igual al anterior, con G-SYNC para monitores VRR" FontSize="12.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                </StackPanel>
+                                                <Border x:Name="GpuProfileCompetitiveGsyncCheck" Width="16" Height="16" BorderThickness="1" BorderBrush="#5A5A5A" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                                    <FontIcon Glyph="&#xE73E;" FontSize="11" Foreground="#000000" Visibility="Collapsed" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+
+                                        <Border x:Name="GpuProfileDefault" Grid.Row="1" Grid.Column="0" Tag="Default" Style="{StaticResource KruzhSelectableCardStyle}"
+                                                Tapped="GpuProfileCard_Tapped" PointerEntered="GpuProfileCard_PointerEntered" PointerExited="GpuProfileCard_PointerExited" Loaded="GameCard_Loaded">
+                                            <Grid>
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="Predeterminado" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Vuelve al perfil base de NVIDIA" FontSize="12.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                </StackPanel>
+                                                <Border x:Name="GpuProfileDefaultCheck" Width="16" Height="16" BorderThickness="1" BorderBrush="#5A5A5A" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                                    <FontIcon Glyph="&#xE73E;" FontSize="11" Foreground="#000000" Visibility="Collapsed" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+
+                                    <Rectangle Height="1" Fill="{StaticResource KruzhDividerHairlineBrush}" Margin="0,24,0,16" />
+                                    <TextBlock Text="PERFIL DEL DRIVER" FontSize="10.5" FontWeight="SemiBold" CharacterSpacing="60" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                    <TextBlock x:Name="GpuProfileStatusText" Text="Ningún perfil seleccionado." FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Avanzado: interrupciones (lista PCI / MSI). Se reemplaza por el auto-tune MSI (T70-T72). -->
+                            <Expander Margin="0,40,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                      Background="Transparent" BorderBrush="{StaticResource KruzhHairlineBorderBrush}">
+                                <Expander.Header>
+                                    <StackPanel Spacing="2" Padding="0,8">
+                                        <TextBlock Text="Interrupciones (avanzado)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        <TextBlock Text="Modo MSI y prioridad por dispositivo. El ajuste automático por medición llega en una próxima versión." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
                                     </StackPanel>
-                                </Border>
-                            </StackPanel>
+                                </Expander.Header>
+                                <StackPanel Spacing="14">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Click="ApplySafeMsiAllBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Activar MSI seguro" />
+                                        <Button Click="ScanPciDevicesBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Re-escanear" />
+                                        <Button Click="RevertAllPciIrqMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir" />
+                                    </StackPanel>
+                                    <ItemsControl x:Name="PciDevicesItemsControl">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnSpacing="16" Padding="0,12" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1" ToolTipService.ToolTip="{Binding PnpInstanceId}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding FriendlyName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Category}" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                        <TextBlock Text="{Binding MsiStatusText}" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" />
+                                                        <TextBlock Text="{Binding PriorityText}" FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2" Tag="{Binding PnpInstanceId}" Click="EnableSinglePciMsiBtn_Click" IsEnabled="{Binding IsSafeForMsi}"
+                                                            Style="{StaticResource KruzhGhostButtonStyle}" Content="MSI" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Expander>
+
+                            <TextBlock Text="Aplicá solo los ajustes adecuados para tu uso." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" Margin="0,28,0,0" />
                         </StackPanel>
                     </ScrollViewer>
 
