@@ -35,7 +35,7 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 | ID | Tarea | Deps | Hecho cuando |
 |---|---|---|---|
 | T30 | Migrar tweaks al formato declarativo. **Red: se mantienen todos** (N01–N08). Fuera: M02, M03, M04, G03, G07, I03, F02 | T20, T21, T23 | test: toda definición con ops + Source + Describe()==ops |
-| T31 [P] | Borrar código viejo de tweaks quitados y fallbacks `*_Rev` | T30 | grep `_Rev` = 0 |
+| T31 ✅ | Borrar código viejo de tweaks quitados y fallbacks `*_Rev` | T30 | grep `_Rev` = 0 |
 | T32 [P] | Perfiles Normal/Competitivo/Profesional/Entusiasta + gates laptop + gates anticheat | T30, T12 | tests de membresía |
 | T33 [P] | Energía: una sola fuente de verdad (plan KRUZH + `PowerSettingOp`) | T23, T30 | sin journal huérfano (B10) |
 | T34 [P] | CS2 + VALORANT: detección de exe (Steam VDF multi-biblioteca, Riot Client), IFEO, GPU pref, FSO, CPU sets — **sin tocar archivos del juego** | T21, T24 | test: ninguna op apunta a carpetas del juego (ADR-004) |
@@ -101,7 +101,7 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 | U5 | Optimizaciones minimalista | ✅ |
 | U6 | GPU minimalista y dinámica por fabricante | ✅ |
 | U7 | Monitor legible (4 indicadores, 1 gráfico, cambios aplicados en lenguaje humano) | ✅ |
-| U8 | Quitar del catálogo los placebo de mouse/GPU/audio (M02-M04, G03, I03, F02) — es T31. **G07 (HDCP) se mantiene** por decisión del dueño (spec 002) | pendiente |
+| U8 ✅ | Quitar del catálogo los placebo de mouse/GPU/audio (M02-M04, G03, I03, F02) — es T31. **G07 (HDCP) se mantiene** por decisión del dueño (spec 002) | pendiente |
 | U9 | Ronda 3: sidebar LeftCompact, titlebar unificada, overlay en toda acción, B2, Agregar juego inline, Interrupciones en Optimizaciones, import .nip | ✅ |
 | U10 | Monitor: drivers con más latencia (ETW DPC/ISR por driver, base de T70) | ✅ verificado por el usuario |
 | U11 | Ronda 4: ancho de vistas fijo, sidebar que empuja con cierre animado, modal propio, medición DPC continua | ✅ |

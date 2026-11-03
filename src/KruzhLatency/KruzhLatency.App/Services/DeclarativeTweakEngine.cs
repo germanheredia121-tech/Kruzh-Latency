@@ -133,9 +133,6 @@ public sealed partial class DeclarativeTweakItem : ObservableObject
     public string CategoryGlyph => Id switch
     {
         "MouseAccelOff" => "\uE962",
-        "MarkCMouseCurve" => "\uE9D9",
-        "MouseDataQueueDynamic" => "\uE8B7",
-        "RawMouseThrottleWin11" => "\uE945",
         "CpuPrioritySeparationSelector" => "\uE950",
         "GlobalTimerResolutionWin11" => "\uE916",
         "BcdDisableDynamicTick" => "\uE823",
@@ -147,7 +144,6 @@ public sealed partial class DeclarativeTweakItem : ObservableObject
         "ServicesAndTasksDebloat" => "\uE713",
         "GpuHardwareSchedulingHags" => "\uE7F8",
         "GpuDynamicP0State" => "\uEC4A",
-        "NvidiaUltraLowLatencyReg" => "\uE945",
         "AmdRadeonUlpsOff" => "\uE708",
         "DirectXIndependentFlipAndFse" => "\uE740",
         "DisableMpo" => "\uE81E",
@@ -159,14 +155,12 @@ public sealed partial class DeclarativeTweakItem : ObservableObject
         "NtpHighPrecisionClockSync" => "\uE774",
         "PciMsiModeV3" => "\uE964",
         "PciIrqSmartBalancer" => "\uE71D",
-        "AudioEnhancementsAndSpatialOff" => "\uE767",
         "UsbHidPowerSavingOff" => "\uE88E",
         "PcieAspmDisable" => "\uE950",
         "FastStartupAndHibernationOff" => "\uE7E8",
         "NtfsDisable8dot3AndLastAccess" => "\uEDA2",
         "SysMainAndMemoryManagement" => "\uE958",
         "GameIfeoHighPriority" => "\uE74A",
-        "SteamBackgroundGpuAccelOff" => "\uE7F4",
         "DisableCfgPerGameIfeo" => "\uE8A5",
         "CpuKernelMitigationsOff" => "\uE7BA",
         "DefenderGameFolderExclusion" => "\uE83D",
@@ -467,17 +461,6 @@ public sealed partial class DeclarativeTweakEngine
         var hw = _hwService.CurrentProfile;
         foreach (var tweak in _allTweaks)
         {
-            // Adjust dynamic default option for MouseDataQueueSize if not yet chosen
-            if (tweak.Id == "MouseDataQueueDynamic" && string.IsNullOrEmpty(tweak.SelectedOptionKey))
-            {
-                tweak.SelectedOptionKey = hw.MousePollingRateHz switch
-                {
-                    >= 8000 => "128",
-                    >= 4000 => "64",
-                    >= 2000 => "32",
-                    _ => "16"
-                };
-            }
             tweak.RefreshGatesAndLiveState(hw);
         }
     }
@@ -531,13 +514,6 @@ public sealed partial class DeclarativeTweakEngine
                 {
                     string recOpt = t.Id switch
                     {
-                        "MouseDataQueueDynamic" => hw.MousePollingRateHz switch
-                        {
-                            >= 8000 => "128",
-                            >= 4000 => "64",
-                            >= 2000 => "32",
-                            _ => "16"
-                        },
                         "CpuPrioritySeparationSelector" => "38",
                         "MmcssAndNetworkThrottlingSelector" => "Balanced10_Off",
                         _ => t.Options.LastOrDefault()?.Key ?? string.Empty
@@ -645,30 +621,22 @@ public sealed partial class DeclarativeTweakEngine
         };
     }
 
-    /// <summary>Paso 2 del revert (background). Journal -> fallback del tweak -> fallback de OS. Nunca lanza.</summary>
+    /// <summary>
+    /// Paso 2 del revert (background). Solo desde el journal: se restaura el valor original exacto que se guardó.
+    /// Sin backup no se escribe nada (T31: se quitaron los fallbacks que adivinaban "valores de Windows" con ids "*_Rev",
+    /// bug B2). Un ítem puede explicar por qué no se revierte (ej. fantasmas borrados). Nunca lanza.
+    /// </summary>
     public (bool Success, string Detail) RunRevertActions(DeclarativeTweakItem item)
     {
         try
         {
             bool reverted = _audit.RevertTweakFromJournal(item.Id, out string msg);
-            if (!reverted && item.CustomRevertFallback != null)
+            if (!reverted && !_audit.HasBackupForTweak(item.Id))
             {
-                var (okFallback, detailFallback) = item.CustomRevertFallback();
-                msg = detailFallback;
-                reverted = okFallback;
+                msg = item.CustomRevertFallback is { } explain
+                    ? explain().Detail
+                    : "No hay valores originales guardados de este ajuste (no lo aplicó KRUZH o ya se revirtió): no se cambió nada.";
             }
-            if (!reverted)
-            {
-                var (okOs, detailOs) = ApplyDefaultOsRevertFallback(item.Id);
-                if (okOs)
-                {
-                    reverted = true;
-                    msg = detailOs;
-                }
-            }
-            // B2: los fallbacks escriben con ids "*_Rev"; esas entradas no deben quedar en el journal
-            // (revertirlas después volvería a aplicar el tweak).
-            _audit.DiscardEntries(TransactionalAuditService.IsLegacyFallbackEntry);
             return (reverted, msg);
         }
         catch (Exception ex)
@@ -743,135 +711,6 @@ public sealed partial class DeclarativeTweakEngine
                 _audit.SetRegistryValue("MouseAccelOff", RegistryHive.CurrentUser, @"Control Panel\Mouse", "MouseThreshold2", "0", RegistryValueKind.String);
                 _audit.SetRegistryValue("MouseAccelOff", RegistryHive.CurrentUser, @"Control Panel\Mouse", "MouseSensitivity", "10", RegistryValueKind.String);
                 return (true, "Aceleración de mouse desactivada (1:1 6/11).");
-            },
-            CustomRevertFallback = () =>
-            {
-                _audit.SetRegistryValue("MouseAccelOff_Rev", RegistryHive.CurrentUser, @"Control Panel\Mouse", "MouseSpeed", "1", RegistryValueKind.String);
-                _audit.SetRegistryValue("MouseAccelOff_Rev", RegistryHive.CurrentUser, @"Control Panel\Mouse", "MouseThreshold1", "6", RegistryValueKind.String);
-                _audit.SetRegistryValue("MouseAccelOff_Rev", RegistryHive.CurrentUser, @"Control Panel\Mouse", "MouseThreshold2", "10", RegistryValueKind.String);
-                return (true, "Restaurado a valores estándar de Windows.");
-            }
-        });
-
-        _allTweaks.Add(new DeclarativeTweakItem
-        {
-            Id = "MarkCMouseCurve",
-            CodeNumber = "M02",
-            Title = "MarkC 1:1 Linear Mouse Curves (40-Byte True Ramp)",
-            Category = TweakCategory.MouseInput,
-            CategoryDisplay = "Mouse & Input",
-            TechnicalDescription = "Inyecta las curvas planas exactas de 40 bytes (MarkC 100% DPI) en SmoothMouseXCurve y SmoothMouseYCurve para eliminar cualquier filtrado residual.",
-            WhatItTouches = @"HKCU\Control Panel\Mouse -> SmoothMouseXCurve, SmoothMouseYCurve (40 bytes lineales)",
-            SourceAttribution = "MarkC Windows 10/11 Mouse Fix",
-            Risk = RiskLevel.Low,
-            RequiresReboot = true,
-            InMinimal = false,
-            InCompetitivo = true,
-            InProfesional = true,
-            ReadLiveState = () =>
-            {
-                using var key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Mouse");
-                if (key?.GetValue("SmoothMouseXCurve") is byte[] b && b.Length == 40)
-                {
-                    // Check linear MarkC marker byte at index 9 == 0x00 and index 10 == 0x01
-                    return b[8] == 0x00 && b[9] == 0x00 && b[10] == 0x01;
-                }
-                return false;
-            },
-            ApplyAction = _ =>
-            {
-                // True MarkC 1:1 100% DPI 40-byte linear ramp (unlike original script which wrote default curve)
-                byte[] linearX =
-                {
-                    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                    0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,
-                    0x00,0x00,0x02,0x00,0x00,0x00,0x00,0x00,
-                    0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00,
-                    0x00,0x00,0x04,0x00,0x00,0x00,0x00,0x00
-                };
-                byte[] linearY =
-                {
-                    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-                    0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,
-                    0x00,0x00,0x02,0x00,0x00,0x00,0x00,0x00,
-                    0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00,
-                    0x00,0x00,0x04,0x00,0x00,0x00,0x00,0x00
-                };
-                _audit.SetRegistryValue("MarkCMouseCurve", RegistryHive.CurrentUser, @"Control Panel\Mouse", "SmoothMouseXCurve", linearX, RegistryValueKind.Binary);
-                _audit.SetRegistryValue("MarkCMouseCurve", RegistryHive.CurrentUser, @"Control Panel\Mouse", "SmoothMouseYCurve", linearY, RegistryValueKind.Binary);
-                return (true, "Curvas MarkC 1:1 de 40 bytes aplicadas (backup previo guardado en Journal).");
-            }
-        });
-
-        _allTweaks.Add(new DeclarativeTweakItem
-        {
-            Id = "MouseDataQueueDynamic",
-            CodeNumber = "M03",
-            Title = "Mouse & Keyboard DataQueueSize Dinámico (Por Polling Rate Hz)",
-            Category = TweakCategory.MouseInput,
-            CategoryDisplay = "Mouse & Input",
-            TechnicalDescription = "Ajusta la profundidad del ring buffer de mouclass.sys y kbdclass.sys según los Hz de tu mouse: 16 para <=1000Hz, 32 para 2000Hz, 64 para 4000Hz, 128 para 8000Hz (evita packet drops en alto polling rate).",
-            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters\MouseDataQueueSize & kbdclass\Parameters\KeyboardDataQueueSize",
-            SourceAttribution = "Calypto / BlurBusters High-Polling Rate Guide",
-            Risk = RiskLevel.Low,
-            RequiresReboot = true,
-            InMinimal = false,
-            InCompetitivo = true,
-            InProfesional = true,
-            SelectedOptionKey = "16",
-            Options = new List<TweakOptionChoice>
-            {
-                new() { Key = "100", ShortLabel = "Auto", DisplayName = "Default Windows (100)", Description = "Buffer estándar de Windows." },
-                new() { Key = "16", ShortLabel = "16", DisplayName = "Queue = 16 (Óptimo para Mouse 500Hz / 1000Hz)", Description = "Mínima latencia de cola para polling estándar de 1000Hz." },
-                new() { Key = "32", ShortLabel = "32", DisplayName = "Queue = 32 (Óptimo para Mouse 2000Hz)", Description = "Buffer seguro para receptores inalámbricos de 2000Hz." },
-                new() { Key = "64", ShortLabel = "64", DisplayName = "Queue = 64 (Óptimo para Mouse 4000Hz)", Description = "Evita saturación de cola en mouses de 4000Hz." },
-                new() { Key = "128", ShortLabel = "128", DisplayName = "Queue = 128 (Óptimo para Mouse 8000Hz)", Description = "Imprescindible para 8000Hz sin pérdida de eventos." }
-            },
-            EvaluateGate = hw => hw.MousePollingRateHz >= 4000
-                ? EvaluationResult.Recommended($"Detectado perfil {hw.MousePollingRateHz}Hz: se recomienda Queue >= 64 para evitar pérdida de paquetes.")
-                : EvaluationResult.Recommended("Para mouse de 1000Hz, Queue = 16 minimiza el retraso de buffer sin riesgo de overflow."),
-            ReadLiveState = () =>
-            {
-                int? val = ReadRegDword(RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\mouclass\Parameters", "MouseDataQueueSize");
-                return val is 16 or 32 or 64 or 128;
-            },
-            ReadLiveOptionKey = () =>
-            {
-                int? val = ReadRegDword(RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\mouclass\Parameters", "MouseDataQueueSize");
-                return val is 16 or 32 or 64 or 128 ? val.Value.ToString() : "100";
-            },
-            ApplyAction = opt =>
-            {
-                int queueVal = int.TryParse(opt, out int parsed) ? parsed : 16;
-                _audit.SetRegistryValue("MouseDataQueueDynamic", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\mouclass\Parameters", "MouseDataQueueSize", queueVal, RegistryValueKind.DWord);
-                _audit.SetRegistryValue("MouseDataQueueDynamic", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\kbdclass\Parameters", "KeyboardDataQueueSize", queueVal, RegistryValueKind.DWord);
-                return (true, $"Mouse/Keyboard DataQueueSize establecido en {queueVal}.");
-            }
-        });
-
-        _allTweaks.Add(new DeclarativeTweakItem
-        {
-            Id = "RawMouseThrottleWin11",
-            CodeNumber = "M04",
-            Title = "Windows 11 RawMouseThrottleDuration & Background Input Rate Fix",
-            Category = TweakCategory.MouseInput,
-            CategoryDisplay = "Mouse & Input",
-            TechnicalDescription = "Reduce el estrangulamiento de mensajes WM_INPUT / RawMouse introducido en Windows 11 22H2+ para mantener precisión de micro-ajustes.",
-            WhatItTouches = @"HKCU\Control Panel\Mouse -> RawMouseThrottleDuration = 3 (DWORD)",
-            SourceAttribution = "ValleyOfDoom / BoringBoredom PC-Tuning §11.52",
-            Risk = RiskLevel.Low,
-            RequiresReboot = false,
-            InMinimal = true,
-            InCompetitivo = true,
-            InProfesional = true,
-            ApplicableGate = hw => hw.IsWindows11_22H2Plus
-                ? ApplicabilityResult.Applicable("Compatible con tu Windows 11 22H2+")
-                : ApplicabilityResult.NotApplicable($"Requiere Windows 11 Build 22621+ (Build actual: {hw.WindowsBuild})"),
-            ReadLiveState = () => ReadRegDword(RegistryHive.CurrentUser, @"Control Panel\Mouse", "RawMouseThrottleDuration") == 3,
-            ApplyAction = _ =>
-            {
-                _audit.SetRegistryValue("RawMouseThrottleWin11", RegistryHive.CurrentUser, @"Control Panel\Mouse", "RawMouseThrottleDuration", 3, RegistryValueKind.DWord);
-                return (true, "RawMouseThrottleDuration optimizado en 3.");
             }
         });
 
@@ -1311,38 +1150,6 @@ public sealed partial class DeclarativeTweakEngine
 
         _allTweaks.Add(new DeclarativeTweakItem
         {
-            Id = "NvidiaUltraLowLatencyReg",
-            CodeNumber = "G03",
-            Title = "NVIDIA Driver Registry Tuning (PowerMizer + ULL + NvTray Off)",
-            Category = TweakCategory.GpuDisplay,
-            CategoryDisplay = "GPU & Display",
-            TechnicalDescription = "Configura PowerMizer en máximo rendimiento, habilita registros de baja latencia en nvlddmkm y desactiva el proceso en bandeja NvTray.",
-            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters\Global -> PowerMizerEnable=0, PowerMizerLevel=1, NvTray\StartOnLogin=0",
-            SourceAttribution = "NVIDIA Driver Internals / CS2 Pro Config",
-            Risk = RiskLevel.Low,
-            RequiresReboot = true,
-            InMinimal = false,
-            InCompetitivo = true,
-            InProfesional = true,
-            ApplicableGate = hw => hw.GpuVendor == GpuVendorKind.Nvidia
-                ? ApplicabilityResult.Applicable("GPU NVIDIA detectada")
-                : ApplicabilityResult.NotApplicable($"Exclusivo para GPUs NVIDIA (Detectada: {hw.GpuName})"),
-            EvaluateGate = hw => hw.Chassis == ChassisKind.Laptop
-                ? EvaluationResult.Neutral("En Laptop usar solo conectado a corriente alterna.")
-                : EvaluationResult.Recommended("Óptimo para GPUs NVIDIA de escritorio."),
-            ReadLiveState = () => ReadRegDword(RegistryHive.CurrentUser, @"Software\NVIDIA Corporation\NvTray", "StartOnLogin") == 0,
-            ApplyAction = _ =>
-            {
-                _audit.SetRegistryValue("NvidiaUltraLowLatencyReg", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS", "EnableRID73777", 1, RegistryValueKind.DWord);
-                _audit.SetRegistryValue("NvidiaUltraLowLatencyReg", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters\Global", "PowerMizerEnable", 0, RegistryValueKind.DWord);
-                _audit.SetRegistryValue("NvidiaUltraLowLatencyReg", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters\Global", "PowerMizerLevel", 1, RegistryValueKind.DWord);
-                _audit.SetRegistryValue("NvidiaUltraLowLatencyReg", RegistryHive.CurrentUser, @"Software\NVIDIA Corporation\NvTray", "StartOnLogin", 0, RegistryValueKind.DWord);
-                return (true, "Parámetros de baja latencia de nvlddmkm y NvTray OFF aplicados.");
-            }
-        });
-
-        _allTweaks.Add(new DeclarativeTweakItem
-        {
             Id = "AmdRadeonUlpsOff",
             CodeNumber = "G04",
             Title = "AMD Radeon: Desactivar ULPS (Ultra Low Power State) & Stutter Fix",
@@ -1728,30 +1535,6 @@ public sealed partial class DeclarativeTweakEngine
             ApplyAction = _ => _irqMsi.ApplyOptimalPciIrqAffinity("PciIrqSmartBalancer")
         });
 
-        _allTweaks.Add(new DeclarativeTweakItem
-        {
-            Id = "AudioEnhancementsAndSpatialOff",
-            CodeNumber = "I03",
-            Title = "Desactivar Audio Enhancements (APO), Spatial Sound & ProtectedAudioDG",
-            Category = TweakCategory.IrqMsiAudio,
-            CategoryDisplay = "IRQ, MSI & Audio",
-            TechnicalDescription = "Deshabilita el procesamiento de efectos APO en endpoints de audio, Spatial Audio y el overhead DRM de audiodg.exe que causan spikes de DPC.",
-            WhatItTouches = @"MMDevices\Audio\Render\<Endpoint>\FxProperties\{1da5d803...},6=1, EnableSpatialAudio=0, DisableProtectedAudioDG=1",
-            SourceAttribution = "BlurBusters Threads #15352, #12413 (Confirmado por Chief Blur Buster)",
-            Risk = RiskLevel.Low,
-            RequiresReboot = true,
-            InMinimal = false,
-            InCompetitivo = true,
-            InProfesional = true,
-            ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Audio", "DisableProtectedAudioDG") == 1,
-            ApplyAction = _ =>
-            {
-                _audit.SetRegistryValue("AudioEnhancementsAndSpatialOff", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Audio", "DisableProtectedAudioDG", 1, RegistryValueKind.DWord);
-                _audit.SetRegistryValue("AudioEnhancementsAndSpatialOff", RegistryHive.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Audio", "EnableSpatialAudio", 0, RegistryValueKind.DWord);
-                return (true, "Audio Enhancements, Spatial Audio y ProtectedAudioDG desactivados con backup.");
-            }
-        });
-
         // ==================== CATEGORÍA 6: USB, ALMACENAMIENTO Y MEMORIA ====================
         _allTweaks.Add(new DeclarativeTweakItem
         {
@@ -1934,30 +1717,6 @@ public sealed partial class DeclarativeTweakEngine
                     }
                 }
                 return (true, $"Optimizaciones por ejecutable aplicadas a {TargetGames.Count} juegos.");
-            }
-        });
-
-        _allTweaks.Add(new DeclarativeTweakItem
-        {
-            Id = "SteamBackgroundGpuAccelOff",
-            CodeNumber = "F02",
-            Title = "Desactivar Aceleración GPU de Steam WebHelper + Prioridad Compositor (CSRSS/DWM)",
-            Category = TweakCategory.FpsBoostGames,
-            CategoryDisplay = "FPS Boost & Juegos",
-            TechnicalDescription = "Impide que el navegador interno de Steam compita por ciclos 3D de la GPU mientras jugás CS2 y asegura prioridad alta para csrss.exe y dwm.exe.",
-            WhatItTouches = @"HKCU\Software\Valve\Steam\H264HWAccel=0, GPUAccelWebViewsV3=0 & IFEO\csrss.exe / dwm.exe PerfOptions",
-            SourceAttribution = "CS2 Competitive Guide",
-            Risk = RiskLevel.Low,
-            InMinimal = true,
-            InCompetitivo = true,
-            InProfesional = true,
-            ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions", "CpuPriorityClass") == 3,
-            ApplyAction = _ =>
-            {
-                _audit.SetRegistryValue("SteamBackgroundGpuAccelOff", RegistryHive.CurrentUser, @"Software\Valve\Steam", "gpuacceleration", 0, RegistryValueKind.DWord);
-                _audit.SetRegistryValue("SteamBackgroundGpuAccelOff", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions", "CpuPriorityClass", 3, RegistryValueKind.DWord);
-                _audit.SetRegistryValue("SteamBackgroundGpuAccelOff", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\dwm.exe\PerfOptions", "CpuPriorityClass", 3, RegistryValueKind.DWord);
-                return (true, "Aceleración de fondo de Steam desactivada y prioridad CSRSS/DWM configurada.");
             }
         });
 
@@ -2333,148 +2092,5 @@ public sealed partial class DeclarativeTweakEngine
         }
         catch { }
         return false;
-    }
-
-    private (bool ok, string detail) ApplyDefaultOsRevertFallback(string tweakId)
-    {
-        try
-        {
-            switch (tweakId)
-            {
-                case "MarkCMouseCurve":
-                    byte[] defX = { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x15,0x6E,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x40,0x01,0x00,0x00,0x00,0x00,0x00, 0x29,0xDC,0x03,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x28,0x00,0x00,0x00,0x00,0x00 };
-                    byte[] defY = { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0xFD,0x11,0x01,0x00,0x00,0x00,0x00,0x00, 0x00,0x24,0x04,0x00,0x00,0x00,0x00,0x00, 0x00,0xFC,0x12,0x00,0x00,0x00,0x00,0x00, 0x00,0xC0,0xBB,0x01,0x00,0x00,0x00,0x00 };
-                    _audit.SetRegistryValue("MarkC_Rev", RegistryHive.CurrentUser, @"Control Panel\Mouse", "SmoothMouseXCurve", defX, RegistryValueKind.Binary);
-                    _audit.SetRegistryValue("MarkC_Rev", RegistryHive.CurrentUser, @"Control Panel\Mouse", "SmoothMouseYCurve", defY, RegistryValueKind.Binary);
-                    return (true, "Curvas de mouse restauradas al valor estándar de Windows.");
-
-                case "MouseDataQueueDynamic":
-                    _audit.SetRegistryValue("MDQ_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\mouclass\Parameters", "MouseDataQueueSize", 100, RegistryValueKind.DWord);
-                    _audit.SetRegistryValue("MDQ_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\kbdclass\Parameters", "KeyboardDataQueueSize", 100, RegistryValueKind.DWord);
-                    return (true, "DataQueueSize restaurado al estándar de Windows (100).");
-
-                case "RawMouseThrottleWin11":
-                    _audit.SetRegistryValue("RMT_Rev", RegistryHive.CurrentUser, @"Control Panel\Mouse", "RawMouseThrottleDuration", 8, RegistryValueKind.DWord);
-                    return (true, "RawMouseThrottleDuration restaurado al estándar.");
-
-                case "CpuPrioritySeparationSelector":
-                    _audit.SetRegistryValue("CPS_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\PriorityControl", "Win32PrioritySeparation", 2, RegistryValueKind.DWord);
-                    return (true, "Win32PrioritySeparation restaurado a 2 (Default Windows).");
-
-                case "GlobalTimerResolutionWin11":
-                    _audit.SetRegistryValue("GTR_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "GlobalTimerResolutionRequests", 0, RegistryValueKind.DWord);
-                    return (true, "GlobalTimerResolutionRequests restaurado a 0.");
-
-                case "BcdDisableDynamicTick":
-                    new WmiBcdStore().Delete(BcdElement.DisableDynamicTick);
-                    return (true, "disabledynamictick borrado (default de Windows).");
-
-                case "ReservedCpuSetsTopology":
-                    _audit.SetRegistryValue("RCS_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "ReservedCpuSets", Array.Empty<byte>(), RegistryValueKind.Binary);
-                    return (true, "ReservedCpuSets limpiado.");
-
-                case "PowerThrottlingEcoQosOff":
-                    _audit.SetRegistryValue("PTE_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Power\PowerThrottling", "PowerThrottlingOff", 0, RegistryValueKind.DWord);
-                    return (true, "PowerThrottlingOff restaurado a 0.");
-
-                case "CpuIdleAndCoreParkingDesktop":
-                    _audit.SetPowerCfgAcValue("CIP_Rev", "54533251-82be-4824-96c1-47b60b740d00", "5d76a2ca-e8c0-402f-a133-2158492d58ad", 0);
-                    return (true, "C-States Idle rehabilitado (IDLEDISABLE=0).");
-
-                case "GameBarDvrSafeDisable":
-                    _audit.SetRegistryValue("GBD_Rev", RegistryHive.CurrentUser, @"System\GameConfigStore", "GameDVR_Enabled", 1, RegistryValueKind.DWord);
-                    _audit.SetRegistryValue("GBD_Rev", RegistryHive.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\GameDVR", "AppCaptureEnabled", 1, RegistryValueKind.DWord);
-                    return (true, "Game DVR restaurado al valor estándar.");
-
-                case "WindowsGameModeOn":
-                    _audit.SetRegistryValue("WGM_Rev", RegistryHive.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects", "VisualFXSetting", 0, RegistryValueKind.DWord);
-                    return (true, "Efectos visuales restaurados a automático.");
-
-
-                case "GpuHardwareSchedulingHags":
-                    _audit.SetRegistryValue("HAGS_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode", 1, RegistryValueKind.DWord);
-                    return (true, "HAGS desactivado (HwSchMode = 1).");
-
-                case "GpuDynamicP0State":
-                    SetAllDisplayClassDword("P0_Rev", "DisableDynamicPstate", 0);
-                    return (true, "DisableDynamicPstate restaurado a 0.");
-
-                case "NvidiaUltraLowLatencyReg":
-                    _audit.SetRegistryValue("NV_Rev", RegistryHive.CurrentUser, @"Software\NVIDIA Corporation\NvTray", "StartOnLogin", 1, RegistryValueKind.DWord);
-                    return (true, "NvTray StartOnLogin restaurado a 1.");
-
-                case "AmdRadeonUlpsOff":
-                    SetAllDisplayClassDword("ULPS_Rev", "EnableUlps", 1);
-                    return (true, "EnableUlps restaurado a 1.");
-
-                case "DirectXIndependentFlipAndFse":
-                    _audit.SetRegistryValue("DX_Rev", RegistryHive.CurrentUser, @"Software\Microsoft\DirectX\UserGpuPreferences", "DirectXUserGlobalSettings", "", RegistryValueKind.String);
-                    return (true, "DirectXUserGlobalSettings restaurado.");
-
-                case "DisableMpo":
-                    _audit.SetRegistryValue("MPO_Rev", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\Dwm", "OverlayTestMode", 0, RegistryValueKind.DWord);
-                    return (true, "MPO restaurado (OverlayTestMode = 0).");
-
-                case "DisableHdcp":
-                    SetAllDisplayClassDword("HDCP_Rev", "RMHdcpKeyglobZero", 0);
-                    return (true, "HDCP restaurado (RMHdcpKeyglobZero = 0).");
-
-                case "NicLsoAndFlowControlOff":
-                    TransactionalAuditService.RunHiddenProcess("netsh.exe", "int tcp set global rsc=enabled");
-                    return (true, "TCP RSC reactivado.");
-
-                case "MmcssAndNetworkThrottlingSelector":
-                    _audit.SetRegistryValue("MM_Rev", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "SystemResponsiveness", 20, RegistryValueKind.DWord);
-                    _audit.SetRegistryValue("MM_Rev", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex", 10, RegistryValueKind.DWord);
-                    return (true, "MMCSS restaurado a 20% / 10.");
-
-                case "TcpNagleAndRssOptimize":
-                    _audit.SetRegistryValue("TCP_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters", "ECNEnabled", 1, RegistryValueKind.DWord);
-                    return (true, "Configuración TCP restaurada.");
-
-                case "QosDscp46Games":
-                    _audit.SetRegistryValue("QOS_Rev", RegistryHive.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\QoS\KRUZH_CS2", "DSCP Value", "0", RegistryValueKind.String);
-                    return (true, "Política QoS DSCP restaurada.");
-
-                case "NtpHighPrecisionClockSync":
-                    _audit.SetRegistryValue("NTP_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\W32Time\Parameters", "NtpServer", "time.windows.com,0x9", RegistryValueKind.String);
-                    return (true, "Servidor NTP restaurado a time.windows.com.");
-
-                case "AudioEnhancementsAndSpatialOff":
-                    _audit.SetRegistryValue("AUD_Rev", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Audio", "DisableProtectedAudioDG", 0, RegistryValueKind.DWord);
-                    return (true, "DisableProtectedAudioDG restaurado a 0.");
-
-                case "PcieAspmDisable":
-                    _audit.SetRegistryValue("ASPM_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\pci\Parameters", "EnableASPM", 1, RegistryValueKind.DWord);
-                    return (true, "PCIe ASPM restaurado.");
-
-                case "FastStartupAndHibernationOff":
-                    TransactionalAuditService.RunHiddenProcess("powercfg.exe", "/h on");
-                    _audit.SetRegistryValue("FS_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled", 1, RegistryValueKind.DWord);
-                    return (true, "Fast Startup e Hibernación rehabilitados.");
-
-                case "NtfsDisable8dot3AndLastAccess":
-                    _audit.SetRegistryValue("NTFS_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\FileSystem", "NtfsDisable8dot3NameCreation", 2, RegistryValueKind.DWord);
-                    return (true, "NTFS 8.3 restaurado al valor estándar.");
-
-                case "SysMainAndMemoryManagement":
-                    _audit.SetRegistryValue("SM_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "DisablePagingExecutive", 0, RegistryValueKind.DWord);
-                    return (true, "DisablePagingExecutive restaurado.");
-
-                case "GameIfeoHighPriority":
-                    _audit.SetRegistryValue("IFEO_Rev", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\cs2.exe\PerfOptions", "CpuPriorityClass", 2, RegistryValueKind.DWord);
-                    return (true, "Prioridad IFEO restaurada a Normal (2).");
-
-                case "SteamBackgroundGpuAccelOff":
-                    _audit.SetRegistryValue("STM_Rev", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions", "CpuPriorityClass", 2, RegistryValueKind.DWord);
-                    return (true, "Prioridad CSRSS restaurada.");
-
-                case "CpuKernelMitigationsOff":
-                    _audit.SetRegistryValue("MIT_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverride", 0, RegistryValueKind.DWord);
-                    return (true, "Mitigaciones del kernel rehabilitadas.");
-            }
-        }
-        catch { }
-        return (false, "No se encontró entrada previa en el journal para revertir.");
     }
 }

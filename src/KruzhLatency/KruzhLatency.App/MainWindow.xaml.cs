@@ -723,21 +723,9 @@ public sealed partial class MainWindow : Window
         {
             App.HardwareService.SetMousePollingRate(hz);
 
-            var mouseQueueTweak = App.TweakEngine.AllTweaks.FirstOrDefault(t => t.Id == "MouseDataQueueDynamic");
-            if (mouseQueueTweak != null)
-            {
-                mouseQueueTweak.SelectedOptionKey = hz switch
-                {
-                    >= 8000 => "128",
-                    >= 4000 => "64",
-                    >= 2000 => "32",
-                    _ => "16"
-                };
-            }
-
             App.TweakEngine.RefreshAll();
             RefreshTweaksListUi();
-            SetStatus($"Polling Rate ajustado a {hz} Hz (MouseDataQueueSize = {mouseQueueTweak?.SelectedOptionKey ?? "16"}).");
+            SetStatus($"Polling rate ajustado a {hz} Hz.");
         }
     }
 
@@ -2481,7 +2469,7 @@ public sealed partial class MainWindow : Window
 
     private async void ApplyAllGamesBoostBtn_Click(object sender, RoutedEventArgs e)
     {
-        string[] gameTweakIds = { "GameIfeoHighPriority", "QosDscp46Games", "SteamBackgroundGpuAccelOff" };
+        string[] gameTweakIds = { "GameIfeoHighPriority", "QosDscp46Games" };
         var items = gameTweakIds
             .Select(id => App.TweakEngine.AllTweaks.FirstOrDefault(x => x.Id == id))
             .Where(t => t != null)
@@ -3020,7 +3008,7 @@ public sealed partial class MainWindow : Window
         if (item != null) return item.Title;
         if (tweakId.StartsWith("Game:", StringComparison.OrdinalIgnoreCase)) return $"Optimizaciones del juego · {tweakId[5..]}";
         if (tweakId == "NvidiaTelemetryOff") return "Telemetría de NVIDIA desactivada";
-        if (tweakId.EndsWith("_Rev", StringComparison.Ordinal)) return "Restauración automática (versión anterior)";
+        if (TransactionalAuditService.IsLegacyFallbackEntry(tweakId)) return "Restauración automática (versión anterior)";
         return tweakId;
     }
 
