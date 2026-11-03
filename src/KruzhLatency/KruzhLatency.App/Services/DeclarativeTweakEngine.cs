@@ -1987,6 +1987,44 @@ public sealed partial class DeclarativeTweakEngine
             }
         });
 
+        // Spec 002 / B9: Hyper-V y VBS solo en Entusiasta, siempre con el modal de anticheat/seguridad.
+        _allTweaks.Add(new DeclarativeTweakItem
+        {
+            Id = "HypervisorAndVbsOff",
+            CodeNumber = "C13",
+            Title = "Desactivar Hyper-V y VBS / Integridad de memoria",
+            Category = TweakCategory.SystemCpu,
+            CategoryDisplay = "Sistema & CPU",
+            TechnicalDescription = "Con Hyper-V cargado, Windows corre encima del hipervisor: cada interrupción y cambio de contexto pasa por una capa más, y VBS/HVCI verifica el código del kernel en el hipervisor. " +
+                                   "Apagarlo baja el costo de interrupciones y DPC. " +
+                                   "⚠ Deja de funcionar WSL2, Windows Sandbox, máquinas virtuales de Hyper-V y la Integridad de memoria. Algunos anticheats pueden exigir virtualización o VBS según la versión: si FACEIT AC o Vanguard no te dejan entrar, revertilo. " +
+                                   "Si tu VBS está bloqueado por UEFI, el registro no alcanza: hay que desactivarlo desde la BIOS.",
+            WhatItTouches = @"BCD {current} (WMI): hypervisorlaunchtype = Off · HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard -> EnableVirtualizationBasedSecurity=0 · DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity -> Enabled=0",
+            SourceAttribution = "Microsoft Learn: BcdOSLoaderElementTypes (HypervisorLaunchType) · Enable virtualization-based protection of code integrity (claves DeviceGuard) · spec 002 (B9)",
+            Risk = RiskLevel.High,
+            SecurityImpact = SecurityImpact.ReducesSecurity,
+            RequiresReboot = true,
+            InMinimal = false,
+            InCompetitivo = false,
+            InProfesional = false,
+            InEntusiasta = true,
+            EvaluateGate = hw => hw.IsVbsEnabled || ReadBcd(BcdElement.HypervisorLaunchType)?.Integer != 0
+                ? EvaluationResult.Neutral("Entusiasta: menos capas en cada interrupción a cambio de seguridad y compatibilidad.")
+                : EvaluationResult.Recommended("Hyper-V y VBS ya están apagados."),
+            AnticheatGate = _ => AnticheatResult.Unsafe("FACEIT AC / Vanguard pueden exigir virtualización o VBS según la versión de Windows y del anticheat."),
+            ReadLiveState = () =>
+                ReadBcd(BcdElement.HypervisorLaunchType)?.Integer == 0 &&
+                ReadRegDword(RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\DeviceGuard", "EnableVirtualizationBasedSecurity") is null or 0 &&
+                ReadRegDword(RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity", "Enabled") is null or 0,
+            ApplyAction = _ =>
+            {
+                _audit.SetBcdValue("HypervisorAndVbsOff", "hypervisorlaunchtype", "0");
+                _audit.SetRegistryValue("HypervisorAndVbsOff", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\DeviceGuard", "EnableVirtualizationBasedSecurity", 0, RegistryValueKind.DWord);
+                _audit.SetRegistryValue("HypervisorAndVbsOff", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity", "Enabled", 0, RegistryValueKind.DWord);
+                return (true, "Hyper-V (hypervisorlaunchtype Off) y VBS/HVCI desactivados. Reiniciá para aplicarlo.");
+            }
+        });
+
         _allTweaks.Add(new DeclarativeTweakItem
         {
             Id = "CpuKernelMitigationsOff",

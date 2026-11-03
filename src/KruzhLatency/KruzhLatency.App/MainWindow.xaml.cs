@@ -1003,19 +1003,7 @@ public sealed partial class MainWindow : Window
         var toRevert = pending.Where(t => t.IsPendingRevert).ToList();
         bool needsReboot = pending.Any(t => t.RequiresReboot);
 
-        var riskyItems = toApply
-            .Where(t => t.IsAnticheatUnsafeBool || t.ReducesSecurityBool)
-            .ToList();
-
-        if (riskyItems.Count > 0)
-        {
-            bool redConfirmed = await ShowRedSecurityWarningModalAsync(riskyItems);
-            if (!redConfirmed)
-            {
-                SetStatus("Operación cancelada en la advertencia de seguridad/anticheat.");
-                return;
-            }
-        }
+        if (!await ConfirmRiskyAsync(toApply)) return;
 
         _isApplyingBatch = true;
         _telemetryTimer.Stop(); // no refrescar estado de tweaks mientras se escriben (evita lecturas a medio aplicar)
@@ -1652,19 +1640,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var riskyItems = selected
-            .Where(t => t.IsAnticheatUnsafeBool || t.ReducesSecurityBool)
-            .ToList();
-
-        if (riskyItems.Count > 0)
-        {
-            bool redConfirmed = await ShowRedSecurityWarningModalAsync(riskyItems);
-            if (!redConfirmed)
-            {
-                SetStatus("Operación cancelada en la advertencia de seguridad/anticheat.");
-                return;
-            }
-        }
+        if (!await ConfirmRiskyAsync(selected)) return;
 
         if (createRestorePointCheck.IsChecked == true)
         {
@@ -1689,6 +1665,19 @@ public sealed partial class MainWindow : Window
         SetStatus(finalSummary);
     }
 
+    /// <summary>
+    /// B9: TODO ítem que puede romper un anticheat o baja la seguridad pide confirmación antes de aplicarse,
+    /// venga del lote, de un perfil, de un toggle suelto o de un botón de acción. true = seguir.
+    /// </summary>
+    private async Task<bool> ConfirmRiskyAsync(IEnumerable<DeclarativeTweakItem> items)
+    {
+        var risky = items.Where(t => t.IsAnticheatUnsafeBool || t.ReducesSecurityBool).ToList();
+        if (risky.Count == 0) return true;
+        bool ok = await ShowRedSecurityWarningModalAsync(risky);
+        if (!ok) SetStatus("Operación cancelada en la advertencia de seguridad/anticheat.");
+        return ok;
+    }
+
     private Task<bool> ShowRedSecurityWarningModalAsync(List<DeclarativeTweakItem> riskyItems)
     {
         var sb = new StringBuilder();
@@ -1696,11 +1685,12 @@ public sealed partial class MainWindow : Window
         sb.AppendLine();
         foreach (var r in riskyItems)
         {
-            sb.AppendLine($"• {r.Title}");
+            string why = r.IsAnticheatUnsafeBool && !string.IsNullOrWhiteSpace(r.Anticheat.WarningMessage) ? $" — {r.Anticheat.WarningMessage}" : "";
+            sb.AppendLine($"• {r.Title}{why}");
         }
         sb.AppendLine();
         sb.Append("Si un anticheat no te deja entrar, revertilos desde Monitor → Cambios aplicados. ¿Aplicarlos igual?");
-        return ShowConfirmModalAsync("Atención: perfil Entusiasta", sb.ToString(), "Aplicar igual");
+        return ShowConfirmModalAsync("Atención: seguridad y anticheat", sb.ToString(), "Aplicar igual");
     }
 
     private void RevertSelectedTweaksBtn_Click(object sender, RoutedEventArgs e)
@@ -1822,6 +1812,13 @@ public sealed partial class MainWindow : Window
                 if (early != null)
                 {
                     SetStatus(early.Message);
+                    return;
+                }
+                if (!await ConfirmRiskyAsync(new[] { item }))
+                {
+                    _isHandlingToggleChange = true;
+                    ts.IsOn = false;
+                    _isHandlingToggleChange = false;
                     return;
                 }
                 await RunStepsWithOverlayAsync("Aplicando cambios", "Ajuste del driver", new[] { ApplyTweakStep(item) });
@@ -2425,18 +2422,21 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void ApplyAllGamesBoostBtn_Click(object sender, RoutedEventArgs e)
+    private async void ApplyAllGamesBoostBtn_Click(object sender, RoutedEventArgs e)
     {
         string[] gameTweakIds = { "GameIfeoHighPriority", "QosDscp46Games", "SteamBackgroundGpuAccelOff" };
+        var items = gameTweakIds
+            .Select(id => App.TweakEngine.AllTweaks.FirstOrDefault(x => x.Id == id))
+            .Where(t => t != null)
+            .Cast<DeclarativeTweakItem>()
+            .ToList();
+        if (!await ConfirmRiskyAsync(items)) return;
+
         int applied = 0;
-        foreach (string id in gameTweakIds)
+        foreach (var t in items)
         {
-            var t = App.TweakEngine.AllTweaks.FirstOrDefault(x => x.Id == id);
-            if (t != null)
-            {
-                var rep = App.TweakEngine.ExecuteApply(t);
-                if (rep.Success) applied++;
-            }
+            var rep = App.TweakEngine.ExecuteApply(t);
+            if (rep.Success) applied++;
         }
         RefreshLiveTweaksStateInPlace();
         SetStatus($"Optimización por juego aplicada a {App.TweakEngine.TargetGames.Count} ejecutables ({applied} módulos activos).");
