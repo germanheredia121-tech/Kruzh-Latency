@@ -125,11 +125,11 @@ Spec: [specs/002-dpc-red-dispositivos-pantalla.md](specs/002-dpc-red-dispositivo
 | ID | Tarea | Deps | Hecho cuando |
 |---|---|---|---|
 | B1 ✅ | Motor de reglas de dispositivos: hermanos de GPU (audio fn1, xHCI USB-C, UCSI), NVPCF/Virtual Audio, nodos XInput/HID game controller de teclados, Wi-Fi con Ethernet conectado, 2ª NIC sin enlace, HPET/Wavetable/RRAS/Print Queue/Voice Clarity/MIDI 2.0 | A4 | tests con fixture: detecta lo del chat |
-| B2 [P] | Fantasmas: listado por categoría + `pnputil /remove-device` (desde Competitivo, restore point antes) | A2 | test con fixture; UI avisa que es irreversible |
-| B3 [P] | Dispositivos con error: Code 43 (deshabilitar + aviso físico), Code 28 (link driver chipset) | A2 | test con fixture (RAID Controller, Unknown USB Device) |
+| B2 ✅ | Fantasmas: listado por categoría + `pnputil /remove-device` (desde Competitivo, restore point antes) | A2 | test con fixture; UI avisa que es irreversible |
+| B3 ✅ | Dispositivos con error: Code 43 (deshabilitar + aviso físico), Code 28 (link driver chipset) | A2 | test con fixture (RAID Controller, Unknown USB Device) |
 | B4 ✅ | Red por chip: tabla RTL8125/RTL8111/I225/I226/I219/Killer, solo keywords y valores permitidos, Speed/Duplex = negociada, reinicio inmediato del adaptador | A3 | tests con `Ndi\Params` del fixture |
-| B5 [P] | Red: detección de filtros NDIS (cFos, MSI LAN Manager, Dragon Center) y driver NetAdapterCx vs NDIS → recomendación con link | A2 | test con fixture |
-| B6 [P] | USB/HID: EnhancedPowerManagement + AllowIdleIrpInD3 en todo USB; casilla "permitir apagar" off vía WMI; consejo de puerto CPU vs chipset | A2, A5 | lectura posterior confirma valores |
+| B5 ✅ | Red: detección de filtros NDIS (cFos, MSI LAN Manager, Dragon Center) y driver NetAdapterCx vs NDIS → recomendación con link | A2 | test con fixture |
+| B6 ✅ | USB/HID: EnhancedPowerManagement + AllowIdleIrpInD3 en todo USB; casilla "permitir apagar" off vía WMI; consejo de puerto CPU vs chipset | A2, A5 | lectura posterior confirma valores |
 | B7 ✅ | GPU: HDCP off (G07 vuelve), MPO estable `OverlayMinFPS=0` (ADR-008), PROCTHROTTLEMIN 100 en el plan | – | tweaks en catálogo con Source |
 | B8 [P] | Timer (ADR-008): fuera de perfiles en W11; experimentales en Entusiasta; limpiar `useplatformclock` | – | presets actualizados |
 | B9 [P] | Hyper-V/VBS off solo Entusiasta + modal anticheat genérico para todo ítem con impacto | – | todo ítem con `AnticheatGate` inseguro abre modal |

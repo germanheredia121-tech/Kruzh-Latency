@@ -192,11 +192,14 @@ public sealed partial class DeclarativeTweakEngine
     /// </summary>
     private void BuildDeviceItems()
     {
+        DeviceTree tree;
+        DeviceRuleContext context;
         IReadOnlyList<DeviceRecommendation> recommendations;
         try
         {
-            var tree = new DeviceTree(new CfgMgrDeviceInventory().Snapshot());
-            recommendations = DeviceRuleEngine.Evaluate(tree, DeviceContextProbe.Detect(tree));
+            tree = new DeviceTree(new CfgMgrDeviceInventory().Snapshot());
+            context = DeviceContextProbe.Detect(tree);
+            recommendations = DeviceRuleEngine.Evaluate(tree, context);
         }
         catch (Exception ex)
         {
@@ -208,6 +211,10 @@ public sealed partial class DeclarativeTweakEngine
         {
             _allTweaks.Add(BuildDeviceItem(rec));
         }
+
+        BuildGhostItems(tree);                      // B2
+        BuildIssueItems(tree, context.Safety);      // B3
+        BuildInputPortAdvice(tree);                 // B6
     }
 
     private DeclarativeTweakItem BuildDeviceItem(DeviceRecommendation rec)

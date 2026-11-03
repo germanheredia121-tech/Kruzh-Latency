@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.ServiceProcess;
 using CommunityToolkit.Mvvm.ComponentModel;
+using KruzhLatency.Core.Devices;
+using KruzhLatency.Infra.Devices;
 using KruzhLatency.Models;
 using Microsoft.Win32;
 
@@ -1422,6 +1424,7 @@ public sealed partial class DeclarativeTweakEngine
         // ==================== CATEGORÍA 4: RED / DESYNC / JITTER ====================
         // Placas de red: un ítem por placa con ajustes validados contra su driver (spec 002 / B4).
         BuildNicItems();
+        BuildNetworkAdviceItems(); // filtros NDIS, optimizadores y driver NetAdapterCx (B5)
 
         _allTweaks.Add(new DeclarativeTweakItem
         {
@@ -1679,43 +1682,47 @@ public sealed partial class DeclarativeTweakEngine
         {
             Id = "UsbHidPowerSavingOff",
             CodeNumber = "S01",
-            Title = "Desactivar Suspensión Selectiva en Controladoras USB y Dispositivos HID",
+            Title = "Ahorro de energía USB/HID apagado (hubs, mouse, teclado)",
             Category = TweakCategory.UsbPowerBus,
             CategoryDisplay = "USB, Disco & Memoria",
-            TechnicalDescription = "Evita que los puertos USB del mouse y teclado entren en suspensión selectiva D2/D3.",
-            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Enum\USB & HID -> EnhancedPowerManagementEnabled=0, SelectiveSuspendOn=0",
-            SourceAttribution = "BoringBoredom PC-Tuning §11.37",
+            TechnicalDescription = "En cada dispositivo y hub USB conectado: apaga la administración de energía mejorada del hub y la suspensión en reposo (D3), y desmarca \"Permitir que el equipo apague este dispositivo para ahorrar energía\" en USB y HID. Evita que el puerto del mouse o teclado entre en suspensión selectiva y tarde en despertar.",
+            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Enum\USB\<dispositivo>\Device Parameters -> EnhancedPowerManagementEnabled=0, AllowIdleIrpInD3=0 · WMI MSPower_DeviceEnable.Enable=false (USB y HID que la exponen)",
+            SourceAttribution = "Microsoft Learn: USB selective suspend / Device Parameters de usbhub · BoringBoredom PC-Tuning §11.37 · spec 002 (B6)",
             Risk = RiskLevel.Low,
             RequiresReboot = true,
             InMinimal = false,
             InCompetitivo = true,
             InProfesional = true,
-            ReadLiveState = IsUsbHidPowerSavingDisabledInRegistry,
+            ReadLiveState = () =>
+            {
+                var targets = UsbPowerPlanner.PowerTargets(new DeviceTree(new CfgMgrDeviceInventory().Snapshot()));
+                return targets.Count > 0 && targets.All(t =>
+                    ReadRegDword(RegistryHive.LocalMachine, $@"SYSTEM\CurrentControlSet\Enum\{t.InstanceId}\Device Parameters", "EnhancedPowerManagementEnabled") == 0 &&
+                    ReadRegDword(RegistryHive.LocalMachine, $@"SYSTEM\CurrentControlSet\Enum\{t.InstanceId}\Device Parameters", "AllowIdleIrpInD3") == 0);
+            },
             ApplyAction = _ =>
             {
-                using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-                int modified = 0;
-                foreach (string branch in new[] { "HID", "USB" })
+                var tree = new DeviceTree(new CfgMgrDeviceInventory().Snapshot());
+                var targets = UsbPowerPlanner.PowerTargets(tree);
+                foreach (var t in targets)
                 {
-                    using var root = hklm.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{branch}");
-                    if (root == null) continue;
-                    foreach (string dev in root.GetSubKeyNames())
+                    string paramPath = $@"SYSTEM\CurrentControlSet\Enum\{t.InstanceId}\Device Parameters";
+                    _audit.SetRegistryValue("UsbHidPowerSavingOff", RegistryHive.LocalMachine, paramPath, "EnhancedPowerManagementEnabled", 0, RegistryValueKind.DWord);
+                    _audit.SetRegistryValue("UsbHidPowerSavingOff", RegistryHive.LocalMachine, paramPath, "AllowIdleIrpInD3", 0, RegistryValueKind.DWord);
+                }
+
+                int boxes = 0, failed = 0;
+                foreach (var c in UsbPowerPlanner.PowerCheckboxCandidates(tree))
+                {
+                    switch (_audit.SetDeviceAllowPowerOff("UsbHidPowerSavingOff", c.InstanceId, allow: false))
                     {
-                        using var devKey = root.OpenSubKey(dev);
-                        if (devKey == null) continue;
-                        foreach (string inst in devKey.GetSubKeyNames())
-                        {
-                            string paramPath = $@"SYSTEM\CurrentControlSet\Enum\{branch}\{dev}\{inst}\Device Parameters";
-                            using var pKey = hklm.OpenSubKey(paramPath);
-                            if (pKey != null && pKey.GetValue("EnhancedPowerManagementEnabled") != null)
-                            {
-                                _audit.SetRegistryValue("UsbHidPowerSavingOff", RegistryHive.LocalMachine, paramPath, "EnhancedPowerManagementEnabled", 0, RegistryValueKind.DWord);
-                                modified++;
-                            }
-                        }
+                        case true: boxes++; break;
+                        case false: failed++; break;
                     }
                 }
-                return (true, $"Ahorro de energía USB/HID desactivado en {modified} endpoints.");
+                return failed == 0
+                    ? (true, $"Ahorro de energía apagado en {targets.Count} dispositivos USB y en {boxes} casillas de energía.")
+                    : (false, $"{targets.Count} USB ajustados, {boxes} casillas desmarcadas y {failed} que Windows no dejó cambiar.");
             }
         });
 

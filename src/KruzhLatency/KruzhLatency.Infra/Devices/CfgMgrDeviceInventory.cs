@@ -60,6 +60,24 @@ public sealed partial class CfgMgrDeviceInventory : IDeviceInventory, IDeviceMan
             : new DeviceRestartResult(false, problem, $"No se pudo volver a habilitar (CR 0x{cr:X}).");
     }
 
+    /// <summary>
+    /// Borra un devnode fantasma (no conectado), igual que "Desinstalar dispositivo" con "Mostrar ocultos".
+    /// Se niega si el dispositivo está presente. Irreversible: si se vuelve a conectar, Windows lo reinstala.
+    /// </summary>
+    public (bool Removed, string Detail) RemovePhantom(string instanceId)
+    {
+        if (CM_Locate_DevNodeW(out _, instanceId, CM_LOCATE_DEVNODE_NORMAL) == CR_SUCCESS)
+        {
+            return (false, "Está conectado: no es un fantasma.");
+        }
+        if (CM_Locate_DevNodeW(out uint devInst, instanceId, CM_LOCATE_DEVNODE_PHANTOM) != CR_SUCCESS)
+        {
+            return (true, "Ya no existe.");
+        }
+        uint cr = CM_Uninstall_DevNode(devInst, 0);
+        return cr == CR_SUCCESS ? (true, "Borrado.") : (false, $"CM_Uninstall_DevNode devolvió 0x{cr:X}.");
+    }
+
     // ------------------------------------------------------------ lectura
 
     private static IEnumerable<string> AllInstanceIds()
@@ -299,4 +317,7 @@ public sealed partial class CfgMgrDeviceInventory : IDeviceInventory, IDeviceMan
 
     [LibraryImport("cfgmgr32.dll")]
     private static partial uint CM_Enable_DevNode(uint dnDevInst, uint ulFlags);
+
+    [LibraryImport("cfgmgr32.dll")]
+    private static partial uint CM_Uninstall_DevNode(uint dnDevInst, uint ulFlags);
 }

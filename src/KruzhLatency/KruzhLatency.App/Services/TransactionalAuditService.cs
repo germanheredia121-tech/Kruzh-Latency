@@ -425,6 +425,43 @@ public sealed class TransactionalAuditService
         }
     }
 
+    /// <summary>
+    /// Marca/desmarca "Permitir que el equipo apague este dispositivo" (WMI) guardando el valor original en el journal.
+    /// null = el dispositivo no expone la casilla; false = WMI rechazó el cambio o la relectura no coincide.
+    /// </summary>
+    public bool? SetDeviceAllowPowerOff(string tweakId, string instanceId, bool allow)
+    {
+        var power = new KruzhLatency.Infra.Wmi.WmiDevicePowerManagement();
+        bool? current = power.GetAllowPowerOff(instanceId);
+        if (current is null) return null;
+
+        lock (_sync)
+        {
+            RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
+            {
+                TweakId = tweakId,
+                TimestampUtc = DateTime.UtcNow,
+                TargetKind = BackupTargetKind.DevicePowerOff,
+                TargetPath = instanceId,
+                ValueName = "AllowPowerOff",
+                PreviousValueExisted = true,
+                PreviousSerializedValue = current.Value ? "True" : "False",
+                AppliedSerializedValue = allow ? "True" : "False"
+            });
+        }
+
+        if (current.Value == allow) return true;
+        try
+        {
+            power.SetAllowPowerOff(instanceId, allow);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.Management.ManagementException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+        return power.GetAllowPowerOff(instanceId) == allow;
+    }
+
     private static (int ExitCode, string Output) RunPnpUtil(string verb, string instanceId)
     {
         try
@@ -568,6 +605,15 @@ public sealed class TransactionalAuditService
                         {
                             bool wasEnabled = !string.Equals(rec.PreviousSerializedValue, "Disabled", StringComparison.OrdinalIgnoreCase);
                             RunPnpUtil(wasEnabled ? "/enable-device" : "/disable-device", rec.TargetPath);
+                        }
+                        restoredCount++;
+                        break;
+
+                    case BackupTargetKind.DevicePowerOff:
+                        if (!string.IsNullOrEmpty(rec.TargetPath))
+                        {
+                            new KruzhLatency.Infra.Wmi.WmiDevicePowerManagement().SetAllowPowerOff(
+                                rec.TargetPath, string.Equals(rec.PreviousSerializedValue, "True", StringComparison.OrdinalIgnoreCase));
                         }
                         restoredCount++;
                         break;

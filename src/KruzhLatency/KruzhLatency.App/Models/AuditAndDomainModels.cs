@@ -17,7 +17,9 @@ public enum BackupTargetKind
     IrqAffinitySetting,
     DefenderExclusion,
     /// <summary>Dispositivo habilitado/deshabilitado (pnputil). Agregado al final: el journal guarda el número del enum.</summary>
-    DeviceState
+    DeviceState,
+    /// <summary>Casilla "Permitir que el equipo apague este dispositivo" (WMI MSPower_DeviceEnable). Siempre al final.</summary>
+    DevicePowerOff
 }
 
 public sealed class AtomicBackupRecord
