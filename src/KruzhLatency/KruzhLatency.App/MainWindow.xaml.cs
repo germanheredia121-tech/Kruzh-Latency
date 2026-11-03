@@ -287,6 +287,9 @@ public sealed partial class MainWindow : Window
             TelemetryTimer_Tick(null, EventArgs.Empty);
             _telemetryTimer.Start();
 
+            // ADR-009: si hay un EDID esperando confirmación (se aplicó y se reinició), preguntar ya.
+            _ = ConfirmPendingEdidAsync();
+
             // Start native RegNotifyChangeKeyValue watchers for immediate external registry change detection
             App.MonitorScoreService.StartRegistryWatchers(() =>
             {

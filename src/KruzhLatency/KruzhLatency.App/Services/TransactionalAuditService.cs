@@ -442,6 +442,32 @@ public sealed class TransactionalAuditService
     }
 
     /// <summary>
+    /// C6: escribe EDID_OVERRIDE (valores "0", "1"… de 128 bytes, el formato de CRU) con cada bloque en el journal;
+    /// los bloques de un override anterior que sobren se borran (también con backup). Revertir deja el EDID previo.
+    /// </summary>
+    public void WriteEdidOverride(string tweakId, string monitorInstanceId, byte[] edid)
+    {
+        if (edid.Length == 0 || edid.Length % 128 != 0) throw new ArgumentException("El EDID debe tener bloques de 128 bytes.", nameof(edid));
+        string path = $@"SYSTEM\CurrentControlSet\Enum\{monitorInstanceId}\Device Parameters\EDID_OVERRIDE";
+        int blocks = edid.Length / 128;
+        for (int i = 0; i < blocks; i++)
+        {
+            SetRegistryValue(tweakId, RegistryHive.LocalMachine, path, i.ToString(CultureInfo.InvariantCulture),
+                edid.AsSpan(i * 128, 128).ToArray(), RegistryValueKind.Binary);
+        }
+
+        using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+        using var key = baseKey.OpenSubKey(path);
+        foreach (var name in key?.GetValueNames() ?? Array.Empty<string>())
+        {
+            if (int.TryParse(name, out int idx) && idx >= blocks)
+            {
+                DeleteRegistryValue(tweakId, RegistryHive.LocalMachine, path, name);
+            }
+        }
+    }
+
+    /// <summary>
     /// C4: exporta GraphicsDrivers\Configuration y \Connectivity a .reg (carpeta de backups de KRUZH), los registra en el
     /// journal y borra sus subclaves. Revertir los vuelve a importar. Devuelve cuántas entradas se borraron.
     /// </summary>

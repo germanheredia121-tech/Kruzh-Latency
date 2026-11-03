@@ -261,14 +261,130 @@ public sealed partial class MainWindow
             }
         };
 
+        var auto = new Button { Content = "Aplicar automáticamente", Style = (Style)Application.Current.Resources["KruzhGhostButtonStyle"], HorizontalAlignment = HorizontalAlignment.Left };
+        auto.Click += async (_, _) =>
+        {
+            if (current is not null) await ApplyEdidAutomaticallyAsync(a, current);
+        };
+
         var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
         header.Children.Add(new TextBlock { Text = "Resolución 4:3", VerticalAlignment = VerticalAlignment.Center, FontSize = 12.5, Foreground = Brush("KruzhTextSecondaryBrush") });
         header.Children.Add(combo);
         root.Children.Add(header);
+        root.Children.Add(MicroLabel("MODO AUTOMÁTICO"));
+        root.Children.Add(Muted("KRUZH arma el mismo EDID que la guía (bloque base + DisplayID con el nativo y la 4:3, sin CTA-861) y lo escribe como override. " +
+                                "Después del reinicio te pregunta si se ve bien: si no confirmás en 60 segundos, vuelve solo al EDID anterior y reinicia."));
+        root.Children.Add(auto);
+        root.Children.Add(MicroLabel("MODO MANUAL (CRU)"));
         root.Children.Add(stepsHost);
         root.Children.Add(verify);
         root.Children.Add(verifyHost);
         return root;
+    }
+
+    // ---------------------------------------------------------------- C6: modo automático (ADR-009)
+
+    private async Task ApplyEdidAutomaticallyAsync(MonitorAnalysis a, CruGuide guide)
+    {
+        string instance = a.Monitor.InstanceId;
+        byte[]? original = a.Monitor.Edid;
+        if (original is null)
+        {
+            SetStatus("Windows no tiene el EDID del monitor: no se puede armar el override.");
+            return;
+        }
+
+        byte[] edid = EdidBuilder.BuildDisplayIdOverride(original, guide.DisplayIdVersion == "2.0", new[] { guide.Native, guide.Stretched });
+        var check = EdidParser.Parse(edid); // nunca se escribe algo que el propio parser no lee bien
+        if (!check.Base.ChecksumValid || check.DisplayId.Count != 1 || !check.DisplayId[0].ChecksumValid)
+        {
+            SetStatus("El EDID generado no pasó la validación: no se escribió nada.");
+            return;
+        }
+
+        bool go = await ShowConfirmModalAsync("Aplicar EDID automáticamente",
+            $"Se reemplaza CTA-861 por DisplayID {guide.DisplayIdVersion} con {guide.Native.HActive}x{guide.Native.VActive} y " +
+            $"{guide.Stretched.HActive}x{guide.Stretched.VActive} a {Hz(guide.StretchedChoice.Chosen.RefreshHz)}. " +
+            (a.Parsed?.Cta.Count > 0 ? "Se pierden el audio por el cable, HDR y FreeSync del monitor. " : "") +
+            "Se crea un punto de restauración y, al reiniciar, KRUZH te pregunta si se ve bien: si no contestás en 60 segundos vuelve solo al EDID anterior.",
+            "Aplicar y reiniciar");
+        if (!go) return;
+
+        EdidRollbackPaths? paths = null;
+        var results = await RunStepsWithOverlayAsync("Aplicando EDID", "Con vuelta atrás automática", new[]
+        {
+            new OverlayStep("Punto de restauración", () =>
+            {
+                var r = new KruzhLatency.Infra.Wmi.WmiRestorePoint().CreateAsync("KRUZH LATENCY - EDID").GetAwaiter().GetResult();
+                return (true, r.Detail);
+            }),
+            new OverlayStep("Preparar la vuelta atrás", () =>
+            {
+                string folder = EdidAutoApply.SecureFolder();
+                string? previous = EdidAutoApply.ExportCurrentOverride(instance, folder);
+                paths = new EdidRollbackPaths(instance, folder, previous);
+                EdidAutoApply.InstallRollback(paths, Environment.ProcessPath!);
+                return (true, "Tareas de confirmación y vuelta atrás programadas.");
+            }),
+            new OverlayStep("Escribir EDID_OVERRIDE", () =>
+            {
+                App.AuditService.WriteEdidOverride("EdidAutoOverride", instance, edid);
+                var (_, over) = MonitorProbe.ReadEdids(instance);
+                return over is not null && over.AsSpan().SequenceEqual(edid)
+                    ? (true, "Override escrito y verificado.")
+                    : (false, "El override leído no coincide con el generado.");
+            }, RequiresReboot: true)
+        });
+
+        if (results.Any(r => !r.Success))
+        {
+            // Algo falló: no se deja nada a medias (sin override o sin vuelta atrás).
+            if (paths is not null) EdidAutoApply.Confirm(paths);
+            App.AuditService.RevertTweakFromJournal("EdidAutoOverride", out _);
+            await ShowSimpleInfoModalAsync("No se aplicó", "Un paso falló y se deshizo todo. No hace falta reiniciar.");
+            return;
+        }
+
+        if (await ShowConfirmModalAsync("Reiniciar", "El EDID nuevo se lee al arrancar. ¿Reiniciar ahora?", "Reiniciar"))
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "shutdown.exe", Arguments = "/r /t 5", CreateNoWindow = true, UseShellExecute = false
+            });
+        }
+    }
+
+    /// <summary>Al iniciar después de aplicar: "¿se ve bien?". Sí → se confirma; No → vuelve atrás y reinicia. Si no contesta, lo hace la tarea de SYSTEM.</summary>
+    private async Task ConfirmPendingEdidAsync()
+    {
+        string? instance = EdidAutoApply.PendingConfirmation();
+        if (instance is null) return;
+
+        string folder = EdidAutoApply.SecureFolder();
+        string previous = System.IO.Path.Combine(folder, "edid-previo.reg");
+        var paths = new EdidRollbackPaths(instance, folder, System.IO.File.Exists(previous) ? previous : null);
+
+        bool ok = await ShowConfirmModalAsync("¿Se ve bien la pantalla?",
+            "KRUZH aplicó un EDID nuevo. Si ves esto bien, confirmá. Si no confirmás en 60 segundos desde que iniciaste sesión, " +
+            "Windows vuelve solo al EDID anterior y reinicia.",
+            "Se ve bien", "Volver atrás");
+        try
+        {
+            if (ok)
+            {
+                EdidAutoApply.Confirm(paths);
+                SetStatus("EDID confirmado. Revisá en Pantalla → Verificar.");
+            }
+            else
+            {
+                App.AuditService.RevertTweakFromJournal("EdidAutoOverride", out _);
+                EdidAutoApply.RollbackNow(paths); // borra el override, limpia las tareas y reinicia
+            }
+        }
+        catch (Exception ex)
+        {
+            App.LogError("Confirmación EDID", ex);
+        }
     }
 
     private static GpuVendor CurrentGpuVendor() => App.HardwareService.CurrentProfile.GpuVendor switch

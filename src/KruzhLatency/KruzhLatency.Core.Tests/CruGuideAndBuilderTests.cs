@@ -104,3 +104,45 @@ public class CruGuideAndBuilderTests
         Assert.All(checks, c => Assert.True(c.Ok, $"{c.Name}: {c.Detail}"));
     }
 }
+
+/// <summary>C6: script de vuelta atrás y tareas programadas (ADR-009).</summary>
+public class EdidRollbackPlanTests
+{
+    private static readonly EdidRollbackPaths Paths = new(@"DISPLAY\GBT2404\5&3771edd3&0&UID176386", @"C:\ProgramData\KruzhLatency", null);
+
+    [Fact]
+    public void Script_SinConfirmacion_BorraOverrideYReinicia()
+    {
+        var s = EdidRollbackPlan.BuildScript(Paths);
+
+        int check = s.IndexOf(@"if exist ""C:\ProgramData\KruzhLatency\edid-confirmed.flag"" goto confirmed", StringComparison.Ordinal);
+        int delete = s.IndexOf(@"reg delete ""HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\GBT2404\5&3771edd3&0&UID176386\Device Parameters\EDID_OVERRIDE"" /f", StringComparison.Ordinal);
+        int reboot = s.IndexOf("shutdown /r", StringComparison.Ordinal);
+        Assert.True(check >= 0 && delete > check && reboot > delete);
+        Assert.DoesNotContain("reg import", s);       // no había override previo
+        Assert.DoesNotContain("restart64", s);
+        Assert.Contains(@"schtasks /Delete /TN ""KRUZH\EdidConfirm"" /F", s);
+        Assert.Contains(@"schtasks /Delete /TN ""KRUZH\EdidRollback"" /F", s);
+    }
+
+    [Fact]
+    public void Script_ConOverridePrevio_LoRestaura()
+    {
+        var s = EdidRollbackPlan.BuildScript(Paths with { PreviousOverrideReg = @"C:\ProgramData\KruzhLatency\edid-previo.reg" });
+
+        Assert.True(s.IndexOf("reg import", StringComparison.Ordinal) > s.IndexOf("reg delete", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Tareas_RollbackComoSystemA60s_ConfirmacionDelUsuario()
+    {
+        var rollback = EdidRollbackPlan.RollbackTaskArgs(Paths);
+        var confirm = EdidRollbackPlan.ConfirmTaskArgs(@"C:\Apps\KRUZH\KruzhLatency.exe");
+
+        Assert.Contains("/SC ONLOGON /DELAY 0001:00 /RU SYSTEM", rollback);
+        Assert.Contains("edid-rollback.cmd", rollback);
+        Assert.Contains("--edid-confirm", confirm);
+        Assert.Contains("/RL HIGHEST", confirm);
+        Assert.DoesNotContain("/RU SYSTEM", confirm);   // la confirmación corre en la sesión del usuario
+    }
+}

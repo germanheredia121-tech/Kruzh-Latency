@@ -143,7 +143,7 @@ Spec: [specs/002-dpc-red-dispositivos-pantalla.md](specs/002-dpc-red-dispositivo
 | C3 ✅ | Sidebar "Pantalla" (ícono monitor): análisis completo del EDID (timings, data blocks, extensiones) | C1, C2 | revisión manual |
 | C4 ✅ | Limpieza: monitores fantasma + `GraphicsDrivers\Configuration/Connectivity` con export previo, reinicio | C2, B2 | revisión manual |
 | C5 ✅ | Modo manual: guía de CRU generada con datos reales + panel NVIDIA + OSD + recuperación + Verificar | C3 | revisión manual |
-| C6 | Modo automático: generador de EDID (Core, tests) + escritura `EDID_OVERRIDE` + auto-rollback por tarea programada (60 s) | C1, C5 | tests del generador + prueba en VM |
+| C6 🟡 | Modo automático: generador de EDID (Core, tests) + escritura `EDID_OVERRIDE` + auto-rollback por tarea programada (60 s) | C1, C5 | tests del generador + prueba en VM (implementado; falta la prueba en VM) |
 
 ### Fase D — Monitor con diagnóstico
 | ID | Tarea | Deps | Hecho cuando |
