@@ -280,22 +280,17 @@ public sealed class TransactionalAuditService
         }
     }
 
+    /// <summary>
+    /// Escribe o borra un elemento de {current} vía WMI BcdStore (sin parsear bcdedit, que está traducido).
+    /// El journal guarda el valor previo como yes/no/número, que bcdedit y WMI entienden en cualquier idioma.
+    /// </summary>
     public void SetBcdValue(string tweakId, string bcdKey, string? targetValueOrNullToDelete)
     {
-        string currentOut = RunHiddenProcess("bcdedit.exe", "/enum {current}");
-        string? existingVal = null;
-        foreach (string line in currentOut.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-        {
-            string trimmed = line.Trim();
-            if (trimmed.StartsWith(bcdKey, StringComparison.OrdinalIgnoreCase))
-            {
-                string[] parts = trimmed.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length >= 2)
-                {
-                    existingVal = parts[^1];
-                }
-            }
-        }
+        var element = KruzhLatency.Infra.Wmi.WmiBcdStore.FromBcdEditName(bcdKey)
+            ?? throw new ArgumentException($"Elemento BCD no soportado: {bcdKey}", nameof(bcdKey));
+        var store = new KruzhLatency.Infra.Wmi.WmiBcdStore();
+        var previous = store.Read(element);
+        string? existingVal = previous is null ? null : KruzhLatency.Infra.Wmi.WmiBcdStore.Serialize(previous);
 
         lock (_sync)
         {
@@ -313,13 +308,34 @@ public sealed class TransactionalAuditService
             RecordBaselineIfNotExistsLocked(record);
         }
 
-        if (string.IsNullOrEmpty(targetValueOrNullToDelete))
+        if (KruzhLatency.Infra.Wmi.WmiBcdStore.Parse(element, targetValueOrNullToDelete) is { } target)
         {
-            RunHiddenProcess("bcdedit.exe", $"/deletevalue {{current}} {bcdKey}");
+            store.Write(element, target);
         }
         else
         {
-            RunHiddenProcess("bcdedit.exe", $"/set {{current}} {bcdKey} {targetValueOrNullToDelete}");
+            store.Delete(element);
+        }
+    }
+
+    private static void RestoreBcdRecord(AtomicBackupRecord rec)
+    {
+        if (KruzhLatency.Infra.Wmi.WmiBcdStore.FromBcdEditName(rec.ValueName) is not { } element)
+        {
+            // Elemento que no maneja WmiBcdStore (journal viejo): bcdedit con el valor guardado.
+            RunHiddenProcess("bcdedit.exe", rec.PreviousValueExisted && !string.IsNullOrEmpty(rec.PreviousSerializedValue)
+                ? $"/set {{current}} {rec.ValueName} {rec.PreviousSerializedValue}"
+                : $"/deletevalue {{current}} {rec.ValueName}");
+            return;
+        }
+        var store = new KruzhLatency.Infra.Wmi.WmiBcdStore();
+        if (rec.PreviousValueExisted && KruzhLatency.Infra.Wmi.WmiBcdStore.Parse(element, rec.PreviousSerializedValue) is { } previous)
+        {
+            store.Write(element, previous);
+        }
+        else
+        {
+            store.Delete(element);
         }
     }
 
@@ -555,14 +571,7 @@ public sealed class TransactionalAuditService
                         break;
 
                     case BackupTargetKind.BcdEntry:
-                        if (rec.PreviousValueExisted && !string.IsNullOrEmpty(rec.PreviousSerializedValue))
-                        {
-                            RunHiddenProcess("bcdedit.exe", $"/set {{current}} {rec.ValueName} {rec.PreviousSerializedValue}");
-                        }
-                        else
-                        {
-                            RunHiddenProcess("bcdedit.exe", $"/deletevalue {{current}} {rec.ValueName}");
-                        }
+                        RestoreBcdRecord(rec);
                         restoredCount++;
                         break;
 

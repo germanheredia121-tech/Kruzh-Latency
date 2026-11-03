@@ -79,7 +79,8 @@ public enum BcdElement
     DisableDynamicTick,
     UsePlatformClock,
     UsePlatformTick,
-    TscSyncPolicy
+    TscSyncPolicy,
+    HypervisorLaunchType
 }
 
 /// <summary>Valor de un elemento BCD: booleano o entero (según el elemento).</summary>

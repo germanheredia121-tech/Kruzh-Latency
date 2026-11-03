@@ -5,8 +5,10 @@ using System.IO;
 using System.Linq;
 using System.ServiceProcess;
 using CommunityToolkit.Mvvm.ComponentModel;
+using KruzhLatency.Core.Abstractions;
 using KruzhLatency.Core.Devices;
 using KruzhLatency.Infra.Devices;
+using KruzhLatency.Infra.Wmi;
 using KruzhLatency.Models;
 using Microsoft.Win32;
 
@@ -611,7 +613,6 @@ public sealed partial class DeclarativeTweakEngine
         bool verified = false;
         try
         {
-            InvalidateBcdCache();
             item.RefreshGatesAndLiveState(_hwService.CurrentProfile);
             verified = ok && item.IsLiveApplied;
         }
@@ -672,7 +673,6 @@ public sealed partial class DeclarativeTweakEngine
     {
         try
         {
-            InvalidateBcdCache();
             item.RefreshGatesAndLiveState(_hwService.CurrentProfile);
         }
         catch (Exception ex)
@@ -929,36 +929,101 @@ public sealed partial class DeclarativeTweakEngine
             }
         });
 
+        // ADR-008: en Windows 11 ningún perfil toca useplatformtick / disabledynamictick. C03 solo deja el reloj por defecto.
         _allTweaks.Add(new DeclarativeTweakItem
         {
-            Id = "BcdDisableDynamicTick",
+            Id = "BcdDisableDynamicTick", // Id histórico: conserva el journal de versiones anteriores
             CodeNumber = "C03",
-            Title = "BCDEdit: DisableDynamicTick + Invariant TSC Limpio (Sin useplatformtick)",
+            Title = "Reloj de Windows por defecto (sin HPET forzado)",
             Category = TweakCategory.SystemCpu,
             CategoryDisplay = "Sistema & CPU",
-            TechnicalDescription = "Desactiva el Dynamic Tick de ahorro en idle y garantiza que Windows NO fuerce HPET/RTC (elimina useplatformclock y useplatformtick que agregaban latencia).",
-            WhatItTouches = @"bcdedit /set disabledynamictick yes + /deletevalue useplatformclock + /deletevalue useplatformtick",
-            SourceAttribution = "BoringBoredom PC-Tuning §11.50 / Calypto",
+            TechnicalDescription = "Borra useplatformclock (fuerza HPET como contador de rendimiento: más lento que el TSC). " +
+                                   "Si otra herramienta dejó useplatformtick o disabledynamictick, también los borra (en Windows 11 no hay evidencia de mejora y hay reportes de timer trabado), salvo que los hayas aplicado con el experimental de KRUZH.",
+            WhatItTouches = @"BCD {current} (WMI BcdStore): borra useplatformclock; borra useplatformtick y disabledynamictick si no los puso C11",
+            SourceAttribution = "Microsoft Learn: BcdOSLoaderElementTypes (UsePlatformClock: solo para depuración) · ADR-008",
+            Risk = RiskLevel.Low,
+            RequiresReboot = true,
+            InMinimal = true,
+            InCompetitivo = true,
+            InProfesional = true,
+            EvaluateGate = _ =>
+            {
+                var leftovers = new[] { BcdElement.UsePlatformClock, BcdElement.UsePlatformTick, BcdElement.DisableDynamicTick }
+                    .Where(e => ReadBcd(e) is not null).Select(WmiBcdStore.BcdEditName).ToList();
+                return leftovers.Count == 0
+                    ? EvaluationResult.Recommended("Tu BCD ya usa el reloj por defecto.")
+                    : EvaluationResult.Recommended($"Encontrado en tu BCD: {string.Join(", ", leftovers)} (lo dejó otra herramienta o un tweak anterior).");
+            },
+            ReadLiveState = () => ReadBcd(BcdElement.UsePlatformClock) is null &&
+                                  (_audit.HasBackupForTweak("BcdExperimentalTick") ||
+                                   (ReadBcd(BcdElement.UsePlatformTick) is null && ReadBcd(BcdElement.DisableDynamicTick) is null)),
+            ApplyAction = _ =>
+            {
+                _audit.SetBcdValue("BcdDisableDynamicTick", "useplatformclock", null);
+                if (!_audit.HasBackupForTweak("BcdExperimentalTick"))
+                {
+                    _audit.SetBcdValue("BcdDisableDynamicTick", "useplatformtick", null);
+                    _audit.SetBcdValue("BcdDisableDynamicTick", "disabledynamictick", null);
+                }
+                return (true, "Reloj por defecto: useplatformclock borrado (y banderas de tick de otras herramientas).");
+            }
+        });
+
+        _allTweaks.Add(new DeclarativeTweakItem
+        {
+            Id = "BcdExperimentalTick",
+            CodeNumber = "C11",
+            Title = "Experimental: useplatformtick + disabledynamictick (Windows 11)",
+            Category = TweakCategory.SystemCpu,
+            CategoryDisplay = "Sistema & CPU",
+            TechnicalDescription = "Tick del reloj desde la plataforma y sin tick dinámico. No hay documentación de Microsoft ni benchmarks controlados que muestren mejora en Windows 11, y hay reportes de timer trabado o desincronizado. " +
+                                   "Medí DPC y frametime (Monitor) antes y después; si empeora, revertilo.",
+            WhatItTouches = @"BCD {current} (WMI BcdStore): useplatformtick = yes, disabledynamictick = yes",
+            SourceAttribution = "ADR-008 · Microsoft Learn: BCDEdit /set (useplatformtick, disabledynamictick: solo para depuración) · foros BlurBusters",
+            Risk = RiskLevel.Medium,
+            RequiresReboot = true,
+            InMinimal = false,
+            InCompetitivo = false,
+            InProfesional = false,
+            InEntusiasta = true,
+            ApplicableGate = hw => hw.IsWindows11
+                ? ApplicabilityResult.Applicable("Windows 11.")
+                : ApplicabilityResult.NotApplicable("En Windows 10 usá \"Desactivar tick dinámico (Windows 10)\"."),
+            EvaluateGate = _ => EvaluationResult.Neutral("Experimental: medí antes y después."),
+            ReadLiveState = () => ReadBcd(BcdElement.UsePlatformTick)?.Boolean == true && ReadBcd(BcdElement.DisableDynamicTick)?.Boolean == true,
+            ApplyAction = _ =>
+            {
+                _audit.SetBcdValue("BcdExperimentalTick", "useplatformtick", "yes");
+                _audit.SetBcdValue("BcdExperimentalTick", "disabledynamictick", "yes");
+                return (true, "useplatformtick y disabledynamictick activados. Reiniciá y medí.");
+            }
+        });
+
+        _allTweaks.Add(new DeclarativeTweakItem
+        {
+            Id = "BcdDisableDynamicTickWin10",
+            CodeNumber = "C12",
+            Title = "Desactivar tick dinámico (Windows 10)",
+            Category = TweakCategory.SystemCpu,
+            CategoryDisplay = "Sistema & CPU",
+            TechnicalDescription = "En Windows 10 el tick dinámico deja de interrumpir en reposo para ahorrar energía; desactivarlo mantiene el tick periódico constante. Fuera de perfiles: medí antes y después.",
+            WhatItTouches = @"BCD {current} (WMI BcdStore): disabledynamictick = yes",
+            SourceAttribution = "ADR-008 · Microsoft Learn: BCDEdit /set disabledynamictick",
             Risk = RiskLevel.Low,
             RequiresReboot = true,
             InMinimal = false,
-            InCompetitivo = true,
-            InProfesional = true,
-            EvaluateGate = hw => hw.Chassis == ChassisKind.Laptop
-                ? EvaluationResult.Neutral("En Laptop reduce levemente la duración de batería en reposo, pero mejora consistencia de ticks en juego.")
-                : EvaluationResult.Recommended("Óptimo en Desktop: mantiene interrupciones de reloj constantes sobre Invariant TSC."),
-            ReadLiveState = () =>
-            {
-                return GetCachedBcdCurrent().Contains("disabledynamictick", StringComparison.OrdinalIgnoreCase) &&
-                       GetCachedBcdCurrent().Contains("Yes", StringComparison.OrdinalIgnoreCase);
-            },
+            InCompetitivo = false,
+            InProfesional = false,
+            InEntusiasta = false,
+            ApplicableGate = hw => hw.IsWindows11
+                ? ApplicabilityResult.NotApplicable("En Windows 11 está en el experimental de Entusiasta (ADR-008).")
+                : ApplicabilityResult.Applicable("Windows 10."),
+            EvaluateGate = _ => EvaluationResult.Neutral("Opción manual: medí DPC antes y después."),
+            ReadLiveState = () => ReadBcd(BcdElement.DisableDynamicTick)?.Boolean == true,
             ApplyAction = _ =>
             {
-                _audit.SetBcdValue("BcdDisableDynamicTick", "disabledynamictick", "yes");
-                _audit.SetBcdValue("BcdDisableDynamicTick", "useplatformclock", null);
-                _audit.SetBcdValue("BcdDisableDynamicTick", "useplatformtick", null);
-                InvalidateBcdCache();
-                return (true, "disabledynamictick=yes aplicado y relojes legacy (useplatformclock/useplatformtick) limpiados.");
+                _audit.SetBcdValue("BcdDisableDynamicTickWin10", "disabledynamictick", "yes");
+                return (true, "disabledynamictick = yes. Reiniciá para aplicarlo.");
             }
         });
 
@@ -2134,31 +2199,17 @@ public sealed partial class DeclarativeTweakEngine
         }
     }
 
-    private static string? _cachedBcdOutput;
-    private static DateTime _lastBcdQueryUtc = DateTime.MinValue;
-
-    private static string GetCachedBcdCurrent()
+    /// <summary>Lee un elemento de {current} por WMI (null = no definido o sin permisos).</summary>
+    private static BcdValue? ReadBcd(BcdElement element)
     {
-        if (_cachedBcdOutput != null && (DateTime.UtcNow - _lastBcdQueryUtc).TotalSeconds < 6)
-        {
-            return _cachedBcdOutput;
-        }
         try
         {
-            _cachedBcdOutput = TransactionalAuditService.RunHiddenProcess("bcdedit.exe", "/enum {current}");
-            _lastBcdQueryUtc = DateTime.UtcNow;
-            return _cachedBcdOutput;
+            return new WmiBcdStore().Read(element);
         }
-        catch
+        catch (Exception ex) when (ex is System.Management.ManagementException or UnauthorizedAccessException or InvalidOperationException)
         {
-            return string.Empty;
+            return null;
         }
-    }
-
-    private static void InvalidateBcdCache()
-    {
-        _cachedBcdOutput = null;
-        _lastBcdQueryUtc = DateTime.MinValue;
     }
 
     private static int? ReadActivePowerSchemeAcSettingDword(string subGroupGuid, string settingGuid)
@@ -2267,8 +2318,8 @@ public sealed partial class DeclarativeTweakEngine
                     return (true, "GlobalTimerResolutionRequests restaurado a 0.");
 
                 case "BcdDisableDynamicTick":
-                    TransactionalAuditService.RunHiddenProcess("bcdedit.exe", "/set disabledynamictick no");
-                    return (true, "disabledynamictick restaurado a no.");
+                    new WmiBcdStore().Delete(BcdElement.DisableDynamicTick);
+                    return (true, "disabledynamictick borrado (default de Windows).");
 
                 case "ReservedCpuSetsTopology":
                     _audit.SetRegistryValue("RCS_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "ReservedCpuSets", Array.Empty<byte>(), RegistryValueKind.Binary);

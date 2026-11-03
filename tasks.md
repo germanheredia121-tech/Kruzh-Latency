@@ -131,7 +131,7 @@ Spec: [specs/002-dpc-red-dispositivos-pantalla.md](specs/002-dpc-red-dispositivo
 | B5 ✅ | Red: detección de filtros NDIS (cFos, MSI LAN Manager, Dragon Center) y driver NetAdapterCx vs NDIS → recomendación con link | A2 | test con fixture |
 | B6 ✅ | USB/HID: EnhancedPowerManagement + AllowIdleIrpInD3 en todo USB; casilla "permitir apagar" off vía WMI; consejo de puerto CPU vs chipset | A2, A5 | lectura posterior confirma valores |
 | B7 ✅ | GPU: HDCP off (G07 vuelve), MPO estable `OverlayMinFPS=0` (ADR-008), PROCTHROTTLEMIN 100 en el plan | – | tweaks en catálogo con Source |
-| B8 [P] | Timer (ADR-008): fuera de perfiles en W11; experimentales en Entusiasta; limpiar `useplatformclock` | – | presets actualizados |
+| B8 ✅ | Timer (ADR-008): fuera de perfiles en W11; experimentales en Entusiasta; limpiar `useplatformclock` | – | presets actualizados |
 | B9 [P] | Hyper-V/VBS off solo Entusiasta + modal anticheat genérico para todo ítem con impacto | – | todo ítem con `AnticheatGate` inseguro abre modal |
 | B10 [P] | Rescate (ADR-007): reactiva lo deshabilitado por KRUZH | A2 | prueba manual en VM |
 
