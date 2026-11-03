@@ -131,3 +131,55 @@ public class EdidParserTests
         Assert.Throws<InvalidDataException>(() => EdidParser.Parse(new byte[128]));
     }
 }
+
+/// <summary>C2: análisis de un monitor (modo actual vs máximo, override, DSC) con el EDID real.</summary>
+public class MonitorAnalyzerTests
+{
+    private static byte[] Edid() =>
+        Convert.FromBase64String(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "edid-gs25f2-factory.b64")));
+
+    private static ActiveDisplayMode Mode(double hz, int w = 1920, int h = 1080) =>
+        new(w, h, w, h, 2080, 1110, (long)(2080 * 1110 * hz), hz, "DisplayPort", "Identidad");
+
+    [Fact]
+    public void A200Hz_EstaAlMaximo_SinDsc()
+    {
+        var a = MonitorAnalyzer.Analyze(new MonitorInfo(@"DISPLAY\GBT2404\X", "GS25F2", true, null, Edid(), null, Mode(200)));
+
+        Assert.False(a.RunningBelowMax);
+        Assert.False(a.NeedsDscOnHbr2);
+        Assert.Equal(200.0, a.NativeMax!.RefreshHz, 3);
+        Assert.Contains(a.Notes, n => n.Contains("FreeSync/VRR 48–200"));
+    }
+
+    [Fact]
+    public void A60Hz_AvisaQueEstaDebajo()
+    {
+        var a = MonitorAnalyzer.Analyze(new MonitorInfo(@"DISPLAY\GBT2404\X", "GS25F2", true, null, Edid(), null, Mode(60)));
+
+        Assert.True(a.RunningBelowMax);
+        Assert.Contains(a.Notes, n => n.Contains("60 Hz") && n.Contains("200 Hz"));
+    }
+
+    [Fact]
+    public void ConOverride_UsaElOverride_YLoAvisa()
+    {
+        var over = Edid()[..128]; // solo bloque base (como un CRU que borró el CTA-861)
+        var m = new MonitorInfo(@"DISPLAY\GBT2404\X", "GS25F2", true, null, Edid(), over, null);
+        var a = MonitorAnalyzer.Analyze(m);
+
+        Assert.True(m.HasOverride);
+        Assert.Empty(a.Parsed!.Cta);
+        Assert.Contains(a.Notes, n => n.Contains("EDID_OVERRIDE"));
+    }
+
+    [Fact]
+    public void Fantasma_SinEdid_NoLanza()
+    {
+        var a = MonitorAnalyzer.Analyze(new MonitorInfo(@"DISPLAY\GBT2404\Y", "Generic Monitor", false, null, null, null, null));
+
+        Assert.Null(a.Parsed);
+        Assert.NotNull(a.ParseError);
+        Assert.Contains(a.Notes, n => n.Contains("fantasma"));
+    }
+}
