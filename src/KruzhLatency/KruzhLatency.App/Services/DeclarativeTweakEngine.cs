@@ -1030,7 +1030,7 @@ public sealed partial class DeclarativeTweakEngine
             Category = TweakCategory.SystemCpu,
             CategoryDisplay = "Sistema & CPU",
             TechnicalDescription = "Desactiva la promoción a estados C de reposo en el esquema actual y mantiene el 100% de los núcleos despiertos.",
-            WhatItTouches = @"powercfg scheme_current sub_processor: IDLEDISABLE=1, CPMINCORES=100, PERFBOOSTMODE=2",
+            WhatItTouches = @"powercfg scheme_current sub_processor: IDLEDISABLE=1, CPMINCORES=100",
             SourceAttribution = "Calypto Latency Guide",
             Risk = RiskLevel.Medium,
             InMinimal = false,
@@ -1058,6 +1058,33 @@ public sealed partial class DeclarativeTweakEngine
                 _audit.SetPowerCfgAcValue("CpuIdleAndCoreParkingDesktop", "54533251-82be-4824-96c1-47b60b740d00", "0cc5b647-c1df-4637-891a-dec35c318583", 100);
                 _audit.SetPowerCfgAcValue("CpuIdleAndCoreParkingDesktop", "54533251-82be-4824-96c1-47b60b740d00", "5d76a2ca-e8c0-402f-a133-2158492d58ad", 1);
                 return (true, "Core Parking 100% + CPU Idle Disable (0 Wake-up Latency) activado.");
+            }
+        });
+
+        // Spec 002 / B7: estado mínimo del procesador al 100% (PROCTHROTTLEMIN) en el plan activo.
+        _allTweaks.Add(new DeclarativeTweakItem
+        {
+            Id = "ProcessorMinState100",
+            CodeNumber = "C10",
+            Title = "Estado mínimo del procesador al 100% (plan activo)",
+            Category = TweakCategory.SystemCpu,
+            CategoryDisplay = "Sistema & CPU",
+            TechnicalDescription = "El CPU no baja de su frecuencia base mientras hay carga: evita la rampa de subida de frecuencia al empezar un frame o un tick. El boost (PBO / Turbo) sigue funcionando por encima de la base.",
+            WhatItTouches = @"powercfg scheme_current sub_processor: PROCTHROTTLEMIN (893dee8e-2bef-41e0-89c6-b55d0929964c) = 100",
+            SourceAttribution = "Microsoft Learn: Processor power management options (Minimum processor state) · spec 002",
+            Risk = RiskLevel.Low,
+            InMinimal = false,
+            InCompetitivo = true,
+            InProfesional = true,
+            ApplicableGate = hw => hw.Chassis == ChassisKind.Laptop
+                ? ApplicabilityResult.NotApplicable("En notebooks sube la temperatura y el consumo en reposo.")
+                : ApplicabilityResult.Applicable("PC de escritorio."),
+            EvaluateGate = _ => EvaluationResult.Recommended("Recomendado en PC de escritorio."),
+            ReadLiveState = () => ReadActivePowerSchemeAcSettingDword("54533251-82be-4824-96c1-47b60b740d00", "893dee8e-2bef-41e0-89c6-b55d0929964c") == 100,
+            ApplyAction = _ =>
+            {
+                _audit.SetPowerCfgAcValue("ProcessorMinState100", "54533251-82be-4824-96c1-47b60b740d00", "893dee8e-2bef-41e0-89c6-b55d0929964c", 100);
+                return (true, "Estado mínimo del procesador = 100% en el plan activo.");
             }
         });
 
@@ -1322,6 +1349,9 @@ public sealed partial class DeclarativeTweakEngine
             InCompetitivo = false,
             InProfesional = false,
             InEntusiasta = false, // ningún perfil lo activa: es una solución puntual de problemas, no una optimización
+            ApplicableGate = hw => hw.WindowsBuild >= 26100
+                ? ApplicabilityResult.NotApplicable("En Windows 11 24H2 o superior OverlayTestMode = 5 ya no desactiva MPO (ADR-008). Para problemas de MPO usá \"MPO estable\".")
+                : ApplicabilityResult.Applicable($"Build {hw.WindowsBuild}: OverlayTestMode todavía funciona."),
             EvaluateGate = _ => EvaluationResult.NotRecommended("No recomendado: desactivar MPO impide Independent Flip por hardware. Solo para solucionar flickering o pantallas negras."),
             ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\Dwm", "OverlayTestMode") == 5,
             ApplyAction = _ =>
@@ -1338,9 +1368,9 @@ public sealed partial class DeclarativeTweakEngine
             Title = "Desactivar Cifrado HDCP en Enlace de Video (Solo NVIDIA)",
             Category = TweakCategory.GpuDisplay,
             CategoryDisplay = "GPU & Display",
-            TechnicalDescription = "Deshabilita el handshake de protección DRM HDCP en el enlace DisplayPort/HDMI. Nota: impide reproducir Netflix/Prime Video en 4K DRM.",
-            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968...}\0000 -> RMHdcpKeyglobZero = 1",
-            SourceAttribution = "Calypto / NVIDIA Registry Tweaks",
+            TechnicalDescription = "Deshabilita el handshake de protección DRM HDCP en el enlace DisplayPort/HDMI del driver NVIDIA. Efecto reportado: leve y subjetivo (spec 002). Nota: impide reproducir Netflix/Prime Video/Disney+ con DRM en alta resolución.",
+            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\00XX (cada adaptador de video) -> RMHdcpKeyglobZero = 1",
+            SourceAttribution = "Calypto Latency Guide · clave RMHdcpKeyglobZero de nvlddmkm (NVIDIA) · spec 002",
             Risk = RiskLevel.Low,
             RequiresReboot = true,
             InMinimal = false,
@@ -1355,6 +1385,37 @@ public sealed partial class DeclarativeTweakEngine
             {
                 SetAllDisplayClassDword("DisableHdcp", "RMHdcpKeyglobZero", 1);
                 return (true, "HDCP desactivado (RMHdcpKeyglobZero = 1).");
+            }
+        });
+
+        // ADR-008: MPO estable en Windows 11 reciente sin apagarlo.
+        _allTweaks.Add(new DeclarativeTweakItem
+        {
+            Id = "MpoStableOverlayMinFps",
+            CodeNumber = "G08",
+            Title = "MPO estable (OverlayMinFPS = 0)",
+            Category = TweakCategory.GpuDisplay,
+            CategoryDisplay = "GPU & Display",
+            TechnicalDescription = "Elimina el mínimo de FPS que DWM exige para darle un plano de overlay al juego: evita que alterne entre Composed: Flip e Independent Flip y los redibujados tras Alt-Tab. MPO sigue activo. Si \"Desactivar MPO\" (OverlayTestMode) estaba aplicado, lo borra.",
+            WhatItTouches = @"HKLM\SOFTWARE\Microsoft\Windows\Dwm -> OverlayMinFPS = 0 (DWORD) · borra OverlayTestMode si existe",
+            SourceAttribution = "ADR-008 · comunidad r/Windows11 y BlurBusters (PresentMon antes/después en 24H2) · Microsoft Learn: Multiplane overlay support",
+            Risk = RiskLevel.Low,
+            RequiresReboot = true,
+            InMinimal = false,
+            InCompetitivo = true,
+            InProfesional = true,
+            ApplicableGate = hw => hw.IsWindows11
+                ? ApplicabilityResult.Applicable("Windows 11.")
+                : ApplicabilityResult.NotApplicable("Es un ajuste de DWM de Windows 11."),
+            EvaluateGate = _ => EvaluationResult.Recommended("Evidencia comunitaria: medí DPC y frametime antes y después (Monitor)."),
+            ReadLiveState = () =>
+                ReadRegDword(RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\Dwm", "OverlayMinFPS") == 0 &&
+                ReadRegDword(RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\Dwm", "OverlayTestMode") is null,
+            ApplyAction = _ =>
+            {
+                _audit.DeleteRegistryValue("MpoStableOverlayMinFps", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\Dwm", "OverlayTestMode");
+                _audit.SetRegistryValue("MpoStableOverlayMinFps", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\Dwm", "OverlayMinFPS", 0, RegistryValueKind.DWord);
+                return (true, "OverlayMinFPS = 0 aplicado (MPO activo). Reiniciá para que DWM lo tome.");
             }
         });
 

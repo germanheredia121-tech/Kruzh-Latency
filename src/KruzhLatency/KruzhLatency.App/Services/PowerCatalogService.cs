@@ -193,10 +193,10 @@ public sealed class PowerCatalogService
                 break;
 
             case DynamicPowerPlanKind.RyzenBalancedPboTuned:
-                // Keep C-States enabled (0) and Min Processor at 85% so PBO + Curve Optimizer can boost single cores to peak MHz
+                // C-States activos (0) para que PBO + Curve Optimizer lleguen al pico en un núcleo; mínimo 100% (spec 002 / B7): el boost sigue por encima de la base
                 TransactionalAuditService.RunHiddenProcess("powercfg.exe", $"/setacvalueindex {targetGuid} {subProc} {idleDisable} 0");
                 TransactionalAuditService.RunHiddenProcess("powercfg.exe", $"/setacvalueindex {targetGuid} {subProc} {cpMinCores} 100");
-                TransactionalAuditService.RunHiddenProcess("powercfg.exe", $"/setacvalueindex {targetGuid} {subProc} {procMin} 85");
+                TransactionalAuditService.RunHiddenProcess("powercfg.exe", $"/setacvalueindex {targetGuid} {subProc} {procMin} 100");
                 TransactionalAuditService.RunHiddenProcess("powercfg.exe", $"/setacvalueindex {targetGuid} {subProc} {procMax} 100");
                 TransactionalAuditService.RunHiddenProcess("powercfg.exe", $"/setacvalueindex {targetGuid} {subProc} {boostMode} 2");
                 break;

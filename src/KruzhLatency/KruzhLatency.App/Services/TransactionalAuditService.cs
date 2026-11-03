@@ -192,6 +192,36 @@ public sealed class TransactionalAuditService
         }
     }
 
+    /// <summary>
+    /// Borra un valor del registro guardando antes el original en el journal (revertir lo vuelve a crear).
+    /// Si el valor no existe no hace nada ni registra nada.
+    /// </summary>
+    public void DeleteRegistryValue(string tweakId, RegistryHive hive, string subKeyPath, string valueName)
+    {
+        lock (_sync)
+        {
+            using var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
+            using var key = baseKey.OpenSubKey(subKeyPath, writable: true);
+            object? rawOld = key?.GetValue(valueName, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
+            if (key is null || rawOld is null) return;
+
+            var oldKind = key.GetValueKind(valueName);
+            RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
+            {
+                TweakId = tweakId,
+                TimestampUtc = DateTime.UtcNow,
+                TargetKind = BackupTargetKind.RegistryValue,
+                TargetPath = $"{GetHivePrefix(hive)}\\{subKeyPath}",
+                ValueName = valueName,
+                PreviousValueExisted = true,
+                RegistryValueKindName = oldKind.ToString(),
+                PreviousSerializedValue = SerializeRegistryValue(rawOld, oldKind),
+                AppliedSerializedValue = "<DELETED>"
+            });
+            key.DeleteValue(valueName, throwOnMissingValue: false);
+        }
+    }
+
     public void SetServiceStartup(string tweakId, string serviceName, int targetStartMode, bool stopIfRunning)
     {
         string regPath = $@"SYSTEM\CurrentControlSet\Services\{serviceName}";
