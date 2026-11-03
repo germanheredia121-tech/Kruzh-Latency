@@ -291,6 +291,19 @@ public sealed partial class MainWindow : Window
             // ADR-009: si hay un EDID esperando confirmación (se aplicó y se reinició), preguntar ya.
             _ = ConfirmPendingEdidAsync();
 
+            // T11: si el journal estaba dañado, avisar (nunca en silencio).
+            switch (App.AuditService.JournalLoadOutcome)
+            {
+                case KruzhLatency.Core.Journal.JournalLoadOutcome.RecoveredFromBackup:
+                    SetStatus("El registro de cambios estaba dañado y se recuperó de su copia de seguridad.");
+                    break;
+                case KruzhLatency.Core.Journal.JournalLoadOutcome.CorruptStartedEmpty:
+                    _ = ShowSimpleInfoModalAsync("Registro de cambios dañado",
+                        "El registro de cambios de KRUZH y su copia estaban dañados. Se guardó una copia del archivo y se empezó uno nuevo: " +
+                        "los cambios aplicados antes no se pueden revertir desde KRUZH (usá un punto de restauración de Windows si hace falta).");
+                    break;
+            }
+
             // Start native RegNotifyChangeKeyValue watchers for immediate external registry change detection
             App.MonitorScoreService.StartRegistryWatchers(() =>
             {
@@ -3074,11 +3087,7 @@ public sealed partial class MainWindow : Window
 
     private void OpenJournalFolderBtn_Click(object sender, RoutedEventArgs e)
     {
-        string dir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "KruzhLatency",
-            "Journal");
-        Directory.CreateDirectory(dir);
+        string dir = Path.GetDirectoryName(App.AuditService.JournalPath)!; // C:\ProgramData\KruzhLatency\journal (T11)
         Process.Start(new ProcessStartInfo { FileName = dir, UseShellExecute = true });
     }
 

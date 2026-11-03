@@ -7,6 +7,7 @@ using System.Linq;
 using System.ServiceProcess;
 using System.Text.Json;
 using System.Threading.Tasks;
+using KruzhLatency.Core.Journal;
 using KruzhLatency.Models;
 using Microsoft.Win32;
 
@@ -14,128 +15,100 @@ namespace KruzhLatency.Services;
 
 public sealed class TransactionalAuditService
 {
-    private readonly string _journalPath;
     private readonly object _sync = new();
-    private BackupJournalDocument _journal;
+    private readonly JournalStore _store;
+
+    /// <summary>Cómo se cargó el journal: si hubo que recuperarlo del .bak o arrancó vacío por corrupción, la UI lo avisa.</summary>
+    public JournalLoadOutcome JournalLoadOutcome => _store.LoadOutcome;
+    public string JournalPath => _store.Path;
+    public int MigratedFromV1 { get; }
 
     public TransactionalAuditService()
     {
-        string dir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "KruzhLatency",
-            "Journal");
-        Directory.CreateDirectory(dir);
-        _journalPath = Path.Combine(dir, "backup_journal.json");
-        _journal = LoadJournal();
+        // T11: journal v2 en C:\ProgramData\KruzhLatency\journal (solo admins/SYSTEM escriben: la app elevada restaura
+        // lo que dice este archivo, así que un usuario común no puede poder editarlo).
+        string dir = KruzhLatency.Infra.Security.SecureFolders.ProgramData("journal");
+        _store = new JournalStore(Path.Combine(dir, "journal.json"));
+        MigratedFromV1 = MigrateV1();
     }
 
-    public IReadOnlyList<AtomicBackupRecord> GetAuditHistory()
+    /// <summary>Migra el journal v1 (%LOCALAPPDATA%\KruzhLatency\Journal\backup_journal.json) y lo renombra.</summary>
+    private int MigrateV1()
     {
-        lock (_sync)
+        string v1 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KruzhLatency", "Journal", "backup_journal.json");
+        if (!File.Exists(v1)) return 0;
+        try
         {
-            return _journal.AuditHistory.OrderByDescending(x => x.TimestampUtc).ToList();
+            var doc = JsonSerializer.Deserialize(File.ReadAllText(v1), AppJsonContext.Default.BackupJournalDocument);
+            int added = doc is null ? 0 : _store.Import(
+                doc.TweakBackups.SelectMany(kv => kv.Value.Select(r => ToEntry(r, kv.Key))),
+                doc.AuditHistory.Select(r => ToEntry(r, r.TweakId)));
+            File.Move(v1, v1 + ".migrado-a-v2", overwrite: true);
+            return added;
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            App.LogError("Migración journal v1", ex);
+            return 0;
         }
     }
+
+    private static JournalEntry ToEntry(AtomicBackupRecord r, string tweakId) => new()
+    {
+        TweakId = tweakId,
+        OperationId = JournalEntry.MakeOperationId(r.TargetKind.ToString(), r.TargetPath, r.ValueName),
+        Kind = r.TargetKind.ToString(),
+        TargetPath = r.TargetPath,
+        ValueName = r.ValueName,
+        PreviousValueExisted = r.PreviousValueExisted,
+        ValueKind = r.RegistryValueKindName,
+        PreviousValue = r.PreviousSerializedValue,
+        AppliedValue = r.AppliedSerializedValue,
+        TimestampUtc = r.TimestampUtc
+    };
+
+    /// <summary>null si el tipo no existe en esta versión (journal de una versión más nueva): no se toca.</summary>
+    private static AtomicBackupRecord? FromEntry(JournalEntry e) =>
+        Enum.TryParse<BackupTargetKind>(e.Kind, out var kind)
+            ? new AtomicBackupRecord
+            {
+                TweakId = e.TweakId,
+                TimestampUtc = e.TimestampUtc,
+                TargetKind = kind,
+                TargetPath = e.TargetPath,
+                ValueName = e.ValueName,
+                PreviousValueExisted = e.PreviousValueExisted,
+                RegistryValueKindName = e.ValueKind,
+                PreviousSerializedValue = e.PreviousValue,
+                AppliedSerializedValue = e.AppliedValue
+            }
+            : null;
+
+    private static bool SameOperation(AtomicBackupRecord r, JournalEntry e) =>
+        e.OperationId == JournalEntry.MakeOperationId(r.TargetKind.ToString(), r.TargetPath, r.ValueName);
+
+    public IReadOnlyList<AtomicBackupRecord> GetAuditHistory() =>
+        _store.History().Select(FromEntry).OfType<AtomicBackupRecord>().OrderByDescending(x => x.TimestampUtc).ToList();
 
     /// <summary>
     /// Descarta entradas del journal SIN restaurarlas. Se usa para las entradas "*_Rev" que dejaban los fallbacks de
     /// revert de v3 (bug B2): su "valor original" es el valor tweakeado, así que revertirlas re-aplicaba el tweak.
     /// </summary>
-    public int DiscardEntries(Func<string, bool> tweakIdPredicate)
-    {
-        lock (_sync)
-        {
-            var keys = _journal.TweakBackups.Keys.Where(tweakIdPredicate).ToList();
-            foreach (var k in keys)
-            {
-                _journal.TweakBackups.Remove(k);
-            }
-            if (keys.Count > 0)
-            {
-                SaveJournalLocked();
-            }
-            return keys.Count;
-        }
-    }
+    public int DiscardEntries(Func<string, bool> tweakIdPredicate) => _store.RemoveTweaks(tweakIdPredicate);
 
     public static bool IsLegacyFallbackEntry(string tweakId) => tweakId.EndsWith("_Rev", StringComparison.Ordinal);
 
     /// <summary>Cambios ACTIVOS (con backup pendiente de revertir), agrupados por tweak: cantidad de valores y fecha del último.</summary>
-    public IReadOnlyList<(string TweakId, int ValueCount, DateTime LastChangeUtc)> GetActiveBackupSummary()
-    {
-        lock (_sync)
-        {
-            return _journal.TweakBackups
-                .Where(kv => kv.Value.Count > 0)
-                .Select(kv => (kv.Key, kv.Value.Count, kv.Value.Max(r => r.TimestampUtc)))
-                .OrderByDescending(x => x.Item3)
-                .ToList();
-        }
-    }
+    public IReadOnlyList<(string TweakId, int ValueCount, DateTime LastChangeUtc)> GetActiveBackupSummary() =>
+        _store.AllBaselines()
+            .Select(kv => (kv.Key, kv.Value.Count, kv.Value.Max(r => r.TimestampUtc)))
+            .OrderByDescending(x => x.Item3)
+            .ToList();
 
-    public bool HasBackupForTweak(string tweakId)
-    {
-        lock (_sync)
-        {
-            return _journal.TweakBackups.TryGetValue(tweakId, out var list) && list.Count > 0;
-        }
-    }
+    public bool HasBackupForTweak(string tweakId) => _store.HasBaseline(tweakId);
 
-    private BackupJournalDocument LoadJournal()
-    {
-        try
-        {
-            if (File.Exists(_journalPath))
-            {
-                string json = File.ReadAllText(_journalPath);
-                var doc = JsonSerializer.Deserialize(json, AppJsonContext.Default.BackupJournalDocument);
-                if (doc != null)
-                {
-                    return doc;
-                }
-            }
-        }
-        catch
-        {
-            // If corrupted, start clean journal while preserving old file
-            try { File.Copy(_journalPath, _journalPath + ".bak", true); } catch { }
-        }
-        return new BackupJournalDocument();
-    }
-
-    private void SaveJournalLocked()
-    {
-        _journal.UpdatedAtUtc = DateTime.UtcNow;
-        string json = JsonSerializer.Serialize(_journal, AppJsonContext.Default.BackupJournalDocument);
-        File.WriteAllText(_journalPath, json);
-    }
-
-    private void RecordBaselineIfNotExistsLocked(AtomicBackupRecord record)
-    {
-        if (!_journal.TweakBackups.TryGetValue(record.TweakId, out var list))
-        {
-            list = new List<AtomicBackupRecord>();
-            _journal.TweakBackups[record.TweakId] = list;
-        }
-
-        // Only store the first pre-tweak baseline for a given target+value so multiple applies never overwrite original state
-        bool alreadyRecorded = list.Any(r =>
-            r.TargetKind == record.TargetKind &&
-            string.Equals(r.TargetPath, record.TargetPath, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(r.ValueName, record.ValueName, StringComparison.OrdinalIgnoreCase));
-
-        if (!alreadyRecorded)
-        {
-            list.Add(record);
-        }
-
-        _journal.AuditHistory.Add(record);
-        if (_journal.AuditHistory.Count > 1500)
-        {
-            _journal.AuditHistory.RemoveRange(0, _journal.AuditHistory.Count - 1500);
-        }
-        SaveJournalLocked();
-    }
+    /// <summary>Guarda el original una sola vez por (tweak, operación) — atómico, antes de tocar el sistema.</summary>
+    private void RecordBaselineIfNotExistsLocked(AtomicBackupRecord record) => _store.RecordBaseline(ToEntry(record, record.TweakId));
 
     public void SetRegistryValue(
         string tweakId,
@@ -473,8 +446,8 @@ public sealed class TransactionalAuditService
     /// </summary>
     public int ResetDisplayCache(string tweakId)
     {
-        string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "KruzhLatency", "Backups", $"pantallas-{DateTime.Now:yyyyMMdd-HHmmss}");
+        // En la carpeta protegida: "Revertir" hace reg import de estos archivos como administrador.
+        string dir = KruzhLatency.Infra.Security.SecureFolders.ProgramData("backups", $"pantallas-{DateTime.Now:yyyyMMdd-HHmmss}");
         int removed = 0;
         foreach (var key in KruzhLatency.Infra.Display.DisplayCache.CacheKeys)
         {
@@ -506,16 +479,15 @@ public sealed class TransactionalAuditService
     /// </summary>
     public (int Enabled, IReadOnlyList<string> Failed) RescueDisabledDevices()
     {
-        List<(string TweakId, AtomicBackupRecord Rec)> targets;
-        lock (_sync)
-        {
-            targets = _journal.TweakBackups
-                .SelectMany(kv => kv.Value.Select(r => (kv.Key, r)))
-                .Where(x => x.r.TargetKind == BackupTargetKind.DeviceState &&
-                            string.Equals(x.r.PreviousSerializedValue, "Enabled", StringComparison.OrdinalIgnoreCase) &&
-                            !string.IsNullOrEmpty(x.r.TargetPath))
-                .ToList();
-        }
+        var targets = _store.AllBaselines()
+            .SelectMany(kv => kv.Value)
+            .Select(FromEntry)
+            .OfType<AtomicBackupRecord>()
+            .Where(r => r.TargetKind == BackupTargetKind.DeviceState &&
+                        string.Equals(r.PreviousSerializedValue, "Enabled", StringComparison.OrdinalIgnoreCase) &&
+                        !string.IsNullOrEmpty(r.TargetPath))
+            .Select(r => (r.TweakId, Rec: r))
+            .ToList();
 
         int enabled = 0;
         var failed = new List<string>();
@@ -526,18 +498,8 @@ public sealed class TransactionalAuditService
             else failed.Add(instance);
         }
 
-        lock (_sync)
-        {
-            foreach (var (tweakId, rec) in targets.Where(t => !failed.Contains(t.Rec.TargetPath, StringComparer.OrdinalIgnoreCase)))
-            {
-                if (_journal.TweakBackups.TryGetValue(tweakId, out var list))
-                {
-                    list.Remove(rec);
-                    if (list.Count == 0) _journal.TweakBackups.Remove(tweakId);
-                }
-            }
-            SaveJournalLocked();
-        }
+        var done = targets.Where(t => !failed.Contains(t.Rec.TargetPath, StringComparer.OrdinalIgnoreCase)).Select(t => t.Rec).ToList();
+        _store.RemoveEntries(e => done.Any(r => r.TweakId == e.TweakId && SameOperation(r, e)));
         return (enabled, failed);
     }
 
@@ -641,16 +603,13 @@ public sealed class TransactionalAuditService
     /// </summary>
     public bool RevertTweakFromJournal(string tweakId, out string statusMessage)
     {
-        List<AtomicBackupRecord>? records;
-        lock (_sync)
+        var records = _store.Baselines(tweakId).Select(FromEntry).OfType<AtomicBackupRecord>().ToList();
+        if (records.Count == 0)
         {
-            if (!_journal.TweakBackups.TryGetValue(tweakId, out records) || records.Count == 0)
-            {
-                statusMessage = "Sin entradas previas en el journal; aplicando estado seguro predeterminado.";
-                return false;
-            }
-            records = records.ToList();
+            statusMessage = "Sin entradas previas en el journal; aplicando estado seguro predeterminado.";
+            return false;
         }
+        var restored = new List<AtomicBackupRecord>();
 
         int restoredCount = 0;
         for (int i = records.Count - 1; i >= 0; i--)
@@ -743,30 +702,28 @@ public sealed class TransactionalAuditService
                         restoredCount++;
                         break;
                 }
+                restored.Add(rec);
             }
-            catch
+            catch (Exception ex)
             {
-                // Continue restoring remaining records
+                // Sigue con el resto; este valor queda en el journal para reintentar (antes se perdía su original).
+                App.LogError($"Revertir {tweakId} · {rec.TargetKind} {rec.TargetPath} {rec.ValueName}", ex);
             }
         }
 
-        lock (_sync)
-        {
-            _journal.TweakBackups.Remove(tweakId);
-            SaveJournalLocked();
-        }
+        // Solo se quita lo que de verdad se restauró.
+        _store.RemoveEntries(e => e.TweakId == tweakId && restored.Any(r => SameOperation(r, e)));
+        int pending = records.Count - restored.Count;
 
-        statusMessage = $"Revertido con éxito desde Journal ({restoredCount} valores exactos restaurados).";
-        return true;
+        statusMessage = pending == 0
+            ? $"Revertido desde el journal ({restoredCount} valores originales restaurados)."
+            : $"Revertido en parte: {restored.Count} restaurados, {pending} fallaron y quedan guardados para reintentar.";
+        return pending == 0;
     }
 
     public int RevertAllFromJournal(out string summaryMessage)
     {
-        List<string> keys;
-        lock (_sync)
-        {
-            keys = _journal.TweakBackups.Keys.ToList();
-        }
+        var keys = _store.AllBaselines().Keys.ToList();
 
         int count = 0;
         foreach (string key in keys)

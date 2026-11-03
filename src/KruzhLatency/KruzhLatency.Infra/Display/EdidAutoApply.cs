@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using KruzhLatency.Core.Display;
 using Microsoft.Win32;
 
@@ -13,21 +11,7 @@ namespace KruzhLatency.Infra.Display;
 public static class EdidAutoApply
 {
     /// <summary>C:\ProgramData\KruzhLatency\edid: lo lee SYSTEM, solo lo pueden escribir SYSTEM y Administradores.</summary>
-    public static string SecureFolder()
-    {
-        string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "KruzhLatency", "edid");
-        var sec = new DirectorySecurity();
-        sec.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
-        var inherit = InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit;
-        sec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), FileSystemRights.FullControl, inherit, PropagationFlags.None, AccessControlType.Allow));
-        sec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), FileSystemRights.FullControl, inherit, PropagationFlags.None, AccessControlType.Allow));
-        sec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null), FileSystemRights.ReadAndExecute, inherit, PropagationFlags.None, AccessControlType.Allow));
-
-        var info = new DirectoryInfo(dir);
-        if (!info.Exists) info.Create(sec);
-        else info.SetAccessControl(sec);
-        return dir;
-    }
+    public static string SecureFolder() => KruzhLatency.Infra.Security.SecureFolders.ProgramData("edid");
 
     /// <summary>Exporta el EDID_OVERRIDE actual a .reg si existe. Devuelve la ruta o null si no había override.</summary>
     public static string? ExportCurrentOverride(string instanceId, string folder)
