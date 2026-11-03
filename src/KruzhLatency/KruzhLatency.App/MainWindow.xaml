@@ -550,6 +550,10 @@
                                                 BorderBrush="Transparent" Padding="0,8" CornerRadius="0"
                                                 Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="13.5" Content="Device Manager" />
                                     </StackPanel>
+                                    <!-- ADR-007: Rescate, solo en la pestaña Device Manager -->
+                                    <Button x:Name="DeviceRescueBtn" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"
+                                            Click="DeviceRescueBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Rescate"
+                                            ToolTipService.ToolTip="Vuelve a habilitar todos los dispositivos que deshabilitó KRUZH y reinicia" />
                                 </Grid>
                                 <TextBlock x:Name="OptTabNoteText" Visibility="Collapsed" Margin="0,8,0,18" TextWrapping="Wrap"
                                            FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" Text="-" />

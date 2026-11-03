@@ -583,7 +583,41 @@ public sealed partial class MainWindow : Window
             b.BorderBrush = active ? (Brush)Application.Current.Resources["KruzhTextPrimaryBrush"] : TransparentBrush;
             b.FontWeight = active ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal;
         }
+        DeviceRescueBtn.Visibility = tag == "Devices" ? Visibility.Visible : Visibility.Collapsed;
         RefreshTweaksListUi();
+    }
+
+    /// <summary>B10 / ADR-007: reactiva todo lo que KRUZH deshabilitó (no lo que deshabilitó el usuario) y ofrece reiniciar.</summary>
+    private async void DeviceRescueBtn_Click(object sender, RoutedEventArgs e)
+    {
+        bool go = await ShowConfirmModalAsync("Rescate de dispositivos",
+            "Se vuelven a habilitar todos los dispositivos que deshabilitó KRUZH (los que deshabilitaste vos antes no se tocan). " +
+            "Usalo si algo dejó de funcionar después de aplicar el Device Manager. Después conviene reiniciar.",
+            "Rescatar");
+        if (!go) return;
+
+        (int Enabled, IReadOnlyList<string> Failed) result = (0, Array.Empty<string>());
+        await RunStepsWithOverlayAsync("Rescate", "Habilitando dispositivos", new[]
+        {
+            new OverlayStep("Habilitar lo que deshabilitó KRUZH", () =>
+            {
+                result = App.AuditService.RescueDisabledDevices();
+                return result.Failed.Count == 0
+                    ? (true, $"{result.Enabled} dispositivos habilitados.")
+                    : (false, $"{result.Enabled} habilitados; fallaron {result.Failed.Count}: {string.Join(", ", result.Failed)}");
+            })
+        });
+
+        RefreshLiveTweaksStateInPlace();
+        if (result.Enabled > 0 &&
+            await ShowConfirmModalAsync("Reiniciar", $"Se habilitaron {result.Enabled} dispositivos. ¿Reiniciar ahora para que todo arranque limpio?", "Reiniciar"))
+        {
+            Process.Start(new ProcessStartInfo { FileName = "shutdown.exe", Arguments = "/r /t 5", CreateNoWindow = true, UseShellExecute = false });
+        }
+        else if (result.Enabled == 0 && result.Failed.Count == 0)
+        {
+            SetStatus("No hay dispositivos deshabilitados por KRUZH.");
+        }
     }
 
     private bool IsInCurrentOptTab(DeclarativeTweakItem t) => _currentOptTab switch

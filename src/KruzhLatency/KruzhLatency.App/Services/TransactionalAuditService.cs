@@ -442,6 +442,48 @@ public sealed class TransactionalAuditService
     }
 
     /// <summary>
+    /// Rescate (ADR-007): reactiva TODOS los dispositivos que KRUZH deshabilitó (journal: estado previo "Enabled") y
+    /// quita esas entradas. No toca lo que el usuario ya tenía deshabilitado antes de KRUZH.
+    /// Devuelve cuántos se reactivaron y los que fallaron.
+    /// </summary>
+    public (int Enabled, IReadOnlyList<string> Failed) RescueDisabledDevices()
+    {
+        List<(string TweakId, AtomicBackupRecord Rec)> targets;
+        lock (_sync)
+        {
+            targets = _journal.TweakBackups
+                .SelectMany(kv => kv.Value.Select(r => (kv.Key, r)))
+                .Where(x => x.r.TargetKind == BackupTargetKind.DeviceState &&
+                            string.Equals(x.r.PreviousSerializedValue, "Enabled", StringComparison.OrdinalIgnoreCase) &&
+                            !string.IsNullOrEmpty(x.r.TargetPath))
+                .ToList();
+        }
+
+        int enabled = 0;
+        var failed = new List<string>();
+        foreach (var instance in targets.Select(t => t.Rec.TargetPath).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var (exit, _) = RunPnpUtil("/enable-device", instance);
+            if (exit is 0 or 3010) enabled++;
+            else failed.Add(instance);
+        }
+
+        lock (_sync)
+        {
+            foreach (var (tweakId, rec) in targets.Where(t => !failed.Contains(t.Rec.TargetPath, StringComparer.OrdinalIgnoreCase)))
+            {
+                if (_journal.TweakBackups.TryGetValue(tweakId, out var list))
+                {
+                    list.Remove(rec);
+                    if (list.Count == 0) _journal.TweakBackups.Remove(tweakId);
+                }
+            }
+            SaveJournalLocked();
+        }
+        return (enabled, failed);
+    }
+
+    /// <summary>
     /// Marca/desmarca "Permitir que el equipo apague este dispositivo" (WMI) guardando el valor original en el journal.
     /// null = el dispositivo no expone la casilla; false = WMI rechazó el cambio o la relectura no coincide.
     /// </summary>
