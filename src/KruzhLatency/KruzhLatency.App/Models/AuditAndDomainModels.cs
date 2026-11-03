@@ -79,8 +79,12 @@ public sealed class GameTargetItem
     [JsonIgnore]
     public bool IsInstalled => !string.IsNullOrEmpty(FullExePath) && System.IO.File.Exists(FullExePath);
 
+    /// <summary>Estado REAL leído del sistema (IFEO / QoS / GPU pref) por GameOptimizationService, no lo que dicen los toggles.</summary>
     [JsonIgnore]
-    public bool IsOptimized => HighCpuAndIoPriority || QosDscp46 || HighPerfGpuPreference || DisableFullscreenOptimizations || UsePCoresAffinity;
+    public bool IsLiveOptimized { get; set; }
+
+    [JsonIgnore]
+    public bool IsOptimized => IsLiveOptimized;
 
     [JsonIgnore]
     public string StatusText => IsInstalled ? "Instalado" : "No instalado";

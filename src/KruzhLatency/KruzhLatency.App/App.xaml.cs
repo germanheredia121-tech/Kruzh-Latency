@@ -19,6 +19,7 @@ public partial class App : Application
     public static IrqAndMsiService IrqMsiService { get; private set; } = null!;
     public static PowerCatalogService PowerService { get; private set; } = null!;
     public static DeclarativeTweakEngine TweakEngine { get; private set; } = null!;
+    public static GameOptimizationService GameOptimizer { get; private set; } = null!;
     public static NvidiaAndDriversService NvidiaDriversService { get; private set; } = null!;
     public static NvramAdvisoryService NvramService { get; private set; } = null!;
     public static RealtimeMonitorAndScoreService MonitorScoreService { get; private set; } = null!;
@@ -59,6 +60,7 @@ public partial class App : Application
                     splash.SetStatusText("Cargando catálogo de optimizaciones...");
                     TweakEngine = new DeclarativeTweakEngine(AuditService, HardwareService, IrqMsiService, PowerService);
                     TweakEngine.RefreshAll();
+                    GameOptimizer = new GameOptimizationService(AuditService);
 
                     splash.SetStatusText("Verificando firmware y telemetría...");
                     NvidiaDriversService = new NvidiaAndDriversService(HardwareService, AuditService);

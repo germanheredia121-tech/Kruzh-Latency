@@ -955,7 +955,7 @@
                                 </StackPanel>
 
                                 <!-- Library count label -->
-                                <TextBlock x:Name="GamesLibraryCountText" Text="TU BIBLIOTECA · 5 JUEGOS" Style="{StaticResource KruzhMicroLabelStyle}" Margin="0,0,0,4" />
+                                <TextBlock x:Name="GamesLibraryCountText" Text="TU BIBLIOTECA" Style="{StaticResource KruzhMicroLabelStyle}" Margin="0,0,0,4" />
 
                                 <!-- Grid of Game Cards -->
                                 <GridView x:Name="GamesGridView"
@@ -963,6 +963,22 @@
                                           IsItemClickEnabled="True"
                                           ItemClick="GamesGridView_ItemClick"
                                           Padding="0">
+                                    <!-- Sin el fondo gris de hover/pressed del contenedor (era más grande que la card y se veía corrido).
+                                         El hover lo hace la card misma (GameCard_PointerEntered/Exited). -->
+                                    <GridView.Resources>
+                                        <SolidColorBrush x:Key="GridViewItemBackgroundPointerOver" Color="Transparent" />
+                                        <SolidColorBrush x:Key="GridViewItemBackgroundPressed" Color="Transparent" />
+                                        <SolidColorBrush x:Key="GridViewItemBackgroundSelected" Color="Transparent" />
+                                        <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPointerOver" Color="Transparent" />
+                                        <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPressed" Color="Transparent" />
+                                    </GridView.Resources>
+                                    <GridView.ItemContainerStyle>
+                                        <Style TargetType="GridViewItem">
+                                            <Setter Property="Margin" Value="0" />
+                                            <Setter Property="Padding" Value="0" />
+                                            <Setter Property="CornerRadius" Value="12" />
+                                        </Style>
+                                    </GridView.ItemContainerStyle>
                                     <GridView.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <ItemsWrapGrid Orientation="Horizontal" ItemWidth="188" ItemHeight="288" />
@@ -974,7 +990,13 @@
                                                     CornerRadius="12"
                                                     BorderBrush="{StaticResource KruzhHairlineBorderBrush}"
                                                     BorderThickness="1"
-                                                    Background="{StaticResource KruzhCardSurfaceBrush}">
+                                                    Background="{StaticResource KruzhCardSurfaceBrush}"
+                                                    PointerEntered="GameCard_PointerEntered"
+                                                    PointerExited="GameCard_PointerExited"
+                                                    Loaded="GameCard_Loaded">
+                                                <Border.TranslationTransition>
+                                                    <Vector3Transition Duration="0:0:0.15" />
+                                                </Border.TranslationTransition>
                                                 <Grid>
                                                     <Grid.RowDefinitions>
                                                         <RowDefinition Height="*" />
@@ -1031,14 +1053,20 @@
                                     </GridView.ItemTemplate>
                                     <GridView.Footer>
                                         <!-- Card "+ Agregar juego" -->
-                                        <Border Width="176" Height="276" Margin="0,0,12,12"
+                                        <Border x:Name="AddGameCard" Width="176" Height="276" Margin="0,0,12,12"
                                                 CornerRadius="12"
                                                 BorderBrush="#333333" BorderThickness="1"
                                                 Background="Transparent"
-                                                Tapped="AddCustomGameExeBtn_Click">
+                                                Tapped="AddCustomGameExeBtn_Click"
+                                                PointerEntered="GameCard_PointerEntered"
+                                                PointerExited="GameCard_PointerExited"
+                                                Loaded="GameCard_Loaded">
+                                            <Border.TranslationTransition>
+                                                <Vector3Transition Duration="0:0:0.15" />
+                                            </Border.TranslationTransition>
                                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
-                                                <FontIcon Glyph="&#xE710;" FontSize="24" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
-                                                <TextBlock Text="Agregar juego" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                <FontIcon x:Name="AddGameIcon" Glyph="&#xE710;" FontSize="24" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                <TextBlock x:Name="AddGameText" Text="Agregar juego" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
                                             </StackPanel>
                                         </Border>
                                     </GridView.Footer>
@@ -1115,114 +1143,50 @@
                                     <!-- Modal Body -->
                                     <ScrollViewer Grid.Row="1" Padding="22,12,22,8" MaxHeight="520">
                                         <StackPanel Spacing="0">
-                                            <!-- Row 1: Preferencia de GPU -->
+                                            <!--
+                                              Solo opciones que (1) hacen algo de verdad y (2) aplican a ESTA PC.
+                                              Fuera: FSO off (en Windows 11 FSO/flip model es mejor que FSE), y P-cores / Un CCD /
+                                              Boost / Excluir Core 0 (no estaban implementadas; la afinidad por topología llega en T34
+                                              y se mostrará solo en CPUs híbridas o Ryzen dual-CCD).
+                                            -->
+
+                                            <!-- Prioridad alta CPU/IO (IFEO PerfOptions) -->
                                             <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <StackPanel Spacing="2">
-                                                    <TextBlock Text="Preferencia de GPU" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                    <TextBlock Text="GPU de alto rendimiento para este .exe" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                    <TextBlock Text="Prioridad alta de CPU y disco" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Windows le da prioridad al juego frente a procesos de fondo (IFEO, por registro)." FontSize="11.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" x:Name="ModalIfeoPriorityToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                            </Grid>
+
+                                            <!-- QoS DSCP 46 -->
+                                            <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Prioridad de red (QoS DSCP 46)" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Marca el tráfico UDP del juego como prioritario. Sirve si tu router tiene QoS/SQM." FontSize="11.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" x:Name="ModalQosToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
+                                            </Grid>
+
+                                            <!-- Preferencia de GPU: solo visible con 2+ GPUs físicas -->
+                                            <Grid x:Name="ModalGpuPrefRow" Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1" Visibility="Collapsed">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Usar la GPU dedicada" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                                    <TextBlock Text="Detectamos más de una GPU: fuerza la de alto rendimiento para este juego." FontSize="11.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
                                                 </StackPanel>
                                                 <ToggleSwitch Grid.Column="1" x:Name="ModalGpuPrefToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
-                                            </Grid>
-
-                                            <!-- Row 2: Compatibilidad / FSO off -->
-                                            <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Spacing="2">
-                                                    <TextBlock Text="Compatibilidad / FSO off" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                    <TextBlock Text="Flags de pantalla completa y optimizaciones" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                </StackPanel>
-                                                <ToggleSwitch Grid.Column="1" x:Name="ModalFsoOffToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
-                                            </Grid>
-
-                                            <!-- 2-Column Grid -->
-                                            <Grid ColumnSpacing="32">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-
-                                                <StackPanel Grid.Column="0">
-                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Spacing="2">
-                                                            <TextBlock Text="P-cores / afinidad" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                            <TextBlock Text="Selección automática por topología" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                        </StackPanel>
-                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalPCoresToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
-                                                    </Grid>
-
-                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Spacing="2">
-                                                            <TextBlock Text="Un CCD" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                            <TextBlock Text="Solo Ryzen dual-CCD" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                        </StackPanel>
-                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalSingleCcdToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
-                                                    </Grid>
-
-                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Spacing="2">
-                                                            <TextBlock Text="Boost de prioridad" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                            <TextBlock Text="Foreground boost" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                        </StackPanel>
-                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalBoostToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
-                                                    </Grid>
-                                                </StackPanel>
-
-                                                <StackPanel Grid.Column="1">
-                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Spacing="2">
-                                                            <TextBlock Text="Prioridad alta (IFEO)" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                            <TextBlock Text="Anticheat-safe, por registro" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                        </StackPanel>
-                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalIfeoPriorityToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
-                                                    </Grid>
-
-                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Spacing="2">
-                                                            <TextBlock Text="QoS DSCP 46" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                            <TextBlock Text="Prioriza el tráfico UDP del juego" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                        </StackPanel>
-                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalQosToggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
-                                                    </Grid>
-
-                                                    <Grid Padding="0,13" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Spacing="2">
-                                                            <TextBlock Text="Excluir CORE 0" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                                            <TextBlock Text="Deja el Core 0 a interrupciones" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                                        </StackPanel>
-                                                        <ToggleSwitch Grid.Column="1" x:Name="ModalExcludeCore0Toggle" OnContent="" OffContent="" MinWidth="0" Width="40" VerticalAlignment="Center" />
-                                                    </Grid>
-                                                </StackPanel>
                                             </Grid>
 
                                             <!-- Executable path section -->
@@ -1256,10 +1220,10 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <Button Grid.Column="0" Click="ModalRevertBtn_Click"
+                                        <Button Grid.Column="0" x:Name="ModalRevertBtn" Click="ModalRevertBtn_Click"
                                                 Style="{StaticResource KruzhGhostButtonStyle}"
                                                 HorizontalAlignment="Stretch" Content="Revertir" Padding="14,12" />
-                                        <Button Grid.Column="1" Click="ModalApplyBtn_Click"
+                                        <Button Grid.Column="1" x:Name="ModalApplyBtn" Click="ModalApplyBtn_Click"
                                                 Style="{StaticResource KruzhPrimaryButtonStyle}"
                                                 HorizontalAlignment="Stretch" Content="Aplicar" Padding="14,12" />
                                     </Grid>

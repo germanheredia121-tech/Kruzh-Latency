@@ -1626,6 +1626,12 @@ public sealed partial class MainWindow : Window
     private void RefreshGamesAndNvidiaUi()
     {
         var all = App.TweakEngine.TargetGames;
+        foreach (var g in all)
+        {
+            // Badge "OPT" y pestaña "Optimizados" según el estado REAL del sistema.
+            try { g.IsLiveOptimized = App.GameOptimizer.IsAnyApplied(g); }
+            catch (Exception ex) { App.LogError($"Game state {g.ExecutableName}", ex); g.IsLiveOptimized = false; }
+        }
         IEnumerable<GameTargetItem> filtered = all;
 
         if (_currentGamesTab == "Installed")
@@ -1693,6 +1699,47 @@ public sealed partial class MainWindow : Window
         RefreshGamesAndNvidiaUi();
     }
 
+    // Hover de las cards de juego (y de "Agregar juego"): borde más claro + se eleva 3px. Sin el fondo gris del GridView.
+    private static readonly SolidColorBrush GameCardHoverBorderBrush = new(Windows.UI.Color.FromArgb(255, 90, 90, 90));
+    private static readonly SolidColorBrush AddCardIdleBorderBrush = new(Windows.UI.Color.FromArgb(255, 51, 51, 51));
+    private static readonly SolidColorBrush AddCardHoverBackgroundBrush = new(Windows.UI.Color.FromArgb(255, 20, 20, 20));
+    private static readonly SolidColorBrush TransparentBrush = new(Windows.UI.Color.FromArgb(0, 0, 0, 0));
+
+    private void GameCard_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is UIElement el) SetHandCursor(el);
+    }
+
+    private void GameCard_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not Border card) return;
+        card.BorderBrush = GameCardHoverBorderBrush;
+        card.Translation = new System.Numerics.Vector3(0, -3, 0);
+        if (ReferenceEquals(card, AddGameCard))
+        {
+            card.Background = AddCardHoverBackgroundBrush;
+            AddGameIcon.Foreground = (Brush)Application.Current.Resources["KruzhTextPrimaryBrush"];
+            AddGameText.Foreground = (Brush)Application.Current.Resources["KruzhTextPrimaryBrush"];
+        }
+    }
+
+    private void GameCard_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not Border card) return;
+        card.Translation = System.Numerics.Vector3.Zero;
+        if (ReferenceEquals(card, AddGameCard))
+        {
+            card.BorderBrush = AddCardIdleBorderBrush;
+            card.Background = TransparentBrush;
+            AddGameIcon.Foreground = (Brush)Application.Current.Resources["KruzhTextTertiaryBrush"];
+            AddGameText.Foreground = (Brush)Application.Current.Resources["KruzhTextTertiaryBrush"];
+        }
+        else
+        {
+            card.BorderBrush = (Brush)Application.Current.Resources["KruzhHairlineBorderBrush"];
+        }
+    }
+
     private void GamesGridView_ItemClick(object sender, ItemClickEventArgs e)
     {
         if (e.ClickedItem is not GameTargetItem game) return;
@@ -1721,16 +1768,21 @@ public sealed partial class MainWindow : Window
             ModalMiniCoverImage.Source = null;
         }
 
-        ModalGpuPrefToggle.IsOn = game.HighPerfGpuPreference;
-        ModalFsoOffToggle.IsOn = game.DisableFullscreenOptimizations;
-        ModalPCoresToggle.IsOn = game.UsePCoresAffinity;
-        ModalSingleCcdToggle.IsOn = game.SingleCcdAffinity;
-        ModalBoostToggle.IsOn = game.ForegroundPriorityBoost;
-        ModalIfeoPriorityToggle.IsOn = game.HighCpuAndIoPriority;
-        ModalQosToggle.IsOn = game.QosDscp46;
-        ModalExcludeCore0Toggle.IsOn = game.ExcludeCore0;
+        // Los toggles muestran lo que REALMENTE está aplicado; si no hay nada aplicado, la recomendación (todo ON).
+        bool anyApplied = App.GameOptimizer.IsAnyApplied(game);
+        ModalIfeoPriorityToggle.IsOn = !anyApplied || App.GameOptimizer.IsHighPriorityApplied(game);
+        ModalQosToggle.IsOn = !anyApplied || App.GameOptimizer.IsQosApplied(game);
+
+        // Preferencia de GPU: solo con 2+ GPUs físicas (iGPU + dedicada). Con una sola GPU no hace nada.
+        bool multiGpu = GameOptimizationService.HasMultiplePhysicalGpus();
+        ModalGpuPrefRow.Visibility = multiGpu ? Visibility.Visible : Visibility.Collapsed;
+        ModalGpuPrefToggle.IsOn = multiGpu && (!anyApplied || App.GameOptimizer.IsGpuPreferenceApplied(game));
 
         ModalExePathText.Text = string.IsNullOrEmpty(game.FullExePath) ? game.ExecutableName : game.FullExePath;
+        ModalAnticheatNoteText.Text = game.IsInstalled
+            ? "Compatible con FACEIT AC y Vanguard: solo prioridad por registro (IFEO) y QoS. No toca archivos ni memoria del juego."
+            : "No encontramos el ejecutable. Elegilo con «Seleccionar» para poder aplicar.";
+        ModalApplyBtn.IsEnabled = game.IsInstalled;
         GameOptimizationModalOverlay.Visibility = Visibility.Visible;
     }
 
@@ -1781,54 +1833,61 @@ public sealed partial class MainWindow : Window
         SetStatus($"Ruta de ejecutable actualizada: '{exePath}'.");
     }
 
-    private void ModalApplyBtn_Click(object sender, RoutedEventArgs e)
+    private async void ModalApplyBtn_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedGameForModal == null) return;
+        var game = _selectedGameForModal;
+        bool priority = ModalIfeoPriorityToggle.IsOn;
+        bool qos = ModalQosToggle.IsOn;
+        bool gpuPref = ModalGpuPrefRow.Visibility == Visibility.Visible && ModalGpuPrefToggle.IsOn;
 
-        _selectedGameForModal.HighPerfGpuPreference = ModalGpuPrefToggle.IsOn;
-        _selectedGameForModal.DisableFullscreenOptimizations = ModalFsoOffToggle.IsOn;
-        _selectedGameForModal.UsePCoresAffinity = ModalPCoresToggle.IsOn;
-        _selectedGameForModal.SingleCcdAffinity = ModalSingleCcdToggle.IsOn;
-        _selectedGameForModal.ForegroundPriorityBoost = ModalBoostToggle.IsOn;
-        _selectedGameForModal.HighCpuAndIoPriority = ModalIfeoPriorityToggle.IsOn;
-        _selectedGameForModal.QosDscp46 = ModalQosToggle.IsOn;
-        _selectedGameForModal.ExcludeCore0 = ModalExcludeCore0Toggle.IsOn;
-
-        // Apply via DeclarativeTweakEngine
-        string[] gameTweakIds = { "GameIfeoHighPriority", "QosDscp46Games", "SteamBackgroundGpuAccelOff" };
-        foreach (string id in gameTweakIds)
+        ModalApplyBtn.IsEnabled = false;
+        ModalRevertBtn.IsEnabled = false;
+        try
         {
-            var t = App.TweakEngine.AllTweaks.FirstOrDefault(x => x.Id == id);
-            if (t != null)
+            var (ok, detail) = await Task.Run(() => App.GameOptimizer.Apply(game, priority, qos, gpuPref));
+            SetStatus(detail);
+            if (!ok)
             {
-                App.TweakEngine.ExecuteApply(t);
+                await ShowSimpleInfoModalAsync("No se pudo aplicar", detail);
             }
         }
-
-        GameOptimizationModalOverlay.Visibility = Visibility.Collapsed;
-        RefreshGamesAndNvidiaUi();
-        RefreshLiveTweaksStateInPlace();
-        SetStatus($"Optimizaciones aplicadas exitosamente para '{_selectedGameForModal.Name}'.");
-        _selectedGameForModal = null;
+        finally
+        {
+            ModalApplyBtn.IsEnabled = true;
+            ModalRevertBtn.IsEnabled = true;
+            GameOptimizationModalOverlay.Visibility = Visibility.Collapsed;
+            _selectedGameForModal = null;
+            RefreshGamesAndNvidiaUi();
+            RefreshJournalAndLicenseUi();
+        }
     }
 
-    private void ModalRevertBtn_Click(object sender, RoutedEventArgs e)
+    private async void ModalRevertBtn_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedGameForModal == null) return;
+        var game = _selectedGameForModal;
 
-        _selectedGameForModal.HighPerfGpuPreference = false;
-        _selectedGameForModal.DisableFullscreenOptimizations = false;
-        _selectedGameForModal.UsePCoresAffinity = false;
-        _selectedGameForModal.SingleCcdAffinity = false;
-        _selectedGameForModal.ForegroundPriorityBoost = false;
-        _selectedGameForModal.HighCpuAndIoPriority = false;
-        _selectedGameForModal.QosDscp46 = false;
-        _selectedGameForModal.ExcludeCore0 = false;
-
-        GameOptimizationModalOverlay.Visibility = Visibility.Collapsed;
-        RefreshGamesAndNvidiaUi();
-        SetStatus($"Optimizaciones revertidas para '{_selectedGameForModal.Name}'.");
-        _selectedGameForModal = null;
+        ModalApplyBtn.IsEnabled = false;
+        ModalRevertBtn.IsEnabled = false;
+        try
+        {
+            var (ok, detail) = await Task.Run(() => App.GameOptimizer.Revert(game));
+            SetStatus(detail);
+            if (!ok)
+            {
+                await ShowSimpleInfoModalAsync("No se pudo revertir", detail);
+            }
+        }
+        finally
+        {
+            ModalApplyBtn.IsEnabled = true;
+            ModalRevertBtn.IsEnabled = true;
+            GameOptimizationModalOverlay.Visibility = Visibility.Collapsed;
+            _selectedGameForModal = null;
+            RefreshGamesAndNvidiaUi();
+            RefreshJournalAndLicenseUi();
+        }
     }
 
     private void AddCustomGameExeBtn_Click(object sender, RoutedEventArgs e)
@@ -1852,11 +1911,7 @@ public sealed partial class MainWindow : Window
             Name = Path.GetFileNameWithoutExtension(exePath),
             ShortName = Path.GetFileNameWithoutExtension(exePath).ToUpperInvariant(),
             ExecutableName = exeName,
-            FullExePath = exePath,
-            HighCpuAndIoPriority = true,
-            QosDscp46 = true,
-            HighPerfGpuPreference = true,
-            DisableFullscreenOptimizations = true
+            FullExePath = exePath
         });
 
         RefreshGamesAndNvidiaUi();

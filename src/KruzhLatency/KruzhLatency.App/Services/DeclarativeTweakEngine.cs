@@ -367,6 +367,7 @@ public sealed class DeclarativeTweakEngine
         RefreshAll();
     }
 
+    /// <summary>Spec 001: el producto es para CS2 y VALORANT. Otros .exe solo si el usuario los agrega a mano.</summary>
     private void InitializeDefaultGames()
     {
         string? cs2Path = DetectCs2ExePath();
@@ -375,83 +376,52 @@ public sealed class DeclarativeTweakEngine
             Name = "Counter-Strike 2",
             ShortName = "CS2",
             ExecutableName = "cs2.exe",
-            FullExePath = cs2Path ?? @"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\bin\win64\cs2.exe",
+            FullExePath = cs2Path ?? string.Empty,
             CoverImagePath = FindSteamCover("730"),
             GradientStartHex = "#3A2E17",
-            GradientEndHex = "#14120C",
-            HighCpuAndIoPriority = true,
-            QosDscp46 = true,
-            HighPerfGpuPreference = true,
-            DisableFullscreenOptimizations = true,
-            UsePCoresAffinity = true,
-            ForegroundPriorityBoost = true
+            GradientEndHex = "#14120C"
         });
 
         TargetGames.Add(new GameTargetItem
         {
             Name = "VALORANT",
-            ShortName = "Valorant",
+            ShortName = "VALORANT",
             ExecutableName = "VALORANT-Win64-Shipping.exe",
-            FullExePath = @"C:\Riot Games\VALORANT\live\ShooterGame\Binaries\Win64\VALORANT-Win64-Shipping.exe",
+            FullExePath = DetectValorantExePath() ?? string.Empty,
             GradientStartHex = "#2A1A2E",
-            GradientEndHex = "#120D14",
-            HighCpuAndIoPriority = true,
-            QosDscp46 = true,
-            HighPerfGpuPreference = true,
-            DisableFullscreenOptimizations = true,
-            UsePCoresAffinity = true,
-            ForegroundPriorityBoost = true
+            GradientEndHex = "#120D14"
         });
+    }
 
-        TargetGames.Add(new GameTargetItem
+    /// <summary>
+    /// Ubica VALORANT por la entrada de desinstalación que crea el Riot Client ("Riot Game valorant.live"),
+    /// con fallback a la ruta por defecto. Solo lee el registro; no toca archivos del juego.
+    /// </summary>
+    private static string? DetectValorantExePath()
+    {
+        const string relativeExe = @"ShooterGame\Binaries\Win64\VALORANT-Win64-Shipping.exe";
+        try
         {
-            Name = "Fortnite",
-            ShortName = "Fortnite",
-            ExecutableName = "FortniteClient-Win64-Shipping.exe",
-            FullExePath = @"C:\Program Files\Epic Games\Fortnite\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe",
-            GradientStartHex = "#15263A",
-            GradientEndHex = "#0C1016",
-            HighCpuAndIoPriority = true,
-            QosDscp46 = true,
-            HighPerfGpuPreference = true,
-            DisableFullscreenOptimizations = true,
-            UsePCoresAffinity = true,
-            ForegroundPriorityBoost = true
-        });
+            foreach (var hive in new[] { RegistryHive.CurrentUser, RegistryHive.LocalMachine })
+            {
+                using var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
+                using var k = baseKey.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\Riot Game valorant.live");
+                string? location = k?.GetValue("InstallLocation")?.ToString();
+                if (!string.IsNullOrWhiteSpace(location))
+                {
+                    string candidate = Path.Combine(location, relativeExe);
+                    if (File.Exists(candidate)) return candidate;
+                }
+            }
 
-        TargetGames.Add(new GameTargetItem
-        {
-            Name = "Apex Legends",
-            ShortName = "Apex Legends",
-            ExecutableName = "r5apex.exe",
-            FullExePath = @"C:\Program Files (x86)\Steam\steamapps\common\Apex Legends\r5apex.exe",
-            CoverImagePath = FindSteamCover("1172470"),
-            GradientStartHex = "#3A1518",
-            GradientEndHex = "#16090B",
-            HighCpuAndIoPriority = true,
-            QosDscp46 = true,
-            HighPerfGpuPreference = true,
-            DisableFullscreenOptimizations = true,
-            UsePCoresAffinity = true,
-            ForegroundPriorityBoost = true
-        });
-
-        TargetGames.Add(new GameTargetItem
-        {
-            Name = "PUBG: BATTLEGROUNDS",
-            ShortName = "PUBG",
-            ExecutableName = "TslGame.exe",
-            FullExePath = @"C:\Program Files (x86)\Steam\steamapps\common\PUBG\TslGame\Binaries\Win64\TslGame.exe",
-            CoverImagePath = FindSteamCover("578080"),
-            GradientStartHex = "#1F3320",
-            GradientEndHex = "#0C130D",
-            HighCpuAndIoPriority = true,
-            QosDscp46 = true,
-            HighPerfGpuPreference = true,
-            DisableFullscreenOptimizations = true,
-            UsePCoresAffinity = true,
-            ForegroundPriorityBoost = true
-        });
+            foreach (var drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady))
+            {
+                string candidate = Path.Combine(drive.RootDirectory.FullName, @"Riot Games\VALORANT\live", relativeExe);
+                if (File.Exists(candidate)) return candidate;
+            }
+        }
+        catch { }
+        return null;
     }
 
     private static string? FindSteamCover(string appId)
