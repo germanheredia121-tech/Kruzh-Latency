@@ -41,8 +41,15 @@ public static class NeverTouchPolicy
     /// </summary>
     private static readonly string[] NonCriticalAcpiHardwareIds =
     {
-        @"ACPI\VEN_PNP&DEV_0103", // HPET
-        @"ACPI\PNP0103",
+        @"ACPI\VEN_PNP&DEV_0103", @"ACPI\PNP0103",   // HPET
+        @"ACPI\VEN_PNP&DEV_0800", @"ACPI\PNP0800",   // Altavoz del sistema (beep)
+        @"ACPI\VEN_NVDA&DEV_0820", @"ACPI\NVDA0820", // NVIDIA Platform Controllers and Framework (NVPCF)
+    };
+
+    /// <summary>Buses raíz virtuales que no hacen falta para arrancar ni para jugar (los deshabilitan las reglas de B1).</summary>
+    private static readonly string[] NonCriticalRootHardwareIds =
+    {
+        @"ROOT\CompositeBus", @"ROOT\NdisVirtualBus", @"ROOT\RDPBUS", @"ROOT\umbus", @"ROOT\vdrvroot",
     };
 
     /// <summary>Servicios de display que nunca se detienen ni deshabilitan (panel de NVIDIA/AMD, ver ADR-007).</summary>
@@ -146,7 +153,8 @@ public static class NeverTouchPolicy
         {
             if (n.HasHardwareIdPrefix(@"ROOT\BasicDisplay") || n.HasHardwareIdPrefix(@"ROOT\BasicRender"))
                 return (ProtectionReason.FallbackDisplay, "Driver de pantalla de respaldo (si la GPU falla, es lo único que da imagen).");
-            if (Is(n, "System") || Is(n, "SCSIAdapter") || Is(n, "Volume"))
+            if ((Is(n, "System") || Is(n, "SCSIAdapter") || Is(n, "Volume")) &&
+                !NonCriticalRootHardwareIds.Any(n.HasHardwareIdPrefix))
                 return (ProtectionReason.PlatformDevice, "Bus o enumerador raíz de Windows.");
         }
 

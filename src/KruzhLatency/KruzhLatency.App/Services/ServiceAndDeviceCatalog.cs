@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KruzhLatency.Core.Devices;
+using KruzhLatency.Infra.Devices;
 using KruzhLatency.Models;
 using Microsoft.Win32;
+using Profile = KruzhLatency.Core.Tweaks.Profile;
 
 namespace KruzhLatency.Services;
 
@@ -43,29 +46,17 @@ public sealed partial class DeclarativeTweakEngine
         string? ConditionReason = null,  // por qué NO aplica si la condición falla
         bool ReducesSecurity = false);
 
-    private sealed record DeviceRule(
-        string Id,
-        string Title,
-        string Section,
-        string Why,
-        MinProfile From,
-        string[] EnumPrefixes);          // rutas bajo HKLM\SYSTEM\CurrentControlSet\Enum (prefijo del id de dispositivo)
-
     private void BuildServiceAndDeviceCatalog()
     {
         foreach (var rule in ServiceRules())
         {
             if (ProtectedServices.Contains(rule.Name)) continue; // red de seguridad: nunca un protegido
+            if (NeverTouchPolicy.ProtectedServices.Contains(rule.Name)) continue; // servicios de display (ADR-007)
             if (!ServiceExists(rule.Name)) continue;            // dinámico: solo lo que existe en esta PC
             _allTweaks.Add(BuildServiceItem(rule));
         }
 
-        foreach (var rule in DeviceRules())
-        {
-            var instances = FindDeviceInstances(rule.EnumPrefixes);
-            if (instances.Count == 0) continue;                 // dinámico: solo dispositivos presentes
-            _allTweaks.Add(BuildDeviceItem(rule, instances));
-        }
+        BuildDeviceItems();
     }
 
     // ---------------------------------------------------------------- servicios
@@ -193,61 +184,57 @@ public sealed partial class DeclarativeTweakEngine
         };
     }
 
-    // ---------------------------------------------------------------- dispositivos
+    // ---------------------------------------------------------------- dispositivos (spec 002 / B1)
 
-    private static IEnumerable<DeviceRule> DeviceRules()
+    /// <summary>
+    /// Ítems del Device Manager: el motor de reglas de Core (DeviceRuleEngine) decide sobre el árbol PnP real
+    /// y todo pasa por la lista de nunca-tocar (ADR-007). Solo aparecen dispositivos presentes en esta PC.
+    /// </summary>
+    private void BuildDeviceItems()
     {
-        const string virtualDevices = "Dispositivos virtuales que no se usan";
-        const string hardware = "Hardware";
+        IReadOnlyList<DeviceRecommendation> recommendations;
+        try
+        {
+            var tree = new DeviceTree(new CfgMgrDeviceInventory().Snapshot());
+            recommendations = DeviceRuleEngine.Evaluate(tree, DeviceContextProbe.Detect(tree));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Inventario de dispositivos falló: {ex.Message}");
+            return; // sin inventario no se propone nada (nunca a ciegas)
+        }
 
-        yield return new("KernelDebugNic", "Adaptador de red de depuración del kernel", virtualDevices,
-            "Placa de red virtual para depurar el kernel. Nunca se usa en una PC de juego.", MinProfile.Normal,
-            new[] { @"ROOT\KDNIC" });
-        yield return new("CompositeBus", "Enumerador de bus compuesto", virtualDevices,
-            "Bus para dispositivos compuestos virtuales (ej. proyectar a otra pantalla por Wi-Fi).", MinProfile.Competitivo,
-            new[] { @"ROOT\CompositeBus" });
-        yield return new("NdisVirtualBus", "Enumerador de adaptadores de red virtuales NDIS", virtualDevices,
-            "Crea adaptadores de red virtuales (punto de acceso móvil, Wi-Fi Direct).", MinProfile.Competitivo,
-            new[] { @"ROOT\NdisVirtualBus" });
-        yield return new("RdpBus", "Bus de redirección de Escritorio remoto", virtualDevices,
-            "Redirige dispositivos en sesiones de Escritorio remoto.", MinProfile.Competitivo,
-            new[] { @"ROOT\RDPBUS" });
-        yield return new("UmBus", "Enumerador de bus UMBus", virtualDevices,
-            "Bus para drivers de modo usuario de algunos dispositivos móviles/sensores.", MinProfile.Profesional,
-            new[] { @"ROOT\umbus" });
-        yield return new("VirtualDrive", "Enumerador de unidades virtuales", virtualDevices,
-            "Montaje de discos virtuales (VHD). Si montás VHD/VHDX, no lo desactives.", MinProfile.Profesional,
-            new[] { @"ROOT\vdrvroot" });
-
-        yield return new("SystemSpeaker", "Altavoz del sistema (beep)", hardware,
-            "El parlante interno de la placa madre (pitidos). No se usa para el audio del juego.", MinProfile.Normal,
-            new[] { @"ACPI\PNP0800" });
-        yield return new("GpuHdmiAudio", "Audio HDMI / DisplayPort de la placa de video", hardware,
-            "Salida de audio por el cable del monitor. Si escuchás por los parlantes del monitor, NO lo desactives.",
-            MinProfile.Profesional,
-            new[] { @"HDAUDIO\FUNC_01&VEN_10DE", @"HDAUDIO\FUNC_01&VEN_1002" });
+        foreach (var rec in recommendations)
+        {
+            _allTweaks.Add(BuildDeviceItem(rec));
+        }
     }
 
-    private DeclarativeTweakItem BuildDeviceItem(DeviceRule rule, IReadOnlyList<string> instances)
+    private DeclarativeTweakItem BuildDeviceItem(DeviceRecommendation rec)
     {
-        string id = $"Dev:{rule.Id}";
+        string id = $"Dev:{rec.RuleId}";
+        var instances = rec.Devices.Select(d => d.InstanceId).ToList();
+        string description = rec.Warning is null ? rec.Why : $"{rec.Why}\n⚠ {rec.Warning}";
         return new DeclarativeTweakItem
         {
             Id = id,
             CodeNumber = "DV",
-            Title = instances.Count > 1 ? $"{rule.Title} ({instances.Count})" : rule.Title,
+            Title = rec.Devices.Count > 1 ? $"{rec.Title} ({rec.Devices.Count})" : rec.Title,
             Category = TweakCategory.Devices,
-            CategoryDisplay = rule.Section,
-            TechnicalDescription = rule.Why,
-            WhatItTouches = "Deshabilitar en el Administrador de dispositivos (pnputil): " + string.Join(", ", instances),
-            SourceAttribution = "Catálogo KRUZH (dispositivos no necesarios para jugar)",
+            CategoryDisplay = rec.Section,
+            TechnicalDescription = description,
+            WhatItTouches = "Deshabilitar en el Administrador de dispositivos: " +
+                            string.Join(", ", rec.Devices.Select(d => $"{d.DisplayName} ({d.InstanceId})")),
+            SourceAttribution = "Catálogo KRUZH (spec 002) · reglas por topología/IDs, nunca toca bridges, GPU activa, USB del mouse/teclado, NIC con enlace ni audio predeterminado (ADR-007)",
             Risk = RiskLevel.Low,
             RequiresReboot = true,
-            InMinimal = rule.From == MinProfile.Normal,
-            InCompetitivo = rule.From <= MinProfile.Competitivo,
-            InProfesional = rule.From <= MinProfile.Profesional,
+            InMinimal = rec.From == Profile.Normal,
+            InCompetitivo = rec.From <= Profile.Competitivo,
+            InProfesional = rec.From <= Profile.Profesional,
             InEntusiasta = true,
-            EvaluateGate = _ => EvaluationResult.Recommended($"Se deshabilita desde el perfil {rule.From}."),
+            EvaluateGate = _ => rec.Warning is null
+                ? EvaluationResult.Recommended($"Se deshabilita desde el perfil {rec.From}.")
+                : EvaluationResult.Neutral(rec.Warning),
             ReadLiveState = () => instances.All(TransactionalAuditService.IsDeviceDisabled),
             ApplyAction = _ =>
             {
@@ -255,7 +242,7 @@ public sealed partial class DeclarativeTweakEngine
                 {
                     _audit.SetDeviceEnabled(id, inst, enable: false);
                 }
-                return (true, $"{rule.Title}: deshabilitado.");
+                return (true, $"{rec.Title}: deshabilitado.");
             }
         };
     }
@@ -267,31 +254,6 @@ public sealed partial class DeclarativeTweakEngine
         using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
         using var k = hklm.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{name}");
         return k?.GetValue("Start") is int && k.GetValue("ImagePath") != null;
-    }
-
-    /// <summary>Instancias instaladas bajo Enum que empiezan con alguno de los prefijos ("ROOT\KDNIC" → "ROOT\KDNIC\0000").</summary>
-    private static List<string> FindDeviceInstances(IEnumerable<string> prefixes)
-    {
-        var result = new List<string>();
-        using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-        foreach (string prefix in prefixes)
-        {
-            int slash = prefix.IndexOf('\\');
-            string bus = prefix[..slash];
-            string devicePrefix = prefix[(slash + 1)..];
-            using var busKey = hklm.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{bus}");
-            if (busKey == null) continue;
-            foreach (string device in busKey.GetSubKeyNames().Where(d => d.StartsWith(devicePrefix, StringComparison.OrdinalIgnoreCase)))
-            {
-                using var devKey = busKey.OpenSubKey(device);
-                if (devKey == null) continue;
-                foreach (string inst in devKey.GetSubKeyNames())
-                {
-                    result.Add($@"{bus}\{device}\{inst}");
-                }
-            }
-        }
-        return result;
     }
 
     /// <summary>Impresoras reales (excluye las virtuales que trae Windows / Office).</summary>
