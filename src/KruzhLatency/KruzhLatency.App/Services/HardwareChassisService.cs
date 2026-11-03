@@ -248,141 +248,66 @@ public sealed partial class HardwareChassisService
         hw.IsRyzenZen2OrZen3OrZen4 = hw.CpuVendor == CpuVendorKind.AMD &&
                                      Regex.IsMatch(hw.CpuName, @"Ryzen\s+[3579]\s+[3579]\d{3}", RegexOptions.IgnoreCase);
 
-        // Query native processor topology (RelationProcessorCore = 0, RelationCache = 2)
-        var coreMasks = new List<(ulong Mask, byte EfficiencyClass)>();
-        var l3Masks = new List<ulong>();
-
+        // Topología real (RelationProcessorCore = 0, RelationCache = 2). El parseo vive en Core
+        // (CpuTopologyParser, con tests sobre buffers reales); acá solo se piden los bytes crudos.
+        IReadOnlyList<KruzhLatency.Core.Hardware.LogicalProcessor> topology = Array.Empty<KruzhLatency.Core.Hardware.LogicalProcessor>();
         try
         {
-            // RelationProcessorCore = 0
-            uint len = 0;
-            GetLogicalProcessorInformationEx(0, IntPtr.Zero, ref len);
-            if (len > 0)
-            {
-                IntPtr buf = Marshal.AllocHGlobal((int)len);
-                try
-                {
-                    if (GetLogicalProcessorInformationEx(0, buf, ref len))
-                    {
-                        uint offset = 0;
-                        while (offset < len)
-                        {
-                            IntPtr current = IntPtr.Add(buf, (int)offset);
-                            int rel = Marshal.ReadInt32(current, 0);
-                            int size = Marshal.ReadInt32(current, 4);
-                            if (rel == 0 && size >= 48)
-                            {
-                                // Offset 8: Flags (1 byte), Offset 9: EfficiencyClass (1 byte)
-                                // Offset 32: GroupCount (ushort), Offset 40: Mask (nuint/ulong on x64)
-                                byte efficiency = Marshal.ReadByte(current, 9);
-                                ulong mask = (ulong)Marshal.ReadInt64(current, 40);
-                                coreMasks.Add((mask, efficiency));
-                            }
-                            if (size <= 0) break;
-                            offset += (uint)size;
-                        }
-                    }
-                }
-                finally
-                {
-                    Marshal.FreeHGlobal(buf);
-                }
-            }
-
-            // RelationCache = 2 (Count L3 cache groups to detect Dual-CCD Ryzen accurately)
-            uint cacheLen = 0;
-            GetLogicalProcessorInformationEx(2, IntPtr.Zero, ref cacheLen);
-            if (cacheLen > 0)
-            {
-                IntPtr cacheBuf = Marshal.AllocHGlobal((int)cacheLen);
-                try
-                {
-                    if (GetLogicalProcessorInformationEx(2, cacheBuf, ref cacheLen))
-                    {
-                        uint offset = 0;
-                        while (offset < cacheLen)
-                        {
-                            IntPtr current = IntPtr.Add(cacheBuf, (int)offset);
-                            int size = Marshal.ReadInt32(current, 4);
-                            byte level = Marshal.ReadByte(current, 8); // Cache.Level
-                            if (level == 3 && size >= 56)
-                            {
-                                ulong mask = (ulong)Marshal.ReadInt64(current, 40);
-                                if (mask != 0 && !l3Masks.Contains(mask))
-                                {
-                                    l3Masks.Add(mask);
-                                }
-                            }
-                            if (size <= 0) break;
-                            offset += (uint)size;
-                        }
-                    }
-                }
-                finally
-                {
-                    Marshal.FreeHGlobal(cacheBuf);
-                }
-            }
+            topology = KruzhLatency.Core.Hardware.CpuTopologyParser.Parse(
+                ReadProcessorInformationBuffer(0), ReadProcessorInformationBuffer(2));
         }
         catch { }
 
-        if (coreMasks.Count > 0)
+        if (topology.Count > 0)
         {
-            hw.CpuPhysicalCores = coreMasks.Count;
-            byte maxEff = coreMasks.Max(c => c.EfficiencyClass);
-            byte minEff = coreMasks.Min(c => c.EfficiencyClass);
-            bool hasHybridEfficiency = maxEff > minEff;
+            hw.CpuPhysicalCores = topology.Select(t => t.PhysicalCoreIndex).Distinct().Count();
+            bool hasHybridEfficiency = topology.Any(t => t.IsEfficiencyCore);
+            int l3Groups = topology.Select(t => t.L3GroupIndex).Distinct().Count();
 
             hw.IsIntelHybrid = hw.CpuVendor == CpuVendorKind.Intel &&
                                (hasHybridEfficiency || Regex.IsMatch(hw.CpuName, @"i[579]-1[234]\d{3}|Core\s+Ultra", RegexOptions.IgnoreCase));
 
             hw.IsDualCcdRyzen = hw.CpuVendor == CpuVendorKind.AMD &&
-                                (l3Masks.Count >= 2 || Regex.IsMatch(hw.CpuName, @"(3900|3950|5900|5950|7900|7950|9900|9950)", RegexOptions.IgnoreCase));
+                                (l3Groups >= 2 || Regex.IsMatch(hw.CpuName, @"(3900|3950|5900|5950|7900|7950|9900|9950)", RegexOptions.IgnoreCase));
 
-            ulong reservedBgMask = 0;
-
-            for (int coreIdx = 0; coreIdx < coreMasks.Count; coreIdx++)
+            foreach (var t in topology)
             {
-                var (mask, eff) = coreMasks[coreIdx];
-                bool isECore = hasHybridEfficiency && eff == minEff;
-                int l3Group = 0;
-                for (int g = 0; g < l3Masks.Count; g++)
+                hw.Topology.Add(new LogicalProcessorNode
                 {
-                    if ((l3Masks[g] & mask) != 0)
-                    {
-                        l3Group = g;
-                        break;
-                    }
-                }
-
-                bool firstThreadSeen = false;
-                for (int bit = 0; bit < 64; bit++)
-                {
-                    if ((mask & (1UL << bit)) != 0)
-                    {
-                        hw.Topology.Add(new LogicalProcessorNode
-                        {
-                            LogicalIndex = bit,
-                            PhysicalCoreIndex = coreIdx,
-                            IsEfficiencyCore = isECore,
-                            IsSmtSecondaryThread = firstThreadSeen,
-                            L3CacheGroupIndex = l3Group
-                        });
-
-                        if (isECore || (hw.IsDualCcdRyzen && l3Group > 0))
-                        {
-                            reservedBgMask |= (1UL << bit);
-                        }
-                        firstThreadSeen = true;
-                    }
-                }
+                    LogicalIndex = t.Index,
+                    PhysicalCoreIndex = t.PhysicalCoreIndex,
+                    IsEfficiencyCore = t.IsEfficiencyCore,
+                    IsSmtSecondaryThread = t.IsSmtSibling,
+                    L3CacheGroupIndex = t.L3GroupIndex
+                });
             }
 
-            hw.ReservedBackgroundCpuMask = reservedBgMask;
+            hw.ReservedBackgroundCpuMask = KruzhLatency.Core.Hardware.CpuTopologyParser.BackgroundReserveMask(topology);
         }
         else
         {
             hw.CpuPhysicalCores = Math.Max(2, hw.CpuLogicalThreads / 2);
+        }
+    }
+
+    /// <summary>Devuelve el buffer crudo de GetLogicalProcessorInformationEx para la relación pedida (vacío si falla).</summary>
+    private static byte[] ReadProcessorInformationBuffer(int relationship)
+    {
+        uint len = 0;
+        GetLogicalProcessorInformationEx(relationship, IntPtr.Zero, ref len);
+        if (len == 0) return Array.Empty<byte>();
+
+        IntPtr buf = Marshal.AllocHGlobal((int)len);
+        try
+        {
+            if (!GetLogicalProcessorInformationEx(relationship, buf, ref len)) return Array.Empty<byte>();
+            var bytes = new byte[len];
+            Marshal.Copy(buf, bytes, 0, (int)len);
+            return bytes;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buf);
         }
     }
 
