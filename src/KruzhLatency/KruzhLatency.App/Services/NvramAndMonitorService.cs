@@ -414,7 +414,7 @@ public sealed partial class RealtimeMonitorAndScoreService
         HardwareProfile hw,
         DeclarativeTweakEngine engine)
     {
-        engine.RefreshAll();
+        // Usa el estado ya leído (el refresco corre en segundo plano): releer acá congelaba la UI y duplicaba el trabajo (B19).
         var applicableTweaks = engine.AllTweaks
             .Where(t => t.IsApplicableBool &&
                         t.Evaluation.Level == RecommendationLevel.Recommended &&

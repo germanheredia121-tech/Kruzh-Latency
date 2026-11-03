@@ -265,7 +265,6 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            App.TweakEngine.RefreshAll();
             PopulateHardwareAndDashboardUi();
             RefreshTweaksListUi();
             RefreshPciAndMsiUi();
@@ -576,21 +575,34 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void RefreshLiveTweaksStateInPlace()
+    /// <summary>
+    /// Relee el estado real de todos los ítems EN SEGUNDO PLANO y lo vuelca en la UI de una vez (antes se leía todo
+    /// —inventario de dispositivos, WMI, AppX, BCD— en el hilo de UI y la ventana se tildaba al navegar).
+    /// </summary>
+    private async Task RefreshStateAsync(bool rerenderList)
     {
-        _isHandlingToggleChange = true;
         try
         {
-            App.TweakEngine.RefreshAll();
+            await App.TweakEngine.RefreshAllAsync(DispatcherQueue, apply =>
+            {
+                bool previous = _isHandlingToggleChange;
+                _isHandlingToggleChange = true; // las propiedades enlazadas cambian: que los toggles no lo tomen como clic
+                try { apply(); }
+                finally { _isHandlingToggleChange = previous; }
+            });
+            if (rerenderList) RefreshTweaksListUi();
             UpdateScoreRingAndCounters();
             UpdateTweaksSummarySubtitle();
             UpdatePendingChangesBar();
         }
-        finally
+        catch (Exception ex)
         {
-            _isHandlingToggleChange = false;
+            App.LogError("Refresco de estado", ex);
         }
     }
+
+    /// <summary>Refresco en el lugar (sin rearmar la lista): las filas se actualizan por binding. Nunca bloquea la UI.</summary>
+    private void RefreshLiveTweaksStateInPlace() => _ = RefreshStateAsync(rerenderList: false);
 
     // ---------------------------------------------------------------- pestañas de Optimizaciones
     private string _currentOptTab = "Tweaks";
@@ -690,17 +702,17 @@ public sealed partial class MainWindow : Window
                 : $"{liveApplied} de {totalApplicable} activas.";
     }
 
-    private void RefreshSystemStateBtn_Click(object sender, RoutedEventArgs e)
+    private async void RefreshSystemStateBtn_Click(object sender, RoutedEventArgs e)
     {
         App.HardwareService.DetectHardwareProfile();
-        App.TweakEngine.RefreshAll();
+        await RefreshStateAsync(rerenderList: false);
         PopulateHardwareAndDashboardUi();
         RefreshTweaksListUi();
         RefreshPowerPlansUi();
         SetStatus("Estado real del sistema (ReadState + Verify) actualizado.");
     }
 
-    private void CpuClockingModeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void CpuClockingModeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_isInitializingUi) return;
         if (CpuClockingModeCombo.SelectedItem is ComboBoxItem item && item.Tag is string tag)
@@ -710,7 +722,7 @@ public sealed partial class MainWindow : Window
                 : CpuClockingMode.DynamicBoostPbo;
 
             App.HardwareService.SetClockingModeOverride(newMode);
-            App.TweakEngine.RefreshAll();
+            await RefreshStateAsync(rerenderList: false);
 
             PopulateHardwareAndDashboardUi();
             RefreshTweaksListUi();
@@ -720,7 +732,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void MousePollingHzCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void MousePollingHzCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_isInitializingUi) return;
         if (MousePollingHzCombo.SelectedItem is ComboBoxItem item &&
@@ -729,7 +741,7 @@ public sealed partial class MainWindow : Window
         {
             App.HardwareService.SetMousePollingRate(hz);
 
-            App.TweakEngine.RefreshAll();
+            await RefreshStateAsync(rerenderList: false);
             RefreshTweaksListUi();
             SetStatus($"Polling rate ajustado a {hz} Hz.");
         }
@@ -821,7 +833,7 @@ public sealed partial class MainWindow : Window
 
             App.HardwareService.SetClockingModeOverride(doc.PreferredClockingMode);
             App.HardwareService.SetMousePollingRate(doc.MousePollingRateHz);
-            App.TweakEngine.RefreshAll();
+            await RefreshStateAsync(rerenderList: false);
 
             foreach (var tweak in App.TweakEngine.AllTweaks)
             {
@@ -856,7 +868,6 @@ public sealed partial class MainWindow : Window
         _isHandlingToggleChange = true;
         try
         {
-            App.TweakEngine.RefreshAll();
 
             string catTag = (TweakCategoryFilterCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "ALL";
             string gateTag = (TweakGateFilterCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "APPLICABLE";
@@ -1764,10 +1775,18 @@ public sealed partial class MainWindow : Window
     // ========================================================================================
     // VIEW 3: GPU — ajustes de driver de la GPU detectada + perfil del driver (.nip) + interrupciones (avanzado)
     // ========================================================================================
-    private void RefreshPciAndMsiUi()
+    /// <summary>Recorre Enum\PCI del registro: en segundo plano para no trabar la navegación.</summary>
+    private async void RefreshPciAndMsiUi()
     {
-        var devices = App.IrqMsiService.EnumeratePciDevices();
-        PciDevicesItemsControl.ItemsSource = devices;
+        try
+        {
+            var devices = await Task.Run(() => App.IrqMsiService.EnumeratePciDevices());
+            PciDevicesItemsControl.ItemsSource = devices;
+        }
+        catch (Exception ex)
+        {
+            App.LogError("PCI/MSI", ex);
+        }
     }
 
     /// <summary>Tweaks de driver que se muestran en la página GPU (solo los aplicables a la GPU detectada).</summary>
@@ -2676,8 +2695,10 @@ public sealed partial class MainWindow : Window
             ? Windows.UI.Color.FromArgb(51, 99, 192, 136)
             : Windows.UI.Color.FromArgb(51, 184, 95, 95));
 
-        // Every 3 seconds, poll live ReadState() of tweaks to catch any non-watched external OS changes
-        if (_telemetryTickCounter % 3 == 0 && !_isInitializingUi)
+        // Cada 10 s (en segundo plano) relee el estado real para detectar cambios hechos fuera de KRUZH, y solo si se ve
+        // Inicio u Optimizaciones: el resto del tiempo KRUZH no consulta el sistema (B19: la app no debe sumar latencia).
+        if (_telemetryTickCounter % 10 == 0 && !_isInitializingUi && !_isApplyingBatch &&
+            (ViewTweaks.Visibility == Visibility.Visible || ViewDashboard.Visibility == Visibility.Visible))
         {
             RefreshLiveTweaksStateInPlace();
         }

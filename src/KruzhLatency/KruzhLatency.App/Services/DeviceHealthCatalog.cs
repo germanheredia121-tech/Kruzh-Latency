@@ -130,7 +130,7 @@ public sealed partial class DeclarativeTweakEngine
             Risk = RiskLevel.Low,
             InMinimal = false, InCompetitivo = false, InProfesional = false, InEntusiasta = false,
             EvaluateGate = _ => EvaluationResult.Neutral("Cambio físico: KRUZH no puede hacerlo por vos."),
-            ReadLiveState = () => UsbPowerPlanner.InputPlacement(new DeviceTree(new CfgMgrDeviceInventory().Snapshot()))
+            ReadLiveState = () => UsbPowerPlanner.InputPlacement(CachedDeviceTree())
                                                  .All(p => p.Location != UsbControllerLocation.Chipset),
             ApplyAction = _ => (false, "Mové el mouse/teclado a un puerto USB del CPU y refrescá.")
         });
@@ -154,7 +154,7 @@ public sealed partial class DeclarativeTweakEngine
         foreach (var a in advice)
         {
             _allTweaks.Add(ManualLinkItem(a.Id, a.Title, "Red & Desync", TweakCategory.NetworkDesync, a.Detail, a.Link,
-                isResolved: () => NetworkStackAdvisor.Evaluate(NetworkStackProbe.Detect()).All(x => x.Id != a.Id)));
+                isResolved: () => CachedNetworkAdvice().All(x => x.Id != a.Id)));
         }
     }
 

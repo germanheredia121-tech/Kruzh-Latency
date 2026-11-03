@@ -273,28 +273,60 @@ public sealed partial class DeclarativeTweakItem : ObservableObject
         $"Clave de registro / Comando:\n{WhatItTouches}\n\n" +
         $"Evaluación para tu hardware:\n{GateExplanationText}";
 
-    public void RefreshGatesAndLiveState(HardwareProfile hw)
+    /// <summary>Resultado de leer el estado real de un ítem (gates + estado vivo). Se arma fuera del hilo de UI.</summary>
+    public sealed record StateProbe(ApplicabilityResult Applicability, EvaluationResult Evaluation, AnticheatResult Anticheat,
+        bool LiveApplied, string? LiveOptionKey, bool LiveReadFailed);
+
+    /// <summary>
+    /// Lee el estado real (registro, WMI, dispositivos…). No toca propiedades enlazadas a la UI: se puede llamar desde
+    /// un hilo de fondo. Un ítem que no puede leer su estado queda "no aplicable" con el motivo, nunca tira abajo el resto.
+    /// </summary>
+    public StateProbe Probe(HardwareProfile hw)
     {
-        // Un ítem que no puede leer su estado (WMI/BCD sin permiso, driver raro) queda "no aplicable"
-        // con el motivo, pero nunca tira abajo el arranque ni el refresco de los demás.
+        ApplicabilityResult applicability;
+        EvaluationResult evaluation = EvaluationResult.Recommended("");
+        AnticheatResult anticheat = AnticheatResult.Safe();
         try
         {
-            Applicability = ApplicableGate(hw);
-            Evaluation = EvaluateGate(hw);
-            Anticheat = AnticheatGate(hw);
+            applicability = ApplicableGate(hw);
+            evaluation = EvaluateGate(hw);
+            anticheat = AnticheatGate(hw);
         }
         catch (Exception ex)
         {
             App.LogError($"Gates {Id}", ex);
-            Applicability = ApplicabilityResult.NotApplicable($"No se pudo leer el estado en esta PC ({ex.GetType().Name}).");
+            applicability = ApplicabilityResult.NotApplicable($"No se pudo leer el estado en esta PC ({ex.GetType().Name}).");
         }
+
         try
         {
-            IsLiveApplied = Applicability.IsApplicable && ReadLiveState();
+            bool live = applicability.IsApplicable && ReadLiveState();
+            string? liveKey = HasOptions ? (ReadLiveOptionKey?.Invoke() ?? Options.FirstOrDefault()?.Key ?? string.Empty) : null;
+            return new StateProbe(applicability, evaluation, anticheat, live, liveKey, false);
+        }
+        catch (Exception ex)
+        {
+            App.LogError($"Estado {Id}", ex);
+            return new StateProbe(applicability, evaluation, anticheat, false, null, true);
+        }
+    }
+
+    /// <summary>Lectura + aplicación en el mismo hilo (para un ítem suelto después de aplicarlo/revertirlo).</summary>
+    public void RefreshGatesAndLiveState(HardwareProfile hw) => ApplyProbe(Probe(hw));
+
+    /// <summary>Vuelca una lectura en las propiedades enlazadas. Solo en el hilo de UI.</summary>
+    public void ApplyProbe(StateProbe probe)
+    {
+        Applicability = probe.Applicability;
+        Evaluation = probe.Evaluation;
+        Anticheat = probe.Anticheat;
+        try
+        {
+            if (probe.LiveReadFailed) throw new InvalidOperationException("lectura fallida");
+            IsLiveApplied = probe.LiveApplied;
             if (HasOptions)
             {
-                string defaultKey = Options.FirstOrDefault()?.Key ?? string.Empty;
-                string liveKey = ReadLiveOptionKey?.Invoke() ?? defaultKey;
+                string liveKey = probe.LiveOptionKey ?? Options.FirstOrDefault()?.Key ?? string.Empty;
                 LiveOptionKey = liveKey;
 
                 if (!HasUserPendingEdit || string.IsNullOrEmpty(DesiredOptionKey))
@@ -457,6 +489,7 @@ public sealed partial class DeclarativeTweakEngine
         return null;
     }
 
+    /// <summary>Lectura completa en el hilo actual. Solo para arranque (splash, ya en segundo plano) y casos puntuales.</summary>
     public void RefreshAll()
     {
         var hw = _hwService.CurrentProfile;
@@ -464,6 +497,56 @@ public sealed partial class DeclarativeTweakEngine
         {
             tweak.RefreshGatesAndLiveState(hw);
         }
+    }
+
+    private Task? _refreshTask;
+    private bool _refreshAgain;
+
+    /// <summary>
+    /// Relee el estado de todos los ítems en segundo plano y lo vuelca en la UI de una vez (la UI nunca se congela).
+    /// Si ya hay una lectura en curso no se apilan: se hace una más al terminar y todos esperan esa.
+    /// </summary>
+    public Task RefreshAllAsync(Microsoft.UI.Dispatching.DispatcherQueue ui, Action<Action>? applyWrapper = null)
+    {
+        if (_refreshTask is { IsCompleted: false })
+        {
+            _refreshAgain = true;
+            return _refreshTask;
+        }
+        _refreshTask = RunRefreshLoopAsync(ui, applyWrapper ?? (a => a()));
+        return _refreshTask;
+    }
+
+    private async Task RunRefreshLoopAsync(Microsoft.UI.Dispatching.DispatcherQueue ui, Action<Action> applyWrapper)
+    {
+        do
+        {
+            _refreshAgain = false;
+            var hw = _hwService.CurrentProfile;
+            var items = _allTweaks.ToList();
+            var probes = await Task.Run(() => items.Select(t => t.Probe(hw)).ToList());
+
+            var applied = new TaskCompletionSource();
+            if (!ui.TryEnqueue(() =>
+                {
+                    try
+                    {
+                        applyWrapper(() =>
+                        {
+                            for (int i = 0; i < items.Count; i++) items[i].ApplyProbe(probes[i]);
+                        });
+                    }
+                    finally
+                    {
+                        applied.SetResult();
+                    }
+                }))
+            {
+                return; // la ventana se cerró
+            }
+            await applied.Task;
+        }
+        while (_refreshAgain);
     }
 
     public void DiscardAllPending()
@@ -592,6 +675,10 @@ public sealed partial class DeclarativeTweakEngine
             App.LogError($"Apply {item.Id}", ex);
             return (false, $"Error al aplicar: {ex.Message}");
         }
+        finally
+        {
+            InvalidateReadCaches(); // la relectura de verificación tiene que ver el estado nuevo
+        }
     }
 
     /// <summary>Paso 3 (UI). Re-lee el estado real y arma el reporte.</summary>
@@ -644,6 +731,10 @@ public sealed partial class DeclarativeTweakEngine
         {
             App.LogError($"Revert {item.Id}", ex);
             return (false, $"Error al revertir: {ex.Message}");
+        }
+        finally
+        {
+            InvalidateReadCaches();
         }
     }
 
@@ -1558,7 +1649,7 @@ public sealed partial class DeclarativeTweakEngine
             InProfesional = true,
             ReadLiveState = () =>
             {
-                var targets = UsbPowerPlanner.PowerTargets(new DeviceTree(new CfgMgrDeviceInventory().Snapshot()));
+                var targets = UsbPowerPlanner.PowerTargets(CachedDeviceTree());
                 return targets.Count > 0 && targets.All(t =>
                     ReadRegDword(RegistryHive.LocalMachine, $@"SYSTEM\CurrentControlSet\Enum\{t.InstanceId}\Device Parameters", "EnhancedPowerManagementEnabled") == 0 &&
                     ReadRegDword(RegistryHive.LocalMachine, $@"SYSTEM\CurrentControlSet\Enum\{t.InstanceId}\Device Parameters", "AllowIdleIrpInD3") == 0);
@@ -2011,18 +2102,6 @@ public sealed partial class DeclarativeTweakEngine
         }
     }
 
-    /// <summary>Lee un elemento de {current} por WMI (null = no definido o sin permisos).</summary>
-    private static BcdValue? ReadBcd(BcdElement element)
-    {
-        try
-        {
-            return new WmiBcdStore().Read(element);
-        }
-        catch (Exception ex) when (ex is System.Management.ManagementException or UnauthorizedAccessException or InvalidOperationException or System.Runtime.InteropServices.COMException)
-        {
-            return null;
-        }
-    }
 
     private static int? ReadActivePowerSchemeAcSettingDword(string subGroupGuid, string settingGuid)
     {
