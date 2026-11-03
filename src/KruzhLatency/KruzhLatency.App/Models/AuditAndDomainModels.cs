@@ -21,7 +21,11 @@ public enum BackupTargetKind
     /// <summary>Casilla "Permitir que el equipo apague este dispositivo" (WMI MSPower_DeviceEnable). Siempre al final.</summary>
     DevicePowerOff,
     /// <summary>Clave del registro exportada a un .reg antes de borrarla (TargetPath = archivo). Revertir = reg import.</summary>
-    RegistryExport
+    RegistryExport,
+    /// <summary>App AppX quitada para el usuario (TargetPath = PackageFullName). Revertir = volver a registrarla.</summary>
+    AppxRemoved,
+    /// <summary>App AppX desaprovisionada (TargetPath = PackageFamilyName). No se puede revertir desde KRUZH (se avisa).</summary>
+    AppxDeprovisioned
 }
 
 public sealed class AtomicBackupRecord

@@ -349,30 +349,64 @@ public sealed class TransactionalAuditService
         RunHiddenProcess("powercfg.exe", "/setactive scheme_current");
     }
 
-    public void SetScheduledTaskEnabled(string tweakId, string taskFullPath, bool enable)
+    /// <summary>
+    /// Habilita/deshabilita una tarea programada por la API COM del Programador de tareas (T41: sin parsear schtasks,
+    /// que está traducido). Si la tarea no existe en esta PC no hace nada y devuelve false.
+    /// </summary>
+    public bool SetScheduledTaskEnabled(string tweakId, string taskFullPath, bool enable)
     {
-        string queryOut = RunHiddenProcess("schtasks.exe", $"/Query /TN \"{taskFullPath}\" /FO CSV /NH");
-        bool wasDisabled = queryOut.Contains("Disabled", StringComparison.OrdinalIgnoreCase) ||
-                           queryOut.Contains("Deshabilitado", StringComparison.OrdinalIgnoreCase);
+        bool? current = KruzhLatency.Infra.Debloat.ScheduledTaskStore.IsEnabled(taskFullPath);
+        if (current is null) return false;
 
-        lock (_sync)
+        RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
         {
-            var record = new AtomicBackupRecord
-            {
-                TweakId = tweakId,
-                TimestampUtc = DateTime.UtcNow,
-                TargetKind = BackupTargetKind.ScheduledTaskState,
-                TargetPath = taskFullPath,
-                ValueName = "Enabled",
-                PreviousValueExisted = !string.IsNullOrWhiteSpace(queryOut),
-                PreviousSerializedValue = (!wasDisabled).ToString(),
-                AppliedSerializedValue = enable.ToString()
-            };
-            RecordBaselineIfNotExistsLocked(record);
-        }
+            TweakId = tweakId,
+            TimestampUtc = DateTime.UtcNow,
+            TargetKind = BackupTargetKind.ScheduledTaskState,
+            TargetPath = taskFullPath,
+            ValueName = "Enabled",
+            PreviousValueExisted = true,
+            PreviousSerializedValue = current.Value.ToString(),
+            AppliedSerializedValue = enable.ToString()
+        });
 
-        string flag = enable ? "/Enable" : "/Disable";
-        RunHiddenProcess("schtasks.exe", $"/Change /TN \"{taskFullPath}\" {flag}");
+        if (current.Value != enable) KruzhLatency.Infra.Debloat.ScheduledTaskStore.SetEnabled(taskFullPath, enable);
+        return KruzhLatency.Infra.Debloat.ScheduledTaskStore.IsEnabled(taskFullPath) == enable;
+    }
+
+    /// <summary>T41: quita una app AppX para el usuario con backup (revertir la vuelve a registrar).</summary>
+    public (bool Ok, string Detail) RemoveAppxForUser(string tweakId, string packageFullName, string familyName)
+    {
+        if (!KruzhLatency.Infra.Debloat.AppxStore.IsInstalled(packageFullName)) return (true, "Ya no estaba instalada.");
+        RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
+        {
+            TweakId = tweakId,
+            TimestampUtc = DateTime.UtcNow,
+            TargetKind = BackupTargetKind.AppxRemoved,
+            TargetPath = packageFullName,
+            ValueName = familyName,
+            PreviousValueExisted = true,
+            PreviousSerializedValue = "Installed",
+            AppliedSerializedValue = "Removed"
+        });
+        return KruzhLatency.Infra.Debloat.AppxStore.RemoveForUser(packageFullName);
+    }
+
+    /// <summary>T41, solo Entusiasta: desaprovisiona (irreversible desde KRUZH). Queda en el journal para el historial.</summary>
+    public (bool Ok, string Detail) DeprovisionAppx(string tweakId, string familyName)
+    {
+        RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
+        {
+            TweakId = tweakId,
+            TimestampUtc = DateTime.UtcNow,
+            TargetKind = BackupTargetKind.AppxDeprovisioned,
+            TargetPath = familyName,
+            ValueName = "Provisioned",
+            PreviousValueExisted = true,
+            PreviousSerializedValue = "Provisioned",
+            AppliedSerializedValue = "Deprovisioned"
+        });
+        return KruzhLatency.Infra.Debloat.AppxStore.Deprovision(familyName);
     }
 
     /// <summary>CONFIGFLAG_DISABLED (0x1) en Enum\&lt;instancia&gt;\ConfigFlags = deshabilitado en el Administrador de dispositivos.</summary>
@@ -644,11 +678,25 @@ public sealed class TransactionalAuditService
                         break;
 
                     case BackupTargetKind.ScheduledTaskState:
-                        if (rec.PreviousValueExisted)
+                        if (rec.PreviousValueExisted && KruzhLatency.Infra.Debloat.ScheduledTaskStore.IsEnabled(rec.TargetPath) is not null)
                         {
                             bool wasEnabled = !string.Equals(rec.PreviousSerializedValue, "False", StringComparison.OrdinalIgnoreCase);
-                            RunHiddenProcess("schtasks.exe", $"/Change /TN \"{rec.TargetPath}\" {(wasEnabled ? "/Enable" : "/Disable")}");
+                            KruzhLatency.Infra.Debloat.ScheduledTaskStore.SetEnabled(rec.TargetPath, wasEnabled);
                         }
+                        restoredCount++;
+                        break;
+
+                    case BackupTargetKind.AppxRemoved:
+                        if (!KruzhLatency.Infra.Debloat.AppxStore.IsInstalled(rec.TargetPath))
+                        {
+                            var (ok, detail) = KruzhLatency.Infra.Debloat.AppxStore.Register(rec.TargetPath);
+                            if (!ok) throw new InvalidOperationException(detail); // queda en el journal para reintentar
+                        }
+                        restoredCount++;
+                        break;
+
+                    case BackupTargetKind.AppxDeprovisioned:
+                        // Irreversible desde KRUZH (se avisó al aplicar): la app se reinstala desde la Microsoft Store.
                         restoredCount++;
                         break;
 

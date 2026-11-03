@@ -45,7 +45,7 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 | ID | Tarea | Deps | Hecho cuando |
 |---|---|---|---|
 | T40 [P] | Catálogo de servicios por perfil (nombre, función, motivo, riesgo) usando `ServiceStartOp`; respeta T12 | T12, T21 | lista por perfil == ops aplicadas |
-| T41 [P] | Debloat: AppX por usuario (reversible re-registrando), tareas de telemetría, widgets/Copilot/sugerencias; desaprovisionar solo Entusiasta | T21 | tests con fakes; Profesional sin ops no reversibles |
+| T41 ✅ | Debloat: AppX por usuario (reversible re-registrando), tareas de telemetría, widgets/Copilot/sugerencias; desaprovisionar solo Entusiasta | T21 | tests con fakes; Profesional sin ops no reversibles |
 | T42 [P] | Auditor de drivers: errores (10/28/43…), sin driver, driver genérico donde hay de fabricante, catálogo local de versiones problemáticas | T25 | tests con dispositivos simulados |
 
 ## Fase 5 — MSI auto-tune (riesgo alto, empieza con spike)
@@ -106,7 +106,7 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 | U10 | Monitor: drivers con más latencia (ETW DPC/ISR por driver, base de T70) | ✅ verificado por el usuario |
 | U11 | Ronda 4: ancho de vistas fijo, sidebar que empuja con cierre animado, modal propio, medición DPC continua | ✅ |
 | U12 | Optimizaciones: pestañas Tweaks · Servicios · Device Manager (catálogo dinámico por PC, perfiles aplican todo) — adelanta T40 y parte de F6 | ✅ |
-| U13 | Debloat de apps AppX (pestaña aparte) — T41 | pendiente |
+| U13 ✅ | Debloat de apps AppX (pestaña aparte) — T41 | hecho (pestaña Apps) |
 
 ## Spec 002 — DPC al mínimo: Red, Device Manager, USB, GPU y Pantalla
 Spec: [specs/002-dpc-red-dispositivos-pantalla.md](specs/002-dpc-red-dispositivos-pantalla.md) · ADR-007 (nunca-tocar + Rescate) · ADR-008 (timer y MPO) · ADR-009 (EDID)

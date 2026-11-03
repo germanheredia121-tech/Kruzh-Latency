@@ -599,7 +599,7 @@ public sealed partial class MainWindow : Window
     {
         if (sender is not Button btn || btn.Tag is not string tag) return;
         _currentOptTab = tag;
-        foreach (var b in new[] { OptTabTweaksBtn, OptTabServicesBtn, OptTabDevicesBtn })
+        foreach (var b in new[] { OptTabTweaksBtn, OptTabServicesBtn, OptTabDevicesBtn, OptTabAppsBtn })
         {
             bool active = ReferenceEquals(b, btn);
             b.Foreground = (Brush)Application.Current.Resources[active ? "KruzhTextPrimaryBrush" : "KruzhTextSecondaryBrush"];
@@ -647,7 +647,8 @@ public sealed partial class MainWindow : Window
     {
         "Services" => t.Category == TweakCategory.Services,
         "Devices" => t.Category == TweakCategory.Devices,
-        _ => t.Category != TweakCategory.Services && t.Category != TweakCategory.Devices
+        "Apps" => t.Category == TweakCategory.Apps,
+        _ => t.Category != TweakCategory.Services && t.Category != TweakCategory.Devices && t.Category != TweakCategory.Apps
     };
 
     private void UpdateOptTabNote(TweakCategory? tab, int shown)
@@ -664,10 +665,15 @@ public sealed partial class MainWindow : Window
                 ? "No encontramos servicios para optimizar en esta PC."
                 : $"Analizamos los servicios de tu PC: estos {shown} se pueden desactivar sin afectar el juego. " +
                   $"Los que usan FACEIT AC, Vanguard, la red, el audio y Windows ({DeclarativeTweakEngine.ProtectedServices.Count} protegidos) no se tocan nunca.")
-            : (shown == 0
-                ? "No encontramos dispositivos para desactivar en esta PC."
-                : $"Analizamos el Administrador de dispositivos: estos {shown} no se usan para jugar y se pueden deshabilitar. " +
-                  "Se aplica al reiniciar y se revierte desde Monitor.");
+            : tab == TweakCategory.Apps
+                ? (shown == 0
+                    ? "No encontramos apps ni publicidad para quitar en esta PC."
+                    : $"Apps instaladas que no hacen falta para jugar, publicidad y telemetría ({shown}). Las apps se quitan solo para tu usuario " +
+                      "y se pueden revertir; la Store, los códecs, la seguridad y los paneles de drivers no se tocan nunca.")
+                : (shown == 0
+                    ? "No encontramos dispositivos para desactivar en esta PC."
+                    : $"Analizamos el Administrador de dispositivos: estos {shown} no se usan para jugar y se pueden deshabilitar. " +
+                      "Se aplica al reiniciar y se revierte desde Monitor.");
     }
 
     private void UpdateTweaksSummarySubtitle()
@@ -908,6 +914,7 @@ public sealed partial class MainWindow : Window
             {
                 "Services" => (TweakCategory?)TweakCategory.Services,
                 "Devices" => TweakCategory.Devices,
+                "Apps" => TweakCategory.Apps,
                 _ => null
             };
             if (tabCategory != null)

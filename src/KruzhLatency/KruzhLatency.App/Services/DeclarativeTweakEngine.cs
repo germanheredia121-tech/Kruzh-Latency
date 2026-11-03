@@ -378,6 +378,7 @@ public sealed partial class DeclarativeTweakEngine
         InitializeDefaultGames();
         BuildDeclarativeCatalog();
         BuildServiceAndDeviceCatalog();
+        BuildDebloatItems(); // T41: pestaña Apps
         RefreshAll();
     }
 
@@ -1036,11 +1037,11 @@ public sealed partial class DeclarativeTweakEngine
         {
             Id = "WindowsGameModeOn",
             CodeNumber = "C08",
-            Title = "Windows Game Mode ON + Desactivar Copilot & Efectos Pesados",
+            Title = "Windows Game Mode ON + efectos visuales livianos",
             Category = TweakCategory.SystemCpu,
             CategoryDisplay = "Sistema & CPU",
-            TechnicalDescription = "Activa AutoGameModeEnabled, desactiva Windows Copilot en segundo plano y configura efectos visuales para priorizar rendimiento.",
-            WhatItTouches = @"HKCU\Software\Microsoft\GameBar\AutoGameModeEnabled=1, WindowsCopilot\TurnOffWindowsCopilot=1, VisualFXSetting=2",
+            TechnicalDescription = "Activa AutoGameModeEnabled y configura los efectos visuales para priorizar rendimiento. (Copilot ahora está en la pestaña Apps.)",
+            WhatItTouches = @"HKCU\Software\Microsoft\GameBar\AutoGameModeEnabled=1, Explorer\VisualEffects\VisualFXSetting=2",
             SourceAttribution = "Microsoft Gaming Optimization",
             Risk = RiskLevel.Low,
             InMinimal = true,
@@ -1051,9 +1052,8 @@ public sealed partial class DeclarativeTweakEngine
             ApplyAction = _ =>
             {
                 _audit.SetRegistryValue("WindowsGameModeOn", RegistryHive.CurrentUser, @"Software\Microsoft\GameBar", "AutoGameModeEnabled", 1, RegistryValueKind.DWord);
-                _audit.SetRegistryValue("WindowsGameModeOn", RegistryHive.CurrentUser, @"Software\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", 1, RegistryValueKind.DWord);
                 _audit.SetRegistryValue("WindowsGameModeOn", RegistryHive.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects", "VisualFXSetting", 2, RegistryValueKind.DWord);
-                return (true, "Game Mode ON, Copilot OFF y Efectos Visuales optimizados.");
+                return (true, "Game Mode ON y efectos visuales optimizados.");
             }
         });
 
@@ -1062,24 +1062,29 @@ public sealed partial class DeclarativeTweakEngine
             Id = "ServicesAndTasksDebloat",
             CodeNumber = "C09",
             Title = "Tareas programadas de telemetría",
-            Category = TweakCategory.SystemCpu,
-            CategoryDisplay = "Sistema & CPU",
-            TechnicalDescription = "Desactiva con backup las tareas programadas de telemetría (Compatibility Appraiser, ProgramDataUpdater, Consolidator, UsbCeip) que se disparan en segundo plano y causan picos de CPU/disco en partida. Los servicios se manejan en la pestaña Servicios.",
-            WhatItTouches = @"Tareas: Microsoft Compatibility Appraiser, ProgramDataUpdater, Consolidator, UsbCeip",
-            SourceAttribution = "BoringBoredom PC-Tuning §11.14",
+            Category = TweakCategory.Apps,
+            CategoryDisplay = "Telemetría",
+            TechnicalDescription = "Desactiva con backup las tareas programadas de telemetría y diagnóstico que se disparan en segundo plano (picos de CPU/disco en partida): " +
+                                   string.Join("; ", KruzhLatency.Core.Debloat.TelemetryTasks.All.Select(t => $"{t.Path[(t.Path.LastIndexOf('\\') + 1)..]}: {t.Why}")) +
+                                   ". Las que no existen en tu Windows se ignoran. Los servicios se manejan en la pestaña Servicios.",
+            WhatItTouches = "Programador de tareas (API COM): " + string.Join(", ", KruzhLatency.Core.Debloat.TelemetryTasks.All.Select(t => t.Path)),
+            SourceAttribution = "Microsoft Learn: Configure Windows diagnostic data · BoringBoredom PC-Tuning §11.14",
             Risk = RiskLevel.Low,
             InMinimal = false,
             InCompetitivo = true,
             InProfesional = true,
-            // Leer el estado real de una tarea programada requiere lanzar schtasks en cada refresco: se usa el journal.
-            ReadLiveState = () => _audit.HasBackupForTweak("ServicesAndTasksDebloat"),
+            ReadLiveState = () => KruzhLatency.Core.Debloat.TelemetryTasks.All
+                .Select(t => KruzhLatency.Infra.Debloat.ScheduledTaskStore.IsEnabled(t.Path))
+                .All(enabled => enabled != true),
             ApplyAction = _ =>
             {
-                _audit.SetScheduledTaskEnabled("ServicesAndTasksDebloat", @"\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser", false);
-                _audit.SetScheduledTaskEnabled("ServicesAndTasksDebloat", @"\Microsoft\Windows\Application Experience\ProgramDataUpdater", false);
-                _audit.SetScheduledTaskEnabled("ServicesAndTasksDebloat", @"\Microsoft\Windows\Customer Experience Improvement Program\Consolidator", false);
-                _audit.SetScheduledTaskEnabled("ServicesAndTasksDebloat", @"\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip", false);
-                return (true, "Tareas programadas de telemetría desactivadas (reversibles).");
+                var results = KruzhLatency.Core.Debloat.TelemetryTasks.All
+                    .Where(t => KruzhLatency.Infra.Debloat.ScheduledTaskStore.IsEnabled(t.Path) is not null)
+                    .Select(t => _audit.SetScheduledTaskEnabled("ServicesAndTasksDebloat", t.Path, false))
+                    .ToList();
+                return results.All(ok => ok)
+                    ? (true, $"{results.Count} tareas de telemetría desactivadas (reversibles).")
+                    : (false, $"{results.Count(ok => ok)} de {results.Count} tareas desactivadas; Windows no dejó cambiar el resto.");
             }
         });
 

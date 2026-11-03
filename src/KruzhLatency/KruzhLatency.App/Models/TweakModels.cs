@@ -16,7 +16,8 @@ public enum TweakCategory
     StorageMemory,
     FpsBoostGames,
     Services,
-    Devices
+    Devices,
+    Apps
 }
 
 public enum RecommendationLevel

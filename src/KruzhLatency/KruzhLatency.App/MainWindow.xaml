@@ -555,6 +555,9 @@
                                         <Button x:Name="OptTabDevicesBtn" Tag="Devices" Click="OptTab_Click" Background="Transparent" BorderThickness="0,0,0,2"
                                                 BorderBrush="Transparent" Padding="0,8" CornerRadius="0"
                                                 Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="13.5" Content="Device Manager" />
+                                        <Button x:Name="OptTabAppsBtn" Tag="Apps" Click="OptTab_Click" Background="Transparent" BorderThickness="0,0,0,2"
+                                                BorderBrush="Transparent" Padding="0,8" CornerRadius="0"
+                                                Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="13.5" Content="Apps" />
                                     </StackPanel>
                                     <!-- ADR-007: Rescate, solo en la pestaña Device Manager -->
                                     <Button x:Name="DeviceRescueBtn" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"
