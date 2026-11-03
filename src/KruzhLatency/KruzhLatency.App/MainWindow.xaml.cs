@@ -50,6 +50,7 @@ public sealed partial class MainWindow : Window
     {
         this.InitializeComponent();
         ConfigureMicaAndCustomTitleBar();
+        FitAllViewsToViewport();
 
         _telemetryTimer = new DispatcherTimer
         {
@@ -72,6 +73,87 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    // ========================================================================================
+    // ANCHO DEL CONTENIDO = ANCHO VISIBLE
+    // Si algún hijo pedía más ancho que la ventana, el ScrollViewer armaba un área más ancha y centraba el panel
+    // (MaxWidth + Stretch) ahí: la vista quedaba corrida a la derecha y cortada (BIOS, Biblioteca, Monitor), y al
+    // abrir/cerrar el sidebar quedaba con el ancho viejo. Fijando Width = min(MaxWidth, ancho visible) en cada
+    // cambio de tamaño, el área nunca supera la ventana.
+    // ========================================================================================
+    private void FitAllViewsToViewport()
+    {
+        foreach (var sv in new[] { ViewDashboard, TweaksScrollViewer, ViewIrqMsi, ViewPowerDrivers, GamesScrollViewer, ViewBiosNvram, ViewMonitorAudit, ViewConfig })
+        {
+            FitContentToViewport(sv);
+        }
+    }
+
+    private static void FitContentToViewport(ScrollViewer? sv)
+    {
+        if (sv == null) return;
+        sv.HorizontalScrollMode = ScrollMode.Disabled;
+        sv.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+
+        void Fit()
+        {
+            if (sv.Content is not FrameworkElement content) return;
+            double viewport = sv.ViewportWidth > 0 ? sv.ViewportWidth : sv.ActualWidth;
+            if (viewport <= 0) return;
+            double max = double.IsInfinity(content.MaxWidth) || content.MaxWidth <= 0 ? double.PositiveInfinity : content.MaxWidth;
+            double target = Math.Min(max, viewport);
+            if (Math.Abs(content.Width - target) > 0.5 || double.IsNaN(content.Width))
+            {
+                content.Width = target;
+            }
+        }
+
+        sv.SizeChanged += (_, _) => Fit();
+        sv.Loaded += (_, _) => Fit();
+        sv.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (_, _) => Fit());
+        Fit();
+    }
+
+    // Sidebar en modo "Left" (empuja el contenido). WinUI lo cierra sin animación: se intercepta el cierre,
+    // se anima el ancho del pane hasta el ancho compacto (el contenido acompaña) y recién ahí se cierra.
+    private bool _paneCloseAnimationDone;
+    private const double PaneOpenLength = 240;
+    private const int PaneCloseMs = 200;
+
+    private void AnimatePaneClose()
+    {
+        try
+        {
+            var anim = new DoubleAnimation
+            {
+                From = PaneOpenLength,
+                To = MainNavView.CompactPaneLength,
+                Duration = new Duration(TimeSpan.FromMilliseconds(PaneCloseMs)),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
+                EnableDependentAnimation = true
+            };
+            Storyboard.SetTarget(anim, MainNavView);
+            Storyboard.SetTargetProperty(anim, "OpenPaneLength");
+            var sb = new Storyboard();
+            sb.Children.Add(anim);
+            sb.Completed += (_, _) =>
+            {
+                _paneCloseAnimationDone = true;
+                MainNavView.IsPaneOpen = false;
+                sb.Stop();
+                MainNavView.OpenPaneLength = PaneOpenLength;
+                _paneCloseAnimationDone = false;
+            };
+            sb.Begin();
+        }
+        catch (Exception ex)
+        {
+            App.LogError("Pane close animation", ex);
+            _paneCloseAnimationDone = true;
+            MainNavView.IsPaneOpen = false;
+            _paneCloseAnimationDone = false;
+        }
+    }
+
     // Sidebar: el pane se abre con la animación de recorte de WinUI, pero la marca y el texto de licencia pasaban
     // de Collapsed a Visible de golpe (y como el pane tiene el mismo color que el contenido, eso era lo único que se
     // veía: un "pop"). Ahora acompañan la apertura con un fundido y se van con un fundido corto al cerrar.
@@ -87,8 +169,21 @@ public sealed partial class MainWindow : Window
 
     private void MainNavView_PaneClosing(NavigationView sender, NavigationViewPaneClosingEventArgs args)
     {
-        FadePaneElement(PaneBrandHeaderPanel, show: false);
-        FadePaneElement(HeaderLicenseText, show: false);
+        if (!_paneCloseAnimationDone && sender.PaneDisplayMode == NavigationViewPaneDisplayMode.Left
+            && sender.DisplayMode == NavigationViewDisplayMode.Expanded)
+        {
+            // Primero el cierre animado; el cierre real lo dispara AnimatePaneClose al terminar.
+            args.Cancel = true;
+            FadePaneElement(PaneBrandHeaderPanel, show: false);
+            FadePaneElement(HeaderLicenseText, show: false);
+            AnimatePaneClose();
+            return;
+        }
+        if (!_paneCloseAnimationDone)
+        {
+            FadePaneElement(PaneBrandHeaderPanel, show: false);
+            FadePaneElement(HeaderLicenseText, show: false);
+        }
     }
 
     private static void FadePaneElement(UIElement? element, bool show)
@@ -1527,92 +1622,18 @@ public sealed partial class MainWindow : Window
         SetStatus(finalSummary);
     }
 
-    private async Task<bool> ShowRedSecurityWarningModalAsync(List<DeclarativeTweakItem> riskyItems)
+    private Task<bool> ShowRedSecurityWarningModalAsync(List<DeclarativeTweakItem> riskyItems)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("ADVERTENCIA DE SEGURIDAD Y COMPATIBILIDAD ANTICHEAT");
-        sb.AppendLine("Has seleccionado módulos que desactivan mitigaciones de kernel, aislamiento VBS/HVCI o protecciones del sistema:");
+        sb.AppendLine("Estos cambios bajan la seguridad del sistema o pueden hacer que FACEIT AC o Vanguard no dejen jugar:");
         sb.AppendLine();
-
         foreach (var r in riskyItems)
         {
-            sb.AppendLine($"· [{r.CodeNumber}] {r.Title}");
-            sb.AppendLine($"  {r.GateExplanationText}");
+            sb.AppendLine($"• {r.Title}");
         }
-
         sb.AppendLine();
-        sb.AppendLine("Riot Vanguard (Valorant) y FACEIT AC requieren TPM 2.0, Secure Boot, VBS y mitigaciones de kernel activas en Windows 11. Desactivarlas puede impedir que dichos juegos inicien hasta revertir desde el Journal.");
-
-        var confirmCheck = new CheckBox
-        {
-            Content = "Comprendo la advertencia y deseo aplicar estos cambios bajo mi responsabilidad.",
-            Margin = new Thickness(0, 10, 0, 0)
-        };
-
-        // Desaturated red (#B85F5F) ONLY on border and warning title, transparent background
-        var mutedDangerBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 184, 95, 95));
-        var warningBorder = new Border
-        {
-            Background = new SolidColorBrush(Colors.Transparent),
-            BorderBrush = mutedDangerBrush,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(16),
-            Child = new StackPanel
-            {
-                Spacing = 8,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = sb.ToString(),
-                        TextWrapping = TextWrapping.Wrap,
-                        Foreground = mutedDangerBrush,
-                        FontSize = 12
-                    },
-                    confirmCheck
-                }
-            }
-        };
-
-        await _dialogLock.WaitAsync();
-        try
-        {
-            if (_activeContentDialog != null)
-            {
-                try { _activeContentDialog.Hide(); } catch { }
-                await Task.Delay(100);
-            }
-
-            var warningDialog = new ContentDialog
-            {
-                Title = "Advertencia de seguridad y anticheat",
-                Content = warningBorder,
-                PrimaryButtonText = "Aplicar cambios",
-                CloseButtonText = "Cancelar",
-                DefaultButton = ContentDialogButton.Close,
-                XamlRoot = RootGrid.XamlRoot
-            };
-            _activeContentDialog = warningDialog;
-
-            try
-            {
-                var res = await warningDialog.ShowAsync();
-                return res == ContentDialogResult.Primary && confirmCheck.IsChecked == true;
-            }
-            finally
-            {
-                if (_activeContentDialog == warningDialog) _activeContentDialog = null;
-            }
-        }
-        catch (System.Runtime.InteropServices.COMException)
-        {
-            return false;
-        }
-        finally
-        {
-            _dialogLock.Release();
-        }
+        sb.Append("Si un anticheat no te deja entrar, revertilos desde Monitor → Cambios aplicados. ¿Aplicarlos igual?");
+        return ShowConfirmModalAsync("Atención: perfil Entusiasta", sb.ToString(), "Aplicar igual");
     }
 
     private void RevertSelectedTweaksBtn_Click(object sender, RoutedEventArgs e)
@@ -2879,16 +2900,11 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var confirm = new ContentDialog
-        {
-            Title = "Revertir todos los cambios",
-            Content = $"Se van a restaurar los valores originales de {active.Count} optimización(es). Algunos cambios necesitan reiniciar la PC.",
-            PrimaryButtonText = "Revertir todo",
-            CloseButtonText = "Cancelar",
-            DefaultButton = ContentDialogButton.Close,
-            XamlRoot = RootGrid.XamlRoot
-        };
-        if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
+        bool confirmed = await ShowConfirmModalAsync(
+            "Revertir todos los cambios",
+            $"Se van a restaurar los valores originales de {active.Count} optimización(es). Algunos cambios necesitan reiniciar la PC para volver del todo.",
+            "Revertir todo");
+        if (!confirmed) return;
 
         var steps = active.Select(a => BuildJournalRevertStep(a.TweakId)).ToList();
         await RunStepsWithOverlayAsync("Revirtiendo cambios", "Restaurando los valores originales", steps);
@@ -2955,46 +2971,58 @@ public sealed partial class MainWindow : Window
     }
 
     private static readonly System.Threading.SemaphoreSlim _dialogLock = new(1, 1);
-    private static ContentDialog? _activeContentDialog;
 
-    private async Task ShowSimpleInfoModalAsync(string title, string message)
+    /// <summary>Aviso con un solo botón, con el modal de la app.</summary>
+    private Task ShowSimpleInfoModalAsync(string title, string message) =>
+        ShowAppModalAsync(title, message, "Aceptar", secondaryText: null);
+
+    /// <summary>Confirmación con el modal de la app. Devuelve true si se eligió la acción principal.</summary>
+    private Task<bool> ShowConfirmModalAsync(string title, string message, string primaryText, string secondaryText = "Cancelar") =>
+        ShowAppModalAsync(title, message, primaryText, secondaryText);
+
+    private TaskCompletionSource<bool>? _appModalTcs;
+
+    /// <summary>
+    /// Modal propio (velo con blur + tarjeta negra) en lugar de ContentDialog de Windows. Si se pide otro modal mientras
+    /// hay uno abierto, el anterior se resuelve como "cancelar" y se muestra el nuevo.
+    /// </summary>
+    private async Task<bool> ShowAppModalAsync(string title, string message, string primaryText, string? secondaryText)
     {
         await _dialogLock.WaitAsync();
+        TaskCompletionSource<bool> tcs;
         try
         {
-            if (_activeContentDialog != null)
-            {
-                try { _activeContentDialog.Hide(); } catch { }
-                await Task.Delay(100);
-            }
+            _appModalTcs?.TrySetResult(false);
+            tcs = new TaskCompletionSource<bool>();
+            _appModalTcs = tcs;
 
-            var dialog = new ContentDialog
-            {
-                Title = title,
-                Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, FontSize = 12 },
-                CloseButtonText = "Aceptar",
-                XamlRoot = RootGrid.XamlRoot
-            };
-            _activeContentDialog = dialog;
-
-            try
-            {
-                await dialog.ShowAsync();
-            }
-            finally
-            {
-                if (_activeContentDialog == dialog) _activeContentDialog = null;
-            }
-        }
-        catch (System.Runtime.InteropServices.COMException)
-        {
-            // Ignore single ContentDialog COMException safely
+            AppModalTitleText.Text = title;
+            AppModalMessageText.Text = message;
+            AppModalPrimaryBtn.Content = primaryText;
+            AppModalSecondaryBtn.Content = secondaryText ?? string.Empty;
+            AppModalSecondaryBtn.Visibility = secondaryText == null ? Visibility.Collapsed : Visibility.Visible;
+            AppModalOverlay.Visibility = Visibility.Visible;
+            AppModalPrimaryBtn.Focus(FocusState.Programmatic);
         }
         finally
         {
             _dialogLock.Release();
         }
+
+        bool result = await tcs.Task;
+        if (ReferenceEquals(_appModalTcs, tcs))
+        {
+            AppModalOverlay.Visibility = Visibility.Collapsed;
+            _appModalTcs = null;
+        }
+        return result;
     }
+
+    private void AppModalPrimaryBtn_Click(object sender, RoutedEventArgs e) => _appModalTcs?.TrySetResult(true);
+
+    private void AppModalSecondaryBtn_Click(object sender, RoutedEventArgs e) => _appModalTcs?.TrySetResult(false);
+
+    private void AppModalScrim_Tapped(object sender, TappedRoutedEventArgs e) => _appModalTcs?.TrySetResult(false);
 
     private void SetStatus(string text)
     {

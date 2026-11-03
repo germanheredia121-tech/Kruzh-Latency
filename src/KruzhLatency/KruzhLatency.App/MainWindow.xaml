@@ -34,7 +34,7 @@
         <NavigationView
             x:Name="MainNavView"
             Grid.Row="1"
-            PaneDisplayMode="LeftCompact"
+            PaneDisplayMode="Left"
             IsPaneToggleButtonVisible="True"
             OpenPaneLength="240"
             CompactPaneLength="48"
@@ -1019,8 +1019,8 @@
                     <!-- VIEW 5: JUEGOS (BIBLIOTECA CON CARÁTULAS 1:1 ESTILO HONEST PROGRAM)      -->
                     <!-- ======================================================================= -->
                     <Grid x:Name="ViewGamesNvidia" Visibility="Collapsed">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel Padding="48,18,48,36" Spacing="22" MaxWidth="1280" HorizontalAlignment="Stretch">
+                        <ScrollViewer x:Name="GamesScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Padding="48,18,48,36" Spacing="22" MaxWidth="1280" HorizontalAlignment="Left">
                                 <!-- Head: Eyebrow + Title + Subtitle + Buscador -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -1973,6 +1973,39 @@
         <!-- ======================================================================= -->
         <!-- OVERLAY AL "APLICAR CAMBIOS" (MOCKUP KRUZH_LOADERS 1:1)                  -->
         <!-- ======================================================================= -->
+        <!-- ======================================================================= -->
+        <!-- MODAL DE LA APP (reemplaza a ContentDialog de Windows): confirmaciones y avisos -->
+        <!-- ======================================================================= -->
+        <Grid x:Name="AppModalOverlay" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed">
+            <Border Tapped="AppModalScrim_Tapped">
+                <Border.Background>
+                    <AcrylicBrush TintColor="#070707" TintOpacity="0.55" TintLuminosityOpacity="0.55" FallbackColor="#8C070707" />
+                </Border.Background>
+            </Border>
+            <Border x:Name="AppModalCard" Width="460" MaxHeight="560" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="#000000" BorderBrush="#1F1F1F" BorderThickness="1" CornerRadius="12" Padding="28,24"
+                    Translation="0,0,40">
+                <Border.Shadow>
+                    <ThemeShadow />
+                </Border.Shadow>
+                <Grid RowSpacing="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock x:Name="AppModalTitleText" Text="-" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <TextBlock x:Name="AppModalMessageText" Text="-" FontSize="13" TextWrapping="Wrap" LineHeight="20" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                    </ScrollViewer>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button x:Name="AppModalSecondaryBtn" Click="AppModalSecondaryBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Cancelar" MinWidth="110" />
+                        <Button x:Name="AppModalPrimaryBtn" Click="AppModalPrimaryBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Aceptar" MinWidth="110" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
         <!-- Grid.RowSpan=2: cubre barra de título + contenido (antes quedaba atrapado en la fila de 38px del título). -->
         <Grid x:Name="ApplyingChangesOverlay" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <!-- Velo rgba(7,7,7,.55) + blur: el acrílico in-app desenfoca la UI de abajo sin taparla. -->
