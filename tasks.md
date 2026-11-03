@@ -148,8 +148,8 @@ Spec: [specs/002-dpc-red-dispositivos-pantalla.md](specs/002-dpc-red-dispositivo
 ### Fase D — Monitor con diagnóstico
 | ID | Tarea | Deps | Hecho cuando |
 |---|---|---|---|
-| D1 | Objetivos (pico ≤ 250–300 µs, promedio < 8 µs) y mapeo driver → causa → botón "Arreglar" | B1, B4, B6 | cada driver alto tiene acción |
-| D2 | Mientras mide: sin gráfico en vivo + sugerencia de minimizar | – | dxgkrnl de la propia app no suma |
+| D1 ✅ | Objetivos (pico ≤ 250–300 µs, promedio < 8 µs) y mapeo driver → causa → botón "Arreglar" | B1, B4, B6 | cada driver alto tiene acción |
+| D2 ✅ | Mientras mide: sin gráfico en vivo + sugerencia de minimizar | – | dxgkrnl de la propia app no suma |
 
 ### Orden sugerido
 1. A1 → A2 → A3 → A4 (+ A5 en paralelo)

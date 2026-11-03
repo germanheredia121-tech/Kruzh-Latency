@@ -1704,7 +1704,7 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Drivers con más latencia" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                    <TextBlock Text="Mide cuánto tarda cada driver en atender sus interrupciones (DPC/ISR). Iniciá la medición, jugá una partida y volvé a detenerla: los resultados se actualizan en vivo." FontSize="12.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                    <TextBlock Text="Mide cuánto tarda cada driver en atender sus interrupciones (DPC/ISR). Iniciá la medición, minimizá KRUZH, jugá una partida y volvé a detenerla. Objetivo por driver: pico de hasta 300 µs y promedio menor a 8 µs." FontSize="12.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
                                 </StackPanel>
                                 <Button Grid.Column="1" x:Name="AnalyzeDpcDriversBtn" Click="AnalyzeDpcDriversBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}"
                                         Content="Iniciar medición" VerticalAlignment="Center" MinWidth="140" />
@@ -1755,6 +1755,11 @@
                                             <StackPanel Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
                                                 <TextBlock Text="{Binding FileName}" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Cause}" Visibility="{Binding CauseVisibility}" FontSize="11.5" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                           Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                <Button Content="Arreglar" Tag="{Binding FileName}" Visibility="{Binding FixVisibility}" Click="DpcFixDriverBtn_Click"
+                                                        Style="{StaticResource KruzhGhostButtonStyle}" Margin="0,6,0,0" HorizontalAlignment="Left"
+                                                        ToolTipService.ToolTip="Marca como pendientes los ajustes de KRUZH que atacan este driver y te lleva a Optimizaciones para revisarlos y aplicarlos." />
                                             </StackPanel>
                                             <TextBlock Grid.Column="1" Text="{Binding MaxText}" FontSize="13" FontWeight="SemiBold" Foreground="{Binding MaxBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                                             <TextBlock Grid.Column="2" Text="{Binding AvgText}" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />

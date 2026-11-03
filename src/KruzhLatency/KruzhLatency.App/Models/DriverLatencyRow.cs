@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 
 namespace KruzhLatency.Models;
@@ -11,4 +12,12 @@ public sealed class DriverLatencyRow
     public string AvgText { get; init; } = string.Empty;
     public string CountText { get; init; } = string.Empty;
     public Brush? MaxBrush { get; init; }
+
+    /// <summary>Causa probable (D1). Vacío si el driver está dentro de los objetivos.</summary>
+    public string Cause { get; init; } = string.Empty;
+    public Visibility CauseVisibility => string.IsNullOrEmpty(Cause) ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>Hay ítems del catálogo que atacan este driver y todavía no están aplicados.</summary>
+    public bool CanFix { get; init; }
+    public Visibility FixVisibility => CanFix ? Visibility.Visible : Visibility.Collapsed;
 }

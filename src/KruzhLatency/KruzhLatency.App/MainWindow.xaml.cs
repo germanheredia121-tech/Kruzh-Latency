@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KruzhLatency.Controls;
+using KruzhLatency.Core.Latency;
 using KruzhLatency.Models;
 using KruzhLatency.Services;
 using Microsoft.UI;
@@ -2852,9 +2853,14 @@ public sealed partial class MainWindow : Window
 
         _dpcSession = session;
         _dpcLiveTicks = 0;
+        // D2: mientras mide, KRUZH no redibuja gráficos ni relee tweaks (eso también genera DPC en dxgkrnl y suma a la medición).
+        _telemetryTimer.Stop();
+        DpcSummaryPanel.Visibility = Visibility.Collapsed;
+        DpcDriversHeader.Visibility = Visibility.Collapsed;
+        DpcDriversItemsControl.ItemsSource = null;
         AnalyzeDpcDriversBtn.Content = "Detener";
         DpcLiveDot.Visibility = Visibility.Visible;
-        DpcStatusText.Text = "Midiendo · 00:00";
+        DpcStatusText.Text = "Midiendo · 00:00 · minimizá KRUZH y jugá";
 
         _dpcLiveTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _dpcLiveTimer.Tick -= DpcLiveTimer_Tick;
@@ -2865,15 +2871,10 @@ public sealed partial class MainWindow : Window
     private void DpcLiveTimer_Tick(object? sender, object e)
     {
         if (_dpcSession == null) return;
+        // D2: solo un texto chico cada 5 s; los resultados se muestran al detener.
+        if (++_dpcLiveTicks % 5 != 0) return;
         var elapsed = _dpcSession.Elapsed;
-        DpcStatusText.Text = $"Midiendo · {(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00} · los resultados se actualizan en vivo";
-
-        // La tabla se refresca cada 2 s, y solo si Monitor está a la vista (la medición sigue igual en segundo plano).
-        if (++_dpcLiveTicks % 2 == 0 && ViewMonitorAudit.Visibility == Visibility.Visible)
-        {
-            try { ShowDpcAnalysis(_dpcSession.Snapshot()); }
-            catch (Exception ex) { App.LogError("DPC snapshot", ex); }
-        }
+        DpcStatusText.Text = $"Midiendo · {(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00} · minimizá KRUZH y jugá; los resultados aparecen al detener";
     }
 
     private async Task StopDpcMeasurementAsync()
@@ -2902,6 +2903,7 @@ public sealed partial class MainWindow : Window
             DpcLiveDot.Visibility = Visibility.Collapsed;
             AnalyzeDpcDriversBtn.Content = "Iniciar medición";
             AnalyzeDpcDriversBtn.IsEnabled = true;
+            if (!_isApplyingBatch) _telemetryTimer.Start();
         }
     }
 
@@ -2920,7 +2922,10 @@ public sealed partial class MainWindow : Window
         }
 
         var top = result.Drivers.Where(d => d.Count > 0).Take(8).ToList();
+        var diagnoses = top.Select(d => DpcDiagnosis.Diagnose(d.FileName, d.MaxUs, AverageUs(d))).ToList();
+        _lastDpcDiagnoses = diagnoses;
         var worst = top.FirstOrDefault();
+        int offTarget = diagnoses.Count(x => x.NeedsAttention);
         if (worst == null)
         {
             DpcVerdictText.Text = "No se registraron DPC ni interrupciones en la medición.";
@@ -2928,17 +2933,17 @@ public sealed partial class MainWindow : Window
         }
         else if (worst.MaxUs >= DpcBadUs)
         {
-            DpcVerdictText.Text = $"{worst.Description} tuvo picos de {worst.MaxUs:0} µs: puede causar micro-stutters. Probá actualizar o reinstalar ese driver.";
+            DpcVerdictText.Text = $"{worst.Description} tuvo picos de {worst.MaxUs:0} µs: puede causar micro-stutters. Mirá abajo la causa y \"Arreglar\".";
             DpcVerdictText.Foreground = MonitorBadBrush;
         }
-        else if (worst.MaxUs >= DpcWarnUs)
+        else if (offTarget > 0)
         {
-            DpcVerdictText.Text = $"Latencia aceptable. El peor fue {worst.Description} con {worst.MaxUs:0} µs.";
+            DpcVerdictText.Text = $"Jugable, pero {offTarget} driver(s) fuera del objetivo (pico ≤ {DpcDiagnosis.PeakTargetUs:0} µs, promedio < {DpcDiagnosis.AverageTargetUs:0} µs).";
             DpcVerdictText.Foreground = MonitorWarnBrush;
         }
         else
         {
-            DpcVerdictText.Text = $"Bien: ningún driver supera {DpcWarnUs:0} µs (peor: {worst.Description}, {worst.MaxUs:0} µs).";
+            DpcVerdictText.Text = $"En objetivo: ningún driver pasa {DpcDiagnosis.PeakTargetUs:0} µs de pico ni {DpcDiagnosis.AverageTargetUs:0} µs de promedio (peor: {worst.Description}, {worst.MaxUs:0} µs).";
             DpcVerdictText.Foreground = MonitorGoodBrush;
         }
 
@@ -2947,16 +2952,52 @@ public sealed partial class MainWindow : Window
             $"{result.Drivers.Count} drivers con actividad.";
 
         var neutral = (Brush)Application.Current.Resources["KruzhTextSecondaryBrush"];
-        DpcDriversItemsControl.ItemsSource = top.Select(d => new DriverLatencyRow
+        DpcDriversItemsControl.ItemsSource = top.Select((d, i) =>
         {
-            Title = d.Description,
-            FileName = d.FileName,
-            MaxText = $"{d.MaxUs:0} µs",
-            AvgText = $"{(d.DpcCount + d.IsrCount > 0 ? (d.DpcAvgUs * d.DpcCount + d.IsrAvgUs * d.IsrCount) / (d.DpcCount + d.IsrCount) : 0):0.0} µs",
-            CountText = $"{d.Count:N0}",
-            MaxBrush = d.MaxUs >= DpcBadUs ? MonitorBadBrush : (d.MaxUs >= DpcWarnUs ? MonitorWarnBrush : neutral)
+            var dx = diagnoses[i];
+            return new DriverLatencyRow
+            {
+                Title = d.Description,
+                FileName = d.FileName,
+                MaxText = $"{d.MaxUs:0} µs",
+                AvgText = $"{AverageUs(d):0.0} µs",
+                CountText = $"{d.Count:N0}",
+                MaxBrush = d.MaxUs >= DpcBadUs ? MonitorBadBrush : (dx.NeedsAttention ? MonitorWarnBrush : neutral),
+                Cause = dx.NeedsAttention ? dx.Cause : string.Empty,
+                CanFix = dx.NeedsAttention && FixableItems(dx).Any()
+            };
         }).ToList();
         DpcDriversHeader.Visibility = top.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private List<DriverDiagnosis> _lastDpcDiagnoses = new();
+
+    private static double AverageUs(KruzhLatency.Infra.Etw.DriverLatencyStat d) =>
+        d.DpcCount + d.IsrCount > 0 ? (d.DpcAvgUs * d.DpcCount + d.IsrAvgUs * d.IsrCount) / (d.DpcCount + d.IsrCount) : 0;
+
+    /// <summary>Ítems del catálogo que atacan el driver, aplicables en esta PC y todavía no aplicados.</summary>
+    private static IEnumerable<DeclarativeTweakItem> FixableItems(DriverDiagnosis dx) =>
+        App.TweakEngine.AllTweaks.Where(t => DpcDiagnosis.Matches(dx.FixItemIds, t.Id) && t.IsApplicableBool && !t.IsLiveApplied);
+
+    /// <summary>D1: "Arreglar" marca como pendientes los ajustes que atacan ese driver y lleva a Optimizaciones para aplicarlos.</summary>
+    private void DpcFixDriverBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string file }) return;
+        var dx = _lastDpcDiagnoses.FirstOrDefault(d => string.Equals(d.FileName, file, StringComparison.OrdinalIgnoreCase));
+        if (dx is null) return;
+
+        var items = FixableItems(dx).ToList();
+        foreach (var t in items)
+        {
+            if (t.HasOptions) t.SetDesiredOption(t.Options.LastOrDefault()?.Key ?? t.SelectedOptionKey);
+            else t.SetDesiredToggle(true);
+        }
+
+        string tab = items.All(t => t.Category == TweakCategory.Devices) ? "Devices" : "Tweaks";
+        MainNavView.SelectedItem = NavTweaksItem;
+        SwitchToView("Tweaks");
+        OptTab_Click(tab == "Devices" ? OptTabDevicesBtn : OptTabTweaksBtn, new RoutedEventArgs());
+        SetStatus($"{items.Count} ajuste(s) para {file} quedaron pendientes: revisalos y tocá Aplicar.");
     }
 
     /// <summary>Nombre legible de un id del journal (tweak del catálogo, juego, o entradas internas viejas).</summary>
