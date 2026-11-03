@@ -175,6 +175,10 @@ public sealed partial class MainWindow
 
         if (a.Parsed is { } edid)
         {
+            if (a.NativeMax is not null && m.Current is not null)
+            {
+                root.Children.Add(Section("Resolución 4:3 al refresco nativo (CRU)", GuidePanel(a)));
+            }
             root.Children.Add(Section("Timings detallados", TimingsPanel(edid)));
             root.Children.Add(Section("Hz exactos por tipo de bloque", ExactHzPanel(edid)));
             root.Children.Add(Section("Bloque base", BasePanel(edid.Base)));
@@ -183,6 +187,97 @@ public sealed partial class MainWindow
         }
         return card;
     }
+
+    // ---------------------------------------------------------------- C5: guía de CRU (modo manual)
+
+    private static readonly (int W, int H)[] StretchedOptions = { (1280, 960), (1440, 1080), (1024, 768) };
+
+    private UIElement GuidePanel(MonitorAnalysis a)
+    {
+        var root = new StackPanel { Spacing = 14 };
+        root.Children.Add(Muted("Crea una resolución 4:3 que el monitor escala por hardware (sin pasar por la GPU), al refresco nativo exacto. " +
+                                "Podés hacerlo a mano con CRU siguiendo esta guía, armada con los datos de tu monitor."));
+
+        var options = StretchedOptions.Where(o => o.H <= a.NativeMax!.VActive).ToList();
+        var combo = new ComboBox { MinWidth = 160, HorizontalAlignment = HorizontalAlignment.Left };
+        foreach (var (w, h) in options) combo.Items.Add($"{w}x{h}");
+        combo.SelectedIndex = 0;
+
+        var stepsHost = new StackPanel { Spacing = 14 };
+        var verifyHost = new StackPanel { Spacing = 6 };
+        CruGuide? current = null;
+
+        void Render()
+        {
+            var (w, h) = options[Math.Max(0, combo.SelectedIndex)];
+            current = CruGuideBuilder.Build(new CruGuideRequest(a, w, h, CurrentGpuVendor()));
+            stepsHost.Children.Clear();
+            verifyHost.Children.Clear();
+            stepsHost.Children.Add(Muted($"Resultado: {w}x{h} @ {Hz(current.StretchedChoice.Chosen.RefreshHz)} en DisplayID {current.DisplayIdVersion}. {current.StretchedChoice.Reason}"));
+            foreach (var step in current.Steps)
+            {
+                var s = new StackPanel { Spacing = 4 };
+                s.Children.Add(new TextBlock { Text = step.Title, FontSize = 13.5, FontWeight = FontWeights.SemiBold, Foreground = Brush("KruzhTextPrimaryBrush") });
+                foreach (var line in step.Lines) s.Children.Add(Muted(line));
+                if (step.Link is { } link)
+                {
+                    s.Children.Add(new HyperlinkButton { Content = "Abrir la página oficial de CRU", NavigateUri = new Uri(link), Padding = new Thickness(0) });
+                }
+                stepsHost.Children.Add(s);
+            }
+        }
+
+        combo.SelectionChanged += (_, _) => Render();
+        Render();
+
+        var verify = new Button { Content = "Verificar", Style = (Style)Application.Current.Resources["KruzhGhostButtonStyle"], HorizontalAlignment = HorizontalAlignment.Left };
+        verify.Click += async (_, _) =>
+        {
+            if (current is null) return;
+            verifyHost.Children.Clear();
+            verifyHost.Children.Add(Muted("Releyendo el EDID y la señal…"));
+            string id = a.Monitor.InstanceId;
+            var now = await Task.Run(() =>
+            {
+                var tree = new DeviceTree(new CfgMgrDeviceInventory().Snapshot());
+                var m = MonitorProbe.Detect(tree).FirstOrDefault(x => string.Equals(x.InstanceId, id, StringComparison.OrdinalIgnoreCase));
+                return m is null ? null : MonitorAnalyzer.Analyze(m);
+            });
+            verifyHost.Children.Clear();
+            if (now is null)
+            {
+                verifyHost.Children.Add(Muted("El monitor ya no aparece conectado."));
+                return;
+            }
+            foreach (var c in CruGuideBuilder.Verify(current, now))
+            {
+                verifyHost.Children.Add(new TextBlock
+                {
+                    Text = $"{(c.Ok ? "✓" : "✗")}  {c.Name} — {c.Detail}",
+                    FontSize = 12.5,
+                    TextWrapping = TextWrapping.Wrap,
+                    Foreground = Brush(c.Ok ? "KruzhPositiveBrush" : "KruzhAmberBrush")
+                });
+            }
+        };
+
+        var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        header.Children.Add(new TextBlock { Text = "Resolución 4:3", VerticalAlignment = VerticalAlignment.Center, FontSize = 12.5, Foreground = Brush("KruzhTextSecondaryBrush") });
+        header.Children.Add(combo);
+        root.Children.Add(header);
+        root.Children.Add(stepsHost);
+        root.Children.Add(verify);
+        root.Children.Add(verifyHost);
+        return root;
+    }
+
+    private static GpuVendor CurrentGpuVendor() => App.HardwareService.CurrentProfile.GpuVendor switch
+    {
+        KruzhLatency.Models.GpuVendorKind.Nvidia => GpuVendor.Nvidia,
+        KruzhLatency.Models.GpuVendorKind.Amd => GpuVendor.Amd,
+        KruzhLatency.Models.GpuVendorKind.Intel => GpuVendor.Intel,
+        _ => GpuVendor.Unknown
+    };
 
     // ---------------------------------------------------------------- secciones del EDID
 
