@@ -33,10 +33,11 @@ public sealed record DpcAnalysisResult(
 
 /// <summary>
 /// Mide, por driver, cuánto tardan sus DPC e ISR usando una sesión ETW del kernel (mismo método que LatencyMon / xperf).
-/// Solo lectura: no modifica nada del sistema. Requiere administrador. Se ejecuta a pedido durante unos segundos.
+/// Solo lectura: no modifica nada del sistema. Requiere administrador.
+/// La sesión corre hasta que se la detiene (sirve para medir jugando) y se puede consultar en vivo con <see cref="Snapshot"/>.
 /// Base de la medición del auto-tune MSI (ADR-005).
 /// </summary>
-public static class DpcLatencyAnalyzer
+public sealed class DpcLatencySession : IDisposable
 {
     private const string SessionName = "KruzhLatency-DpcIsr";
 
@@ -52,102 +53,128 @@ public static class DpcLatencyAnalyzer
 
     private readonly record struct ModuleRange(ulong Start, ulong End, string FileName);
 
-    public static async Task<DpcAnalysisResult> AnalyzeAsync(TimeSpan duration, CancellationToken cancellationToken = default)
+    private readonly TraceEventSession _session;
+    private readonly Task _processing;
+    private readonly Stopwatch _watch = Stopwatch.StartNew();
+    private readonly object _gate = new();
+    private readonly Dictionary<ulong, Accumulator> _byRoutine = new();
+    private readonly List<ModuleRange> _modules = new();
+    private long _totalDpc;
+    private long _totalIsr;
+    private bool _stopped;
+
+    public TimeSpan Elapsed => _watch.Elapsed;
+
+    private DpcLatencySession(TraceEventSession session)
     {
+        _session = session;
+        var kernel = session.Source.Kernel;
+        kernel.ImageGroup += OnImage;
+        kernel.PerfInfoDPC += OnDpc;
+        kernel.PerfInfoThreadedDPC += OnDpc;
+        kernel.PerfInfoTimerDPC += OnDpc;
+        kernel.PerfInfoISR += OnIsr;
+        _processing = Task.Run(() => session.Source.Process());
+    }
+
+    /// <summary>Inicia la medición. Devuelve null y un error legible si no se pudo (sin admin, etc.).</summary>
+    public static DpcLatencySession? TryStart(out string? error)
+    {
+        error = null;
         if (!(TraceEventSession.IsElevated() ?? false))
         {
-            return DpcAnalysisResult.Failed("Se necesita ejecutar KRUZH LATENCY como administrador para medir DPC/ISR.");
+            error = "Se necesita ejecutar KRUZH LATENCY como administrador para medir DPC/ISR.";
+            return null;
         }
-
-        // Dirección de rutina -> estadísticas. Se resuelve a driver al final (los eventos de carga de imágenes
-        // del rundown pueden llegar después de los primeros DPC).
-        var byRoutine = new Dictionary<ulong, Accumulator>();
-        var modules = new List<ModuleRange>();
-        var gate = new object();
-        long totalDpc = 0, totalIsr = 0;
 
         try
         {
             // Si quedó una sesión con el mismo nombre de una ejecución anterior que crasheó, se reemplaza.
-            using var session = new TraceEventSession(SessionName) { StopOnDispose = true };
+            var session = new TraceEventSession(SessionName) { StopOnDispose = true };
             session.EnableKernelProvider(
                 KernelTraceEventParser.Keywords.DeferedProcedureCalls |
                 KernelTraceEventParser.Keywords.Interrupt |
                 KernelTraceEventParser.Keywords.ImageLoad);
-
-            var kernel = session.Source.Kernel;
-
-            void OnImage(ImageLoadTraceData d)
-            {
-                if (d.ImageSize <= 0 || string.IsNullOrEmpty(d.FileName)) return;
-                lock (gate)
-                {
-                    modules.Add(new ModuleRange(d.ImageBase, d.ImageBase + (ulong)d.ImageSize, d.FileName));
-                }
-            }
-
-            void OnDpc(DPCTraceData d)
-            {
-                double us = d.ElapsedTimeMSec * 1000.0;
-                if (us < 0) return;
-                lock (gate)
-                {
-                    totalDpc++;
-                    if (!byRoutine.TryGetValue(d.Routine, out var acc)) byRoutine[d.Routine] = acc = new Accumulator();
-                    acc.DpcCount++;
-                    acc.DpcTotalUs += us;
-                    if (us > acc.DpcMaxUs) acc.DpcMaxUs = us;
-                }
-            }
-
-            void OnIsr(ISRTraceData d)
-            {
-                double us = d.ElapsedTimeMSec * 1000.0;
-                if (us < 0) return;
-                lock (gate)
-                {
-                    totalIsr++;
-                    if (!byRoutine.TryGetValue(d.Routine, out var acc)) byRoutine[d.Routine] = acc = new Accumulator();
-                    acc.IsrCount++;
-                    acc.IsrTotalUs += us;
-                    if (us > acc.IsrMaxUs) acc.IsrMaxUs = us;
-                }
-            }
-
-            kernel.ImageGroup += OnImage;
-            kernel.PerfInfoDPC += OnDpc;
-            kernel.PerfInfoThreadedDPC += OnDpc;
-            kernel.PerfInfoTimerDPC += OnDpc;
-            kernel.PerfInfoISR += OnIsr;
-
-            var processing = Task.Run(() => session.Source.Process(), CancellationToken.None);
-            var watch = Stopwatch.StartNew();
-            try
-            {
-                await Task.Delay(duration, cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                // se cortó antes: se reporta lo medido hasta ahora
-            }
-            session.Stop();
-            await processing.ConfigureAwait(false);
-            watch.Stop();
-
-            List<DriverLatencyStat> drivers;
-            lock (gate)
-            {
-                drivers = Aggregate(byRoutine, modules);
-            }
-            return new DpcAnalysisResult(watch.Elapsed, drivers, totalDpc, totalIsr, null);
+            return new DpcLatencySession(session);
         }
         catch (UnauthorizedAccessException)
         {
-            return DpcAnalysisResult.Failed("Windows no permitió iniciar la sesión de medición del kernel (se requiere administrador).");
+            error = "Windows no permitió iniciar la sesión de medición del kernel (se requiere administrador).";
+            return null;
         }
         catch (Exception ex)
         {
-            return DpcAnalysisResult.Failed($"No se pudo medir DPC/ISR: {ex.Message}");
+            error = $"No se pudo iniciar la medición de DPC/ISR: {ex.Message}";
+            return null;
+        }
+    }
+
+    /// <summary>Resultado parcial hasta este momento (thread-safe, la medición sigue).</summary>
+    public DpcAnalysisResult Snapshot()
+    {
+        lock (_gate)
+        {
+            return new DpcAnalysisResult(_watch.Elapsed, Aggregate(_byRoutine, _modules), _totalDpc, _totalIsr, null);
+        }
+    }
+
+    /// <summary>Detiene la sesión ETW y devuelve el resultado final.</summary>
+    public async Task<DpcAnalysisResult> StopAsync()
+    {
+        if (!_stopped)
+        {
+            _stopped = true;
+            _watch.Stop();
+            _session.Stop();
+            try { await _processing.ConfigureAwait(false); } catch { }
+        }
+        return Snapshot();
+    }
+
+    public void Dispose()
+    {
+        if (!_stopped)
+        {
+            _stopped = true;
+            try { _session.Stop(); } catch { }
+        }
+        _session.Dispose();
+    }
+
+    private void OnImage(ImageLoadTraceData d)
+    {
+        if (d.ImageSize <= 0 || string.IsNullOrEmpty(d.FileName)) return;
+        lock (_gate)
+        {
+            _modules.Add(new ModuleRange(d.ImageBase, d.ImageBase + (ulong)d.ImageSize, d.FileName));
+        }
+    }
+
+    private void OnDpc(DPCTraceData d)
+    {
+        double us = d.ElapsedTimeMSec * 1000.0;
+        if (us < 0) return;
+        lock (_gate)
+        {
+            _totalDpc++;
+            if (!_byRoutine.TryGetValue(d.Routine, out var acc)) _byRoutine[d.Routine] = acc = new Accumulator();
+            acc.DpcCount++;
+            acc.DpcTotalUs += us;
+            if (us > acc.DpcMaxUs) acc.DpcMaxUs = us;
+        }
+    }
+
+    private void OnIsr(ISRTraceData d)
+    {
+        double us = d.ElapsedTimeMSec * 1000.0;
+        if (us < 0) return;
+        lock (_gate)
+        {
+            _totalIsr++;
+            if (!_byRoutine.TryGetValue(d.Routine, out var acc)) _byRoutine[d.Routine] = acc = new Accumulator();
+            acc.IsrCount++;
+            acc.IsrTotalUs += us;
+            if (us > acc.IsrMaxUs) acc.IsrMaxUs = us;
         }
     }
 
@@ -196,6 +223,25 @@ public static class DpcLatencyAnalyzer
             else return m.FileName;
         }
         return null;
+    }
+}
+
+/// <summary>Medición de duración fija (la usará el auto-tune MSI para comparar combinaciones).</summary>
+public static class DpcLatencyAnalyzer
+{
+    public static async Task<DpcAnalysisResult> AnalyzeAsync(TimeSpan duration, CancellationToken cancellationToken = default)
+    {
+        using var session = DpcLatencySession.TryStart(out string? error);
+        if (session == null) return DpcAnalysisResult.Failed(error ?? "No se pudo iniciar la medición.");
+        try
+        {
+            await Task.Delay(duration, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // se reporta lo medido hasta ahora
+        }
+        return await session.StopAsync().ConfigureAwait(false);
     }
 }
 

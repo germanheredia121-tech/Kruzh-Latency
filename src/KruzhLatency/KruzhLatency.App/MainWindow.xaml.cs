@@ -59,6 +59,8 @@ public sealed partial class MainWindow : Window
         _telemetryTimer.Tick += TelemetryTimer_Tick;
 
         this.Activated += MainWindow_Activated;
+        // La sesión ETW del kernel sobrevive al proceso si no se detiene: se libera al cerrar.
+        this.Closed += (_, _) => { try { _dpcSession?.Dispose(); } catch { } };
         RootGrid.Loaded += RootGrid_Loaded;
     }
 
@@ -2711,46 +2713,86 @@ public sealed partial class MainWindow : Window
     }
 
     // ---------------------------------------------------------------- Drivers con más latencia (ETW DPC/ISR)
-    private const int DpcAnalysisSeconds = 10;
     private const double DpcWarnUs = 500;   // a partir de acá conviene mirar el driver
     private const double DpcBadUs = 1000;   // arriba de 1 ms se nota como micro-stutter
 
+    private KruzhLatency.Infra.Etw.DpcLatencySession? _dpcSession;
+    private DispatcherTimer? _dpcLiveTimer;
+    private int _dpcLiveTicks;
+
+    /// <summary>Iniciar / Detener la medición continua (sirve para dejarla corriendo mientras se juega).</summary>
     private async void AnalyzeDpcDriversBtn_Click(object sender, RoutedEventArgs e)
     {
-        AnalyzeDpcDriversBtn.IsEnabled = false;
-        AnalyzeDpcDriversBtn.Content = "Midiendo…";
-        DpcAnalysisProgress.Value = 0;
-        DpcAnalysisProgress.Visibility = Visibility.Visible;
-
-        // Progreso visual de la ventana de 10 s (sin overlay: su animación sumaría carga a la medición).
-        using var progressCts = new System.Threading.CancellationTokenSource();
-        var progressTask = Task.Run(async () =>
+        if (_dpcSession == null)
         {
-            var sw = Stopwatch.StartNew();
-            while (!progressCts.IsCancellationRequested)
-            {
-                double pct = Math.Min(100, sw.Elapsed.TotalSeconds / DpcAnalysisSeconds * 100);
-                DispatcherQueue.TryEnqueue(() => DpcAnalysisProgress.Value = pct);
-                try { await Task.Delay(200, progressCts.Token); } catch (OperationCanceledException) { break; }
-            }
-        });
+            StartDpcMeasurement();
+        }
+        else
+        {
+            await StopDpcMeasurementAsync();
+        }
+    }
 
+    private void StartDpcMeasurement()
+    {
+        var session = KruzhLatency.Infra.Etw.DpcLatencySession.TryStart(out string? error);
+        if (session == null)
+        {
+            ShowDpcAnalysis(KruzhLatency.Infra.Etw.DpcAnalysisResult.Failed(error ?? "No se pudo iniciar la medición."));
+            return;
+        }
+
+        _dpcSession = session;
+        _dpcLiveTicks = 0;
+        AnalyzeDpcDriversBtn.Content = "Detener";
+        DpcLiveDot.Visibility = Visibility.Visible;
+        DpcStatusText.Text = "Midiendo · 00:00";
+
+        _dpcLiveTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _dpcLiveTimer.Tick -= DpcLiveTimer_Tick;
+        _dpcLiveTimer.Tick += DpcLiveTimer_Tick;
+        _dpcLiveTimer.Start();
+    }
+
+    private void DpcLiveTimer_Tick(object? sender, object e)
+    {
+        if (_dpcSession == null) return;
+        var elapsed = _dpcSession.Elapsed;
+        DpcStatusText.Text = $"Midiendo · {(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00} · los resultados se actualizan en vivo";
+
+        // La tabla se refresca cada 2 s, y solo si Monitor está a la vista (la medición sigue igual en segundo plano).
+        if (++_dpcLiveTicks % 2 == 0 && ViewMonitorAudit.Visibility == Visibility.Visible)
+        {
+            try { ShowDpcAnalysis(_dpcSession.Snapshot()); }
+            catch (Exception ex) { App.LogError("DPC snapshot", ex); }
+        }
+    }
+
+    private async Task StopDpcMeasurementAsync()
+    {
+        var session = _dpcSession;
+        if (session == null) return;
+        _dpcSession = null;
+        _dpcLiveTimer?.Stop();
+        AnalyzeDpcDriversBtn.IsEnabled = false;
+        DpcStatusText.Text = "Deteniendo…";
         try
         {
-            var result = await KruzhLatency.Infra.Etw.DpcLatencyAnalyzer.AnalyzeAsync(TimeSpan.FromSeconds(DpcAnalysisSeconds));
+            var result = await session.StopAsync();
             ShowDpcAnalysis(result);
+            var t = result.Duration;
+            DpcStatusText.Text = $"Medición terminada · duró {(int)t.TotalMinutes:00}:{t.Seconds:00}";
         }
         catch (Exception ex)
         {
-            App.LogError("DPC analysis", ex);
-            ShowDpcAnalysis(KruzhLatency.Infra.Etw.DpcAnalysisResult.Failed(ex.Message));
+            App.LogError("DPC stop", ex);
+            DpcStatusText.Text = "La medición se detuvo con un error.";
         }
         finally
         {
-            progressCts.Cancel();
-            try { await progressTask; } catch { }
-            DpcAnalysisProgress.Visibility = Visibility.Collapsed;
-            AnalyzeDpcDriversBtn.Content = "Analizar de nuevo";
+            session.Dispose();
+            DpcLiveDot.Visibility = Visibility.Collapsed;
+            AnalyzeDpcDriversBtn.Content = "Iniciar medición";
             AnalyzeDpcDriversBtn.IsEnabled = true;
         }
     }
