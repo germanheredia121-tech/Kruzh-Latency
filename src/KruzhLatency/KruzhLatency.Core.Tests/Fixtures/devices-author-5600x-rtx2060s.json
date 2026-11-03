@@ -1,0 +1,5695 @@
+[
+  {
+    "instanceId": "ACPI\\ACPI0010\\1",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "ACPI Processor Container Device",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0010",
+      "ACPI\\ACPI0010",
+      "*ACPI0010"
+    ],
+    "compatibleIds": [
+      "*PNP0A05"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AMDI0030\\0",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "AMD GPIO Controller",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_AMDI&DEV_0030",
+      "ACPI\\AMDI0030",
+      "*AMDI0030"
+    ],
+    "compatibleIds": [
+      "ACPI\\AMDI0030",
+      "AMDI0030"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "amdgpio2",
+    "manufacturer": "Advanced Micro Devices, Inc",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Advanced Micro Devices, Inc",
+      "version": "2.2.0.71",
+      "date": "2017-05-17",
+      "infName": "amdgpio2.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "ACPI\\AMDIF030\\0",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "AMD GPIO Controller",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_AMDI&DEV_F030",
+      "ACPI\\AMDIF030",
+      "*AMDIF030"
+    ],
+    "compatibleIds": [
+      "ACPI\\AMDIF030",
+      "AMDIF030"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "amdgpio3",
+    "manufacturer": "Advanced Micro Devices, Inc.",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Advanced Micro Devices, Inc.",
+      "version": "2.0.1.0",
+      "date": "2020-03-09",
+      "infName": "oem7.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\0",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\1",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\2",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\3",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\4",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\5",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\6",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\7",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\8",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\9",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\a",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33_-_AMD_Ryzen_5_5600X_6-Core_Processor_____________\\b",
+    "parentInstanceId": "ACPI\\ACPI0010\\1",
+    "description": "AMD Processor",
+    "friendlyName": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "className": "Processor",
+    "classGuid": "50127dc3-0f36-415e-a6cc-4cb3be910b65",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_ACPI&DEV_0007",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "*AuthenticAMD_-_AMD64_Family_25_Model_33",
+      "ACPI\\AuthenticAMD_-_AMD64_Family_25",
+      "*AuthenticAMD_-_AMD64_Family_25",
+      "ACPI\\AuthenticAMD_-_AMD64",
+      "*AuthenticAMD_-_AMD64"
+    ],
+    "compatibleIds": [
+      "ACPI\\Processor"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AmdPPM",
+    "manufacturer": "Advanced Micro Devices",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2009-04-21",
+      "infName": "cpu.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\FixedButton\\2&daba3ff&0",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "ACPI Fixed Feature Button",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\FixedButton",
+      "*FixedButton"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\MSFT0101\\1",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "Trusted Platform Module 2.0",
+    "className": "SecurityDevices",
+    "classGuid": "d94ee5d8-d189-4994-83d2-f68d7d41b0e6",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_MSFT&DEV_0101",
+      "ACPI\\MSFT0101",
+      "*MSFT0101"
+    ],
+    "compatibleIds": [
+      "ACPI\\MSFT0101",
+      "MSFT0101"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "TPM",
+    "manufacturer": "(Standard)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2006-06-21",
+      "infName": "tpm.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0000\\4&127f2322&0",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_790E&SUBSYS_D4731022&REV_51\\3&11583659&0&A3",
+    "description": "Programmable interrupt controller",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0000",
+      "ACPI\\PNP0000",
+      "*PNP0000"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0100\\4&127f2322&0",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_790E&SUBSYS_D4731022&REV_51\\3&11583659&0&A3",
+    "description": "System timer",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0100",
+      "ACPI\\PNP0100",
+      "*PNP0100"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0103\\2&daba3ff&0",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "High precision event timer",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0103",
+      "ACPI\\PNP0103",
+      "*PNP0103"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0200\\4&127f2322&0",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_790E&SUBSYS_D4731022&REV_51\\3&11583659&0&A3",
+    "description": "Direct memory access controller",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0200",
+      "ACPI\\PNP0200",
+      "*PNP0200"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0800\\4&127f2322&0",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_790E&SUBSYS_D4731022&REV_51\\3&11583659&0&A3",
+    "description": "System speaker",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0800",
+      "ACPI\\PNP0800",
+      "*PNP0800"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0A08\\0",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "PCI Express Root Complex",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0A08",
+      "ACPI\\PNP0A08",
+      "*PNP0A08"
+    ],
+    "compatibleIds": [
+      "*PNP0A03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "pci",
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "pci.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0B00\\4&127f2322&0",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_790E&SUBSYS_D4731022&REV_51\\3&11583659&0&A3",
+    "description": "System CMOS/real time clock",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0B00",
+      "ACPI\\PNP0B00",
+      "*PNP0B00"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C01\\c8",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "System board",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C01",
+      "ACPI\\PNP0C01",
+      "*PNP0C01"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C02\\0",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_790E&SUBSYS_D4731022&REV_51\\3&11583659&0&A3",
+    "description": "Motherboard resources",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C02",
+      "ACPI\\PNP0C02",
+      "*PNP0C02"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C02\\15",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "Motherboard resources",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C02",
+      "ACPI\\PNP0C02",
+      "*PNP0C02"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C02\\4&1fde7688&0",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00\\3&11583659&0&41",
+    "description": "Motherboard resources",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C02",
+      "ACPI\\PNP0C02",
+      "*PNP0C02"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C02\\700",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "Motherboard resources",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C02",
+      "ACPI\\PNP0C02",
+      "*PNP0C02"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C02\\90",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "Motherboard resources",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C02",
+      "ACPI\\PNP0C02",
+      "*PNP0C02"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C02\\91",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "Motherboard resources",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C02",
+      "ACPI\\PNP0C02",
+      "*PNP0C02"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C0C\\aa",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "ACPI Power Button",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C0C",
+      "ACPI\\PNP0C0C",
+      "*PNP0C0C"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C14\\AOD",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "Microsoft Windows Management Interface for ACPI",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C14",
+      "ACPI\\PNP0C14",
+      "*PNP0C14"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "WmiAcpi",
+    "manufacturer": "Microsoft",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "wmiacpi.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C14\\MFBI",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "Microsoft Windows Management Interface for ACPI",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C14",
+      "ACPI\\PNP0C14",
+      "*PNP0C14"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "WmiAcpi",
+    "manufacturer": "Microsoft",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "wmiacpi.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI\\PNP0C14\\WMIC",
+    "parentInstanceId": "ACPI_HAL\\PNP0C08\\0",
+    "description": "Microsoft Windows Management Interface for ACPI",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI",
+    "hardwareIds": [
+      "ACPI\\VEN_PNP&DEV_0C14",
+      "ACPI\\PNP0C14",
+      "*PNP0C14"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "WmiAcpi",
+    "manufacturer": "Microsoft",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "wmiacpi.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ACPI_HAL\\PNP0C08\\0",
+    "parentInstanceId": "ROOT\\ACPI_HAL\\0000",
+    "description": "Microsoft ACPI-Compliant System",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ACPI_HAL",
+    "hardwareIds": [
+      "ACPI_HAL\\PNP0C08",
+      "*PNP0C08"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "ACPI",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2006-06-21",
+      "infName": "acpi.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "DISPLAY\\GBT2404\\5&3771edd3&0&UID176386",
+    "parentInstanceId": "PCI\\VEN_10DE&DEV_1F06&SUBSYS_1F0610DE&REV_A1\\4&2283f625&0&0019",
+    "description": "Generic PnP Monitor",
+    "friendlyName": "Generic Monitor (GS25F2)",
+    "className": "Monitor",
+    "classGuid": "4d36e96e-e325-11ce-bfc1-08002be10318",
+    "enumerator": "DISPLAY",
+    "hardwareIds": [
+      "MONITOR\\GBT2404"
+    ],
+    "compatibleIds": [
+      "*PNP09FF"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "monitor",
+    "manufacturer": "(Standard monitor types)",
+    "busNumber": 0,
+    "address": 274,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9278",
+      "date": "2006-06-21",
+      "infName": "monitor.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HDAUDIO\\FUNC_01&VEN_10DE&DEV_0093&SUBSYS_10DE1F06&REV_1001\\5&10f7cd6&0&0001",
+    "parentInstanceId": "PCI\\VEN_10DE&DEV_10F9&SUBSYS_1F0610DE&REV_A1\\4&2283f625&0&0119",
+    "description": "NVIDIA High Definition Audio",
+    "className": "MEDIA",
+    "classGuid": "4d36e96c-e325-11ce-bfc1-08002be10318",
+    "enumerator": "HDAUDIO",
+    "hardwareIds": [
+      "HDAUDIO\\FUNC_01&VEN_10DE&DEV_0093&SUBSYS_10DE1F06&REV_1001",
+      "HDAUDIO\\FUNC_01&VEN_10DE&DEV_0093&SUBSYS_10DE1F06"
+    ],
+    "compatibleIds": [
+      "HDAUDIO\\FUNC_01&CTLR_VEN_10DE&CTLR_DEV_10F9&VEN_10DE&DEV_0093&REV_1001",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_10DE&VEN_10DE&DEV_0093&REV_1001",
+      "HDAUDIO\\FUNC_01&VEN_10DE&DEV_0093&REV_1001",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_10DE&CTLR_DEV_10F9&VEN_10DE&DEV_0093",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_10DE&VEN_10DE&DEV_0093",
+      "HDAUDIO\\FUNC_01&VEN_10DE&DEV_0093",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_10DE&CTLR_DEV_10F9&VEN_10DE",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_10DE&VEN_10DE",
+      "HDAUDIO\\FUNC_01&VEN_10DE",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_10DE&CTLR_DEV_10F9",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_10DE",
+      "HDAUDIO\\FUNC_01&GF&VEN_10DE&DEV_0093&SUBSYS_10DE1F06&REV_1001",
+      "HDAUDIO\\FUNC_01"
+    ],
+    "isPresent": false,
+    "isDisabled": true,
+    "problemCode": 0,
+    "service": "NVHDA",
+    "manufacturer": "NVIDIA",
+    "locationInfo": "Internal High Definition Audio Bus",
+    "address": 1,
+    "driver": {
+      "provider": "NVIDIA Corporation",
+      "version": "1.4.5.7",
+      "date": "2026-07-22",
+      "infName": "oem5.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "HDAUDIO\\FUNC_01&VEN_10EC&DEV_0B00&SUBSYS_1462EC91&REV_1000\\5&23eca7d1&0&0001",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1487&SUBSYS_EC911462&REV_00\\4&1fde7688&0&0441",
+    "description": "High Definition Audio Device",
+    "className": "MEDIA",
+    "classGuid": "4d36e96c-e325-11ce-bfc1-08002be10318",
+    "enumerator": "HDAUDIO",
+    "hardwareIds": [
+      "HDAUDIO\\FUNC_01&VEN_10EC&DEV_0B00&SUBSYS_1462EC91&REV_1000",
+      "HDAUDIO\\FUNC_01&VEN_10EC&DEV_0B00&SUBSYS_1462EC91"
+    ],
+    "compatibleIds": [
+      "HDAUDIO\\FUNC_01&CTLR_VEN_1022&CTLR_DEV_1487&VEN_10EC&DEV_0B00&REV_1000",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_1022&VEN_10EC&DEV_0B00&REV_1000",
+      "HDAUDIO\\FUNC_01&VEN_10EC&DEV_0B00&REV_1000",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_1022&CTLR_DEV_1487&VEN_10EC&DEV_0B00",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_1022&VEN_10EC&DEV_0B00",
+      "HDAUDIO\\FUNC_01&VEN_10EC&DEV_0B00",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_1022&CTLR_DEV_1487&VEN_10EC",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_1022&VEN_10EC",
+      "HDAUDIO\\FUNC_01&VEN_10EC",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_1022&CTLR_DEV_1487",
+      "HDAUDIO\\FUNC_01&CTLR_VEN_1022",
+      "HDAUDIO\\FUNC_01&GF&VEN_10EC&DEV_0B00&SUBSYS_1462EC91&REV_1000",
+      "HDAUDIO\\FUNC_01"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HdAudAddService",
+    "manufacturer": "Microsoft",
+    "locationInfo": "Internal High Definition Audio Bus",
+    "busNumber": 0,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-10",
+      "infName": "hdaudio.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_046D&PID_C54D&MI_00\\8&194d27c4&0&0000",
+    "parentInstanceId": "USB\\VID_046D&PID_C54D&MI_00\\7&7958379&0&0000",
+    "description": "HID-compliant mouse",
+    "className": "Mouse",
+    "classGuid": "4d36e96f-e325-11ce-bfc1-08002be10318",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_046D&PID_C54D&REV_1403&MI_00",
+      "HID\\VID_046D&PID_C54D&MI_00",
+      "HID\\VID_046D&UP:0001_U:0002",
+      "HID_DEVICE_SYSTEM_MOUSE",
+      "HID_DEVICE_UP:0001_U:0002",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "mouhid",
+    "manufacturer": "Microsoft",
+    "busNumber": 9,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "msmouse.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_046D&PID_C54D&MI_01&Col01\\8&2c7d4402&0&0000",
+    "parentInstanceId": "USB\\VID_046D&PID_C54D&MI_01\\7&7958379&0&0001",
+    "description": "HID Keyboard Device",
+    "className": "Keyboard",
+    "classGuid": "4d36e96b-e325-11ce-bfc1-08002be10318",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_046D&PID_C54D&REV_1403&MI_01&Col01",
+      "HID\\VID_046D&PID_C54D&MI_01&Col01",
+      "HID\\VID_046D&UP:0001_U:0006",
+      "HID_DEVICE_SYSTEM_KEYBOARD",
+      "HID_DEVICE_UP:0001_U:0006",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "kbdhid",
+    "manufacturer": "(Standard keyboards)",
+    "busNumber": 10,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8972",
+      "date": "2006-06-21",
+      "infName": "keyboard.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_046D&PID_C54D&MI_01&Col02\\8&2c7d4402&0&0001",
+    "parentInstanceId": "USB\\VID_046D&PID_C54D&MI_01\\7&7958379&0&0001",
+    "description": "HID-compliant consumer control device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_046D&PID_C54D&REV_1403&MI_01&Col02",
+      "HID\\VID_046D&PID_C54D&MI_01&Col02",
+      "HID\\VID_046D&UP:000C_U:0001",
+      "HID_DEVICE_SYSTEM_CONSUMER",
+      "HID_DEVICE_UP:000C_U:0001",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "busNumber": 10,
+    "address": 2,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "hidserv.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_046D&PID_C54D&MI_01&Col03\\8&2c7d4402&0&0002",
+    "parentInstanceId": "USB\\VID_046D&PID_C54D&MI_01\\7&7958379&0&0001",
+    "description": "HID-compliant system controller",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_046D&PID_C54D&REV_1403&MI_01&Col03",
+      "HID\\VID_046D&PID_C54D&MI_01&Col03",
+      "HID\\VID_046D&UP:0001_U:0080",
+      "HID_DEVICE_SYSTEM_CONTROL",
+      "HID_DEVICE_UP:0001_U:0080",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 10,
+    "address": 3,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_046D&PID_C54D&MI_02&Col01\\8&4129639&0&0000",
+    "parentInstanceId": "USB\\VID_046D&PID_C54D&MI_02\\7&7958379&0&0002",
+    "description": "HID-compliant vendor-defined device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_046D&PID_C54D&REV_1403&MI_02&Col01",
+      "HID\\VID_046D&PID_C54D&MI_02&Col01",
+      "HID\\VID_046D&UP:FF00_U:0001",
+      "HID_DEVICE_UP:FF00_U:0001",
+      "HID_DEVICE_UPR:FF00-FFFF",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 11,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_046D&PID_C54D&MI_02&Col02\\8&4129639&0&0001",
+    "parentInstanceId": "USB\\VID_046D&PID_C54D&MI_02\\7&7958379&0&0002",
+    "description": "HID-compliant vendor-defined device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_046D&PID_C54D&REV_1403&MI_02&Col02",
+      "HID\\VID_046D&PID_C54D&MI_02&Col02",
+      "HID\\VID_046D&UP:FF00_U:0002",
+      "HID_DEVICE_UP:FF00_U:0002",
+      "HID_DEVICE_UPR:FF00-FFFF",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 11,
+    "address": 2,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1462&PID_7C91\\7&1402d2e5&0&0000",
+    "parentInstanceId": "USB\\VID_1462&PID_7C91\\ANON2DF07988",
+    "description": "HID-compliant device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1462&PID_7C91&REV_0001",
+      "HID\\VID_1462&PID_7C91",
+      "HID\\VID_1462&UP:0001_U:0000",
+      "HID_DEVICE_UP:0001_U:0000",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 8,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_00&Col03&Col01\\9&1c3961fe&0&0000",
+    "parentInstanceId": "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03\\8&90aabfd&0&04",
+    "description": "HID-compliant consumer control device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&MI_00&Col03&Col01",
+      "HID\\VID_1532&UP:000C_U:0001",
+      "HID_DEVICE_SYSTEM_CONSUMER",
+      "HID_DEVICE_UP:000C_U:0001",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "hidserv.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_00&Col03&Col01\\9&3260cabb&0&0000",
+    "parentInstanceId": "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03\\8&90aabfd&0&02",
+    "description": "HID-compliant consumer control device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&MI_00&Col03&Col01",
+      "HID\\VID_1532&UP:000C_U:0001",
+      "HID_DEVICE_SYSTEM_CONSUMER",
+      "HID_DEVICE_UP:000C_U:0001",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "busNumber": 7,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "hidserv.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_00&Col03&Col01\\9&611f941&0&0000",
+    "parentInstanceId": "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03\\8&90aabfd&0&06",
+    "description": "HID-compliant consumer control device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&MI_00&Col03&Col01",
+      "HID\\VID_1532&UP:000C_U:0001",
+      "HID_DEVICE_SYSTEM_CONSUMER",
+      "HID_DEVICE_UP:000C_U:0001",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "hidserv.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_00&Col03&Col02\\9&1c3961fe&0&0001",
+    "parentInstanceId": "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03\\8&90aabfd&0&04",
+    "description": "HID-compliant system controller",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&MI_00&Col03&Col02",
+      "HID\\VID_1532&UP:0001_U:0080",
+      "HID_DEVICE_SYSTEM_CONTROL",
+      "HID_DEVICE_UP:0001_U:0080",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "address": 2,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_00&Col03&Col02\\9&3260cabb&0&0001",
+    "parentInstanceId": "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03\\8&90aabfd&0&02",
+    "description": "HID-compliant system controller",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&MI_00&Col03&Col02",
+      "HID\\VID_1532&UP:0001_U:0080",
+      "HID_DEVICE_SYSTEM_CONTROL",
+      "HID_DEVICE_UP:0001_U:0080",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 7,
+    "address": 2,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_00&Col03&Col02\\9&611f941&0&0001",
+    "parentInstanceId": "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03\\8&90aabfd&0&06",
+    "description": "HID-compliant system controller",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&MI_00&Col03&Col02",
+      "HID\\VID_1532&UP:0001_U:0080",
+      "HID_DEVICE_SYSTEM_CONTROL",
+      "HID_DEVICE_UP:0001_U:0080",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "address": 2,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_00\\8&20ce3842&0&0000",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_00\\7&2e899b0b&0&0000",
+    "description": "Razer Huntsman V3 Pro Mini",
+    "className": "Keyboard",
+    "classGuid": "4d36e96b-e325-11ce-bfc1-08002be10318",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_00",
+      "HID\\VID_1532&PID_02B0&MI_00",
+      "HID\\VID_1532&UP:0001_U:0006",
+      "HID_DEVICE_SYSTEM_KEYBOARD",
+      "HID_DEVICE_UP:0001_U:0006",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "kbdhid",
+    "manufacturer": "Razer Inc",
+    "busNumber": 0,
+    "address": 1,
+    "driver": {
+      "provider": "Razer Inc",
+      "version": "10.0.15063.0",
+      "date": "2025-10-02",
+      "infName": "oem17.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_01&Col01\\8&90aabfd&0&0000",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID Keyboard Device",
+    "className": "Keyboard",
+    "classGuid": "4d36e96b-e325-11ce-bfc1-08002be10318",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_01&Col01",
+      "HID\\VID_1532&PID_02B0&MI_01&Col01",
+      "HID\\VID_1532&UP:0001_U:0006",
+      "HID_DEVICE_SYSTEM_KEYBOARD",
+      "HID_DEVICE_UP:0001_U:0006",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "kbdhid",
+    "manufacturer": "(Standard keyboards)",
+    "busNumber": 1,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8972",
+      "date": "2006-06-21",
+      "infName": "keyboard.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_01&Col02\\8&90aabfd&0&0001",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID-compliant consumer control device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_01&Col02",
+      "HID\\VID_1532&PID_02B0&MI_01&Col02",
+      "HID\\VID_1532&UP:000C_U:0001",
+      "HID_DEVICE_SYSTEM_CONSUMER",
+      "HID_DEVICE_UP:000C_U:0001",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "busNumber": 1,
+    "address": 2,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "hidserv.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_01&Col03\\8&90aabfd&0&0002",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID-compliant system controller",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_01&Col03",
+      "HID\\VID_1532&PID_02B0&MI_01&Col03",
+      "HID\\VID_1532&UP:0001_U:0080",
+      "HID_DEVICE_SYSTEM_CONTROL",
+      "HID_DEVICE_UP:0001_U:0080",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 1,
+    "address": 3,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_01&Col04\\8&90aabfd&0&0003",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID-compliant device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_01&Col04",
+      "HID\\VID_1532&PID_02B0&MI_01&Col04",
+      "HID\\VID_1532&UP:0001_U:0000",
+      "HID_DEVICE_UP:0001_U:0000",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 1,
+    "address": 4,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_01&Col05\\8&90aabfd&0&0004",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID-compliant device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_01&Col05",
+      "HID\\VID_1532&PID_02B0&MI_01&Col05",
+      "HID\\VID_1532&UP:0001_U:0000",
+      "HID_DEVICE_UP:0001_U:0000",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 1,
+    "address": 5,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_01&Col06\\8&90aabfd&0&0005",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID-compliant device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_01&Col06",
+      "HID\\VID_1532&PID_02B0&MI_01&Col06",
+      "HID\\VID_1532&UP:0001_U:0000",
+      "HID_DEVICE_UP:0001_U:0000",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 1,
+    "address": 6,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_01&Col07\\8&90aabfd&0&0006",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID-compliant device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_01&Col07",
+      "HID\\VID_1532&PID_02B0&MI_01&Col07",
+      "HID\\VID_1532&UP:0001_U:0000",
+      "HID_DEVICE_UP:0001_U:0000",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 1,
+    "address": 7,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_02\\8&2ce1e9bf&0&0000",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_02\\7&2e899b0b&0&0002",
+    "description": "HID-compliant mouse",
+    "className": "Mouse",
+    "classGuid": "4d36e96f-e325-11ce-bfc1-08002be10318",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_02",
+      "HID\\VID_1532&PID_02B0&MI_02",
+      "HID\\VID_1532&UP:0001_U:0002",
+      "HID_DEVICE_SYSTEM_MOUSE",
+      "HID_DEVICE_UP:0001_U:0002",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "mouhid",
+    "manufacturer": "Razer Inc",
+    "busNumber": 2,
+    "address": 1,
+    "driver": {
+      "provider": "Razer Inc",
+      "version": "10.0.15063.0",
+      "date": "2025-10-02",
+      "infName": "oem19.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_04\\8&143a06af&0&0000",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_04\\7&2e899b0b&0&0004",
+    "description": "HID-compliant device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_04",
+      "HID\\VID_1532&PID_02B0&MI_04",
+      "HID\\VID_1532&UP:0059_U:0001",
+      "HID_DEVICE_UP:0059_U:0001",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 4,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HID\\VID_1532&PID_02B0&MI_05\\8&2bfd92f4&0&0000",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_05\\7&2e899b0b&0&0005",
+    "description": "HID-compliant vendor-defined device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "HID",
+    "hardwareIds": [
+      "HID\\VID_1532&PID_02B0&REV_0101&MI_05",
+      "HID\\VID_1532&PID_02B0&MI_05",
+      "HID\\VID_1532&UP:FF00_U:0000",
+      "HID_DEVICE_UP:FF00_U:0000",
+      "HID_DEVICE_UPR:FF00-FFFF",
+      "HID_DEVICE"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "busNumber": 5,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "HTREE\\ROOT\\0",
+    "description": "HTREE\\ROOT\\0",
+    "className": "",
+    "classGuid": "00000000-0000-0000-0000-000000000000",
+    "enumerator": "HTREE",
+    "hardwareIds": [],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1440&SUBSYS_00000000&REV_00\\3&11583659&0&C0",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1440&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1440&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1440&REV_00",
+      "PCI\\VEN_1022&DEV_1440",
+      "PCI\\VEN_1022&DEV_1440&CC_060000",
+      "PCI\\VEN_1022&DEV_1440&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 24, function 0",
+    "busNumber": 0,
+    "address": 1572864,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1441&SUBSYS_00000000&REV_00\\3&11583659&0&C1",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1441&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1441&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1441&REV_00",
+      "PCI\\VEN_1022&DEV_1441",
+      "PCI\\VEN_1022&DEV_1441&CC_060000",
+      "PCI\\VEN_1022&DEV_1441&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 24, function 1",
+    "busNumber": 0,
+    "address": 1572865,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1442&SUBSYS_00000000&REV_00\\3&11583659&0&C2",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1442&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1442&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1442&REV_00",
+      "PCI\\VEN_1022&DEV_1442",
+      "PCI\\VEN_1022&DEV_1442&CC_060000",
+      "PCI\\VEN_1022&DEV_1442&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 24, function 2",
+    "busNumber": 0,
+    "address": 1572866,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1443&SUBSYS_00000000&REV_00\\3&11583659&0&C3",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1443&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1443&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1443&REV_00",
+      "PCI\\VEN_1022&DEV_1443",
+      "PCI\\VEN_1022&DEV_1443&CC_060000",
+      "PCI\\VEN_1022&DEV_1443&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 24, function 3",
+    "busNumber": 0,
+    "address": 1572867,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1444&SUBSYS_00000000&REV_00\\3&11583659&0&C4",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1444&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1444&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1444&REV_00",
+      "PCI\\VEN_1022&DEV_1444",
+      "PCI\\VEN_1022&DEV_1444&CC_060000",
+      "PCI\\VEN_1022&DEV_1444&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 24, function 4",
+    "busNumber": 0,
+    "address": 1572868,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1445&SUBSYS_00000000&REV_00\\3&11583659&0&C5",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1445&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1445&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1445&REV_00",
+      "PCI\\VEN_1022&DEV_1445",
+      "PCI\\VEN_1022&DEV_1445&CC_060000",
+      "PCI\\VEN_1022&DEV_1445&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 24, function 5",
+    "busNumber": 0,
+    "address": 1572869,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1446&SUBSYS_00000000&REV_00\\3&11583659&0&C6",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1446&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1446&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1446&REV_00",
+      "PCI\\VEN_1022&DEV_1446",
+      "PCI\\VEN_1022&DEV_1446&CC_060000",
+      "PCI\\VEN_1022&DEV_1446&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 24, function 6",
+    "busNumber": 0,
+    "address": 1572870,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1447&SUBSYS_00000000&REV_00\\3&11583659&0&C7",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1447&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1447&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1447&REV_00",
+      "PCI\\VEN_1022&DEV_1447",
+      "PCI\\VEN_1022&DEV_1447&CC_060000",
+      "PCI\\VEN_1022&DEV_1447&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 24, function 7",
+    "busNumber": 0,
+    "address": 1572871,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1480&SUBSYS_14801022&REV_00\\3&11583659&0&00",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1480&SUBSYS_14801022&REV_00",
+      "PCI\\VEN_1022&DEV_1480&SUBSYS_14801022",
+      "PCI\\VEN_1022&DEV_1480&CC_060000",
+      "PCI\\VEN_1022&DEV_1480&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_1480&REV_00",
+      "PCI\\VEN_1022&DEV_1480",
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 0, function 0",
+    "busNumber": 0,
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00\\3&11583659&0&08",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1482&REV_00",
+      "PCI\\VEN_1022&DEV_1482",
+      "PCI\\VEN_1022&DEV_1482&CC_060000",
+      "PCI\\VEN_1022&DEV_1482&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 1, function 0",
+    "busNumber": 0,
+    "address": 65536,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00\\3&11583659&0&10",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1482&REV_00",
+      "PCI\\VEN_1022&DEV_1482",
+      "PCI\\VEN_1022&DEV_1482&CC_060000",
+      "PCI\\VEN_1022&DEV_1482&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 2, function 0",
+    "busNumber": 0,
+    "address": 131072,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00\\3&11583659&0&18",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1482&REV_00",
+      "PCI\\VEN_1022&DEV_1482",
+      "PCI\\VEN_1022&DEV_1482&CC_060000",
+      "PCI\\VEN_1022&DEV_1482&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 3, function 0",
+    "busNumber": 0,
+    "address": 196608,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00\\3&11583659&0&20",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1482&REV_00",
+      "PCI\\VEN_1022&DEV_1482",
+      "PCI\\VEN_1022&DEV_1482&CC_060000",
+      "PCI\\VEN_1022&DEV_1482&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 4, function 0",
+    "busNumber": 0,
+    "address": 262144,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00\\3&11583659&0&28",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1482&REV_00",
+      "PCI\\VEN_1022&DEV_1482",
+      "PCI\\VEN_1022&DEV_1482&CC_060000",
+      "PCI\\VEN_1022&DEV_1482&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 5, function 0",
+    "busNumber": 0,
+    "address": 327680,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00\\3&11583659&0&38",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1482&REV_00",
+      "PCI\\VEN_1022&DEV_1482",
+      "PCI\\VEN_1022&DEV_1482&CC_060000",
+      "PCI\\VEN_1022&DEV_1482&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 7, function 0",
+    "busNumber": 0,
+    "address": 458752,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00\\3&11583659&0&40",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard host CPU bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000&REV_00",
+      "PCI\\VEN_1022&DEV_1482&SUBSYS_00000000",
+      "PCI\\VEN_1022&DEV_1482&REV_00",
+      "PCI\\VEN_1022&DEV_1482",
+      "PCI\\VEN_1022&DEV_1482&CC_060000",
+      "PCI\\VEN_1022&DEV_1482&CC_0600"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&CC_060000",
+      "PCI\\VEN_1022&CC_0600",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060000",
+      "PCI\\CC_0600"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 8, function 0",
+    "busNumber": 0,
+    "address": 524288,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&09",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI-to-PCI Bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00",
+      "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022",
+      "PCI\\VEN_1022&DEV_1483&CC_060400",
+      "PCI\\VEN_1022&DEV_1483&CC_0604"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_1483&REV_00",
+      "PCI\\VEN_1022&DEV_1483",
+      "PCI\\VEN_1022&CC_060400",
+      "PCI\\VEN_1022&CC_0604",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060400",
+      "PCI\\CC_0604"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "pci",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 1, function 1",
+    "busNumber": 0,
+    "address": 65537,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "pci.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&0A",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI-to-PCI Bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00",
+      "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022",
+      "PCI\\VEN_1022&DEV_1483&CC_060400",
+      "PCI\\VEN_1022&DEV_1483&CC_0604"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_1483&REV_00",
+      "PCI\\VEN_1022&DEV_1483",
+      "PCI\\VEN_1022&CC_060400",
+      "PCI\\VEN_1022&CC_0604",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060400",
+      "PCI\\CC_0604"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "pci",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 1, function 2",
+    "busNumber": 0,
+    "address": 65538,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "pci.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&19",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI-to-PCI Bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00",
+      "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022",
+      "PCI\\VEN_1022&DEV_1483&CC_060400",
+      "PCI\\VEN_1022&DEV_1483&CC_0604"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_1483&REV_00",
+      "PCI\\VEN_1022&DEV_1483",
+      "PCI\\VEN_1022&CC_060400",
+      "PCI\\VEN_1022&CC_0604",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060400",
+      "PCI\\CC_0604"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "pci",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 3, function 1",
+    "busNumber": 0,
+    "address": 196609,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "pci.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00\\3&11583659&0&39",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI-to-PCI Bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00",
+      "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022",
+      "PCI\\VEN_1022&DEV_1484&CC_060400",
+      "PCI\\VEN_1022&DEV_1484&CC_0604"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_1484&REV_00",
+      "PCI\\VEN_1022&DEV_1484",
+      "PCI\\VEN_1022&CC_060400",
+      "PCI\\VEN_1022&CC_0604",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060400",
+      "PCI\\CC_0604"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "pci",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 7, function 1",
+    "busNumber": 0,
+    "address": 458753,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "pci.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00\\3&11583659&0&41",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI-to-PCI Bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00",
+      "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022",
+      "PCI\\VEN_1022&DEV_1484&CC_060400",
+      "PCI\\VEN_1022&DEV_1484&CC_0604"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_1484&REV_00",
+      "PCI\\VEN_1022&DEV_1484",
+      "PCI\\VEN_1022&CC_060400",
+      "PCI\\VEN_1022&CC_0604",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060400",
+      "PCI\\CC_0604"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "pci",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 8, function 1",
+    "busNumber": 0,
+    "address": 524289,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "pci.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1485&SUBSYS_14851022&REV_00\\4&1fde7688&0&0041",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00\\3&11583659&0&41",
+    "description": "AMD PCI",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1485&SUBSYS_14851022&REV_00",
+      "PCI\\VEN_1022&DEV_1485&SUBSYS_14851022",
+      "PCI\\VEN_1022&DEV_1485&CC_130000",
+      "PCI\\VEN_1022&DEV_1485&CC_1300"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_1485&REV_00",
+      "PCI\\VEN_1022&DEV_1485",
+      "PCI\\VEN_1022&CC_130000",
+      "PCI\\VEN_1022&CC_1300",
+      "PCI\\VEN_1022",
+      "PCI\\CC_130000",
+      "PCI\\CC_1300"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AMDPCIDev",
+    "manufacturer": "Advanced Micro Devices",
+    "locationInfo": "PCI bus 45, device 0, function 0",
+    "busNumber": 45,
+    "address": 0,
+    "driver": {
+      "provider": "Advanced Micro Devices",
+      "version": "1.0.0.90",
+      "date": "2022-10-27",
+      "infName": "oem9.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1486&SUBSYS_14861022&REV_00\\4&1fde7688&0&0141",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00\\3&11583659&0&41",
+    "description": "Platform Security Processor",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1486&SUBSYS_14861022&REV_00",
+      "PCI\\VEN_1022&DEV_1486&SUBSYS_14861022",
+      "PCI\\VEN_1022&DEV_1486&CC_108000",
+      "PCI\\VEN_1022&DEV_1486&CC_1080"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_1486&REV_00",
+      "PCI\\VEN_1022&DEV_1486",
+      "PCI\\VEN_1022&CC_108000",
+      "PCI\\VEN_1022&CC_1080",
+      "PCI\\VEN_1022",
+      "PCI\\CC_108000",
+      "PCI\\CC_1080"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "AMD",
+    "locationInfo": "PCI bus 45, device 0, function 1",
+    "busNumber": 45,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": true,
+      "maxMessages": 2
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_1487&SUBSYS_EC911462&REV_00\\4&1fde7688&0&0441",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00\\3&11583659&0&41",
+    "description": "High Definition Audio Controller",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_1487&SUBSYS_EC911462&REV_00",
+      "PCI\\VEN_1022&DEV_1487&SUBSYS_EC911462",
+      "PCI\\VEN_1022&DEV_1487&CC_040300",
+      "PCI\\VEN_1022&DEV_1487&CC_0403"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_1487&REV_00",
+      "PCI\\VEN_1022&DEV_1487",
+      "PCI\\VEN_1022&CC_040300",
+      "PCI\\VEN_1022&CC_0403",
+      "PCI\\VEN_1022",
+      "PCI\\CC_040300",
+      "PCI\\CC_0403"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HDAudBus",
+    "manufacturer": "Microsoft",
+    "locationInfo": "PCI bus 45, device 0, function 4",
+    "busNumber": 45,
+    "address": 4,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-10",
+      "infName": "hdaudbus.inf",
+      "isMicrosoftGeneric": true
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": false,
+      "maxMessages": 1
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_148A&SUBSYS_148A1022&REV_00\\4&d573d7&0&0039",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00\\3&11583659&0&39",
+    "description": "AMD PCI",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_148A&SUBSYS_148A1022&REV_00",
+      "PCI\\VEN_1022&DEV_148A&SUBSYS_148A1022",
+      "PCI\\VEN_1022&DEV_148A&CC_130000",
+      "PCI\\VEN_1022&DEV_148A&CC_1300"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_148A&REV_00",
+      "PCI\\VEN_1022&DEV_148A",
+      "PCI\\VEN_1022&CC_130000",
+      "PCI\\VEN_1022&CC_1300",
+      "PCI\\VEN_1022",
+      "PCI\\CC_130000",
+      "PCI\\CC_1300"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "AMDPCIDev",
+    "manufacturer": "Advanced Micro Devices",
+    "locationInfo": "PCI bus 44, device 0, function 0",
+    "busNumber": 44,
+    "address": 0,
+    "driver": {
+      "provider": "Advanced Micro Devices",
+      "version": "1.0.0.90",
+      "date": "2022-10-27",
+      "infName": "oem9.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_149C&SUBSYS_D4731022&REV_00\\4&1fde7688&0&0341",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1484&SUBSYS_14841022&REV_00\\3&11583659&0&41",
+    "description": "USB xHCI Compliant Host Controller",
+    "friendlyName": "AMD USB 3.10 eXtensible Host Controller - 1.10 (Microsoft)",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_149C&SUBSYS_D4731022&REV_00",
+      "PCI\\VEN_1022&DEV_149C&SUBSYS_D4731022",
+      "PCI\\VEN_1022&DEV_149C&CC_0C0330",
+      "PCI\\VEN_1022&DEV_149C&CC_0C03"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_149C&REV_00",
+      "PCI\\VEN_1022&DEV_149C",
+      "PCI\\VEN_1022&CC_0C0330",
+      "PCI\\VEN_1022&CC_0C03",
+      "PCI\\VEN_1022",
+      "PCI\\CC_0C0330",
+      "PCI\\CC_0C03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "USBXHCI",
+    "manufacturer": "Generic USB xHCI Host Controller",
+    "locationInfo": "PCI bus 45, device 0, function 3",
+    "busNumber": 45,
+    "address": 3,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-09",
+      "infName": "usbxhci.inf",
+      "isMicrosoftGeneric": true
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": true,
+      "maxMessages": 8
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_43E9&SUBSYS_02011B21&REV_00\\4&5f22ecf&0&020A",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&0A",
+    "description": "PCI-to-PCI Bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_43E9&SUBSYS_02011B21&REV_00",
+      "PCI\\VEN_1022&DEV_43E9&SUBSYS_02011B21",
+      "PCI\\VEN_1022&DEV_43E9&CC_060400",
+      "PCI\\VEN_1022&DEV_43E9&CC_0604"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_43E9&REV_00",
+      "PCI\\VEN_1022&DEV_43E9",
+      "PCI\\VEN_1022&CC_060400",
+      "PCI\\VEN_1022&CC_0604",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060400",
+      "PCI\\CC_0604"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "pci",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 5, device 0, function 2",
+    "busNumber": 5,
+    "address": 2,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "pci.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_43EA&SUBSYS_33081B21&REV_00\\5&8fcb7c3&0&38020A",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_43E9&SUBSYS_02011B21&REV_00\\4&5f22ecf&0&020A",
+    "description": "PCI-to-PCI Bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_43EA&SUBSYS_33081B21&REV_00",
+      "PCI\\VEN_1022&DEV_43EA&SUBSYS_33081B21",
+      "PCI\\VEN_1022&DEV_43EA&CC_060400",
+      "PCI\\VEN_1022&DEV_43EA&CC_0604"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_43EA&REV_00",
+      "PCI\\VEN_1022&DEV_43EA",
+      "PCI\\VEN_1022&CC_060400",
+      "PCI\\VEN_1022&CC_0604",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060400",
+      "PCI\\CC_0604"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "pci",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 6, device 7, function 0",
+    "busNumber": 6,
+    "address": 458752,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "pci.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_43EA&SUBSYS_33081B21&REV_00\\5&8fcb7c3&0&48020A",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_43E9&SUBSYS_02011B21&REV_00\\4&5f22ecf&0&020A",
+    "description": "PCI-to-PCI Bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_43EA&SUBSYS_33081B21&REV_00",
+      "PCI\\VEN_1022&DEV_43EA&SUBSYS_33081B21",
+      "PCI\\VEN_1022&DEV_43EA&CC_060400",
+      "PCI\\VEN_1022&DEV_43EA&CC_0604"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_43EA&REV_00",
+      "PCI\\VEN_1022&DEV_43EA",
+      "PCI\\VEN_1022&CC_060400",
+      "PCI\\VEN_1022&CC_0604",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060400",
+      "PCI\\CC_0604"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "pci",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 6, device 9, function 0",
+    "busNumber": 6,
+    "address": 589824,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "pci.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_43EB&SUBSYS_10621B21&REV_00\\4&5f22ecf&0&010A",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&0A",
+    "description": "Standard SATA AHCI Controller",
+    "className": "HDC",
+    "classGuid": "4d36e96a-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_43EB&SUBSYS_10621B21&REV_00",
+      "PCI\\VEN_1022&DEV_43EB&SUBSYS_10621B21",
+      "PCI\\VEN_1022&DEV_43EB&CC_010601",
+      "PCI\\VEN_1022&DEV_43EB&CC_0106"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_43EB&REV_00",
+      "PCI\\VEN_1022&DEV_43EB",
+      "PCI\\VEN_1022&CC_010601",
+      "PCI\\VEN_1022&CC_0106",
+      "PCI\\VEN_1022",
+      "PCI\\CC_010601",
+      "PCI\\CC_0106"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "storahci",
+    "manufacturer": "Standard SATA AHCI Controller",
+    "locationInfo": "PCI bus 5, device 0, function 1",
+    "busNumber": 5,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8972",
+      "date": "2006-06-21",
+      "infName": "mshdc.inf",
+      "isMicrosoftGeneric": true
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": false,
+      "maxMessages": 1
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_43EE&SUBSYS_11421B21&REV_00\\4&5f22ecf&0&000A",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&0A",
+    "description": "USB xHCI Compliant Host Controller",
+    "friendlyName": "AMD USB 3.10 eXtensible Host Controller - 1.10 (Microsoft)",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_43EE&SUBSYS_11421B21&REV_00",
+      "PCI\\VEN_1022&DEV_43EE&SUBSYS_11421B21",
+      "PCI\\VEN_1022&DEV_43EE&CC_0C0330",
+      "PCI\\VEN_1022&DEV_43EE&CC_0C03"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_43EE&REV_00",
+      "PCI\\VEN_1022&DEV_43EE",
+      "PCI\\VEN_1022&CC_0C0330",
+      "PCI\\VEN_1022&CC_0C03",
+      "PCI\\VEN_1022",
+      "PCI\\CC_0C0330",
+      "PCI\\CC_0C03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "USBXHCI",
+    "manufacturer": "Generic USB xHCI Host Controller",
+    "locationInfo": "PCI bus 5, device 0, function 0",
+    "busNumber": 5,
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-09",
+      "infName": "usbxhci.inf",
+      "isMicrosoftGeneric": true
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": true,
+      "maxMessages": 8
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_790B&SUBSYS_D4731022&REV_61\\3&11583659&0&A0",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "AMD SMBus",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_790B&SUBSYS_D4731022&REV_61",
+      "PCI\\VEN_1022&DEV_790B&SUBSYS_D4731022",
+      "PCI\\VEN_1022&DEV_790B&CC_0C0500",
+      "PCI\\VEN_1022&DEV_790B&CC_0C05"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_790B&REV_61",
+      "PCI\\VEN_1022&DEV_790B",
+      "PCI\\VEN_1022&CC_0C0500",
+      "PCI\\VEN_1022&CC_0C05",
+      "PCI\\VEN_1022",
+      "PCI\\CC_0C0500",
+      "PCI\\CC_0C05"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Advanced Micro Devices, Inc",
+    "locationInfo": "PCI bus 0, device 20, function 0",
+    "busNumber": 0,
+    "address": 1310720,
+    "driver": {
+      "provider": "Advanced Micro Devices, Inc",
+      "version": "5.12.0.38",
+      "date": "2022-09-15",
+      "infName": "oem10.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1022&DEV_790E&SUBSYS_D4731022&REV_51\\3&11583659&0&A3",
+    "parentInstanceId": "ACPI\\PNP0A08\\0",
+    "description": "PCI standard ISA bridge",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1022&DEV_790E&SUBSYS_D4731022&REV_51",
+      "PCI\\VEN_1022&DEV_790E&SUBSYS_D4731022",
+      "PCI\\VEN_1022&DEV_790E&CC_060100",
+      "PCI\\VEN_1022&DEV_790E&CC_0601"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1022&DEV_790E&REV_51",
+      "PCI\\VEN_1022&DEV_790E",
+      "PCI\\VEN_1022&CC_060100",
+      "PCI\\VEN_1022&CC_0601",
+      "PCI\\VEN_1022",
+      "PCI\\CC_060100",
+      "PCI\\CC_0601"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "msisadrv",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "PCI bus 0, device 20, function 3",
+    "busNumber": 0,
+    "address": 1310723,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "machine.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_10DE&DEV_10F9&SUBSYS_1F0610DE&REV_A1\\4&2283f625&0&0119",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&19",
+    "description": "High Definition Audio Controller",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_10DE&DEV_10F9&SUBSYS_1F0610DE&REV_A1",
+      "PCI\\VEN_10DE&DEV_10F9&SUBSYS_1F0610DE",
+      "PCI\\VEN_10DE&DEV_10F9&CC_040300",
+      "PCI\\VEN_10DE&DEV_10F9&CC_0403"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_10DE&DEV_10F9&REV_A1",
+      "PCI\\VEN_10DE&DEV_10F9",
+      "PCI\\VEN_10DE&CC_040300",
+      "PCI\\VEN_10DE&CC_0403",
+      "PCI\\VEN_10DE",
+      "PCI\\CC_040300",
+      "PCI\\CC_0403"
+    ],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "service": "HDAudBus",
+    "manufacturer": "Microsoft",
+    "locationInfo": "PCI bus 43, device 0, function 1",
+    "busNumber": 43,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-10",
+      "infName": "hdaudbus.inf",
+      "isMicrosoftGeneric": true
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": false,
+      "maxMessages": 1
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_10DE&DEV_1ADA&SUBSYS_1F0610DE&REV_A1\\4&2283f625&0&0219",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&19",
+    "description": "USB xHCI Compliant Host Controller",
+    "friendlyName": "NVIDIA USB 3.10 eXtensible Host Controller - 1.10 (Microsoft)",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_10DE&DEV_1ADA&SUBSYS_1F0610DE&REV_A1",
+      "PCI\\VEN_10DE&DEV_1ADA&SUBSYS_1F0610DE",
+      "PCI\\VEN_10DE&DEV_1ADA&CC_0C0330",
+      "PCI\\VEN_10DE&DEV_1ADA&CC_0C03"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_10DE&DEV_1ADA&REV_A1",
+      "PCI\\VEN_10DE&DEV_1ADA",
+      "PCI\\VEN_10DE&CC_0C0330",
+      "PCI\\VEN_10DE&CC_0C03",
+      "PCI\\VEN_10DE",
+      "PCI\\CC_0C0330",
+      "PCI\\CC_0C03"
+    ],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "service": "USBXHCI",
+    "manufacturer": "Generic USB xHCI Host Controller",
+    "locationInfo": "PCI bus 43, device 0, function 2",
+    "busNumber": 43,
+    "address": 2,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-09",
+      "infName": "usbxhci.inf",
+      "isMicrosoftGeneric": true
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": false,
+      "maxMessages": 1
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_10DE&DEV_1ADB&SUBSYS_1F0610DE&REV_A1\\4&2283f625&0&0319",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&19",
+    "description": "NVIDIA USB Type-C Port Policy Controller",
+    "friendlyName": "NVIDIA USB Type-C Port Policy Controller",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_10DE&DEV_1ADB&SUBSYS_1F0610DE&REV_A1",
+      "PCI\\VEN_10DE&DEV_1ADB&SUBSYS_1F0610DE",
+      "PCI\\VEN_10DE&DEV_1ADB&CC_0C8000",
+      "PCI\\VEN_10DE&DEV_1ADB&CC_0C80"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_10DE&DEV_1ADB&REV_A1",
+      "PCI\\VEN_10DE&DEV_1ADB",
+      "PCI\\VEN_10DE&CC_0C8000",
+      "PCI\\VEN_10DE&CC_0C80",
+      "PCI\\VEN_10DE",
+      "PCI\\CC_0C8000",
+      "PCI\\CC_0C80"
+    ],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "service": "UcmCxUcsiNvppc",
+    "manufacturer": "NVIDIA",
+    "locationInfo": "PCI bus 43, device 0, function 3",
+    "busNumber": 43,
+    "address": 3,
+    "driver": {
+      "provider": "NVIDIA",
+      "version": "1.52.831.832",
+      "date": "2026-07-22",
+      "infName": "oem2.inf",
+      "isMicrosoftGeneric": false
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": false,
+      "maxMessages": 1
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_10DE&DEV_1F06&SUBSYS_1F0610DE&REV_A1\\4&2283f625&0&0019",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&19",
+    "description": "NVIDIA GeForce RTX 2060 SUPER",
+    "className": "Display",
+    "classGuid": "4d36e968-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_10DE&DEV_1F06&SUBSYS_1F0610DE&REV_A1",
+      "PCI\\VEN_10DE&DEV_1F06&SUBSYS_1F0610DE",
+      "PCI\\VEN_10DE&DEV_1F06&CC_030000",
+      "PCI\\VEN_10DE&DEV_1F06&CC_0300"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_10DE&DEV_1F06&REV_A1",
+      "PCI\\VEN_10DE&DEV_1F06",
+      "PCI\\VEN_10DE&CC_030000",
+      "PCI\\VEN_10DE&CC_0300",
+      "PCI\\VEN_10DE",
+      "PCI\\CC_030000",
+      "PCI\\CC_0300"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "nvlddmkm",
+    "manufacturer": "NVIDIA",
+    "locationInfo": "PCI bus 43, device 0, function 0",
+    "busNumber": 43,
+    "address": 0,
+    "driver": {
+      "provider": "NVIDIA",
+      "version": "32.0.16.2101",
+      "date": "2026-10-19",
+      "infName": "oem4.inf",
+      "isMicrosoftGeneric": false
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": false,
+      "maxMessages": 1
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_10EC&DEV_8125&SUBSYS_7C911462&REV_04\\6&2de62088&0&0048020A",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_43EA&SUBSYS_33081B21&REV_00\\5&8fcb7c3&0&48020A",
+    "description": "Realtek PCIe 2.5GbE Family Controller",
+    "friendlyName": "Realtek PCIe 2.5GbE Family Controller",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_10EC&DEV_8125&SUBSYS_7C911462&REV_04",
+      "PCI\\VEN_10EC&DEV_8125&SUBSYS_7C911462",
+      "PCI\\VEN_10EC&DEV_8125&CC_020000",
+      "PCI\\VEN_10EC&DEV_8125&CC_0200"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_10EC&DEV_8125&REV_04",
+      "PCI\\VEN_10EC&DEV_8125",
+      "PCI\\VEN_10EC&CC_020000",
+      "PCI\\VEN_10EC&CC_0200",
+      "PCI\\VEN_10EC",
+      "PCI\\CC_020000",
+      "PCI\\CC_0200"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "rt640x64",
+    "manufacturer": "Realtek",
+    "locationInfo": "PCI bus 42, device 0, function 0",
+    "busNumber": 42,
+    "address": 0,
+    "driver": {
+      "provider": "Realtek",
+      "version": "10.79.50.1003",
+      "date": "2025-10-03",
+      "infName": "oem0.inf",
+      "isMicrosoftGeneric": false
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": true,
+      "maxMessages": 32
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_10EC&DEV_8168&SUBSYS_7C911462&REV_15\\6&10d9d0ba&0&0038020A",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_43EA&SUBSYS_33081B21&REV_00\\5&8fcb7c3&0&38020A",
+    "description": "Realtek PCIe GbE Family Controller",
+    "friendlyName": "Realtek PCIe GbE Family Controller",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_10EC&DEV_8168&SUBSYS_7C911462&REV_15",
+      "PCI\\VEN_10EC&DEV_8168&SUBSYS_7C911462",
+      "PCI\\VEN_10EC&DEV_8168&CC_020000",
+      "PCI\\VEN_10EC&DEV_8168&CC_0200"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_10EC&DEV_8168&REV_15",
+      "PCI\\VEN_10EC&DEV_8168",
+      "PCI\\VEN_10EC&CC_020000",
+      "PCI\\VEN_10EC&CC_0200",
+      "PCI\\VEN_10EC",
+      "PCI\\CC_020000",
+      "PCI\\CC_0200"
+    ],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "service": "rt640x64",
+    "manufacturer": "Realtek",
+    "locationInfo": "PCI bus 7, device 0, function 0",
+    "busNumber": 7,
+    "address": 0,
+    "driver": {
+      "provider": "Realtek",
+      "version": "10.79.50.1003",
+      "date": "2025-10-03",
+      "infName": "oem0.inf",
+      "isMicrosoftGeneric": false
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": true,
+      "maxMessages": 4
+    }
+  },
+  {
+    "instanceId": "PCI\\VEN_1344&DEV_5416&SUBSYS_11001344&REV_01\\4&12f54805&0&0009",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_1483&SUBSYS_14531022&REV_00\\3&11583659&0&09",
+    "description": "Standard NVM Express Controller",
+    "className": "SCSIAdapter",
+    "classGuid": "4d36e97b-e325-11ce-bfc1-08002be10318",
+    "enumerator": "PCI",
+    "hardwareIds": [
+      "PCI\\VEN_1344&DEV_5416&SUBSYS_11001344&REV_01",
+      "PCI\\VEN_1344&DEV_5416&SUBSYS_11001344",
+      "PCI\\VEN_1344&DEV_5416&CC_010802",
+      "PCI\\VEN_1344&DEV_5416&CC_0108"
+    ],
+    "compatibleIds": [
+      "PCI\\VEN_1344&DEV_5416&REV_01",
+      "PCI\\VEN_1344&DEV_5416",
+      "PCI\\VEN_1344&CC_010802",
+      "PCI\\VEN_1344&CC_0108",
+      "PCI\\VEN_1344",
+      "PCI\\CC_010802",
+      "PCI\\CC_0108"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "stornvme",
+    "manufacturer": "Standard NVM Express Controller",
+    "locationInfo": "PCI bus 1, device 0, function 0",
+    "busNumber": 1,
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9549",
+      "date": "2006-06-21",
+      "infName": "stornvme.inf",
+      "isMicrosoftGeneric": true
+    },
+    "interrupts": {
+      "supportsLineBased": true,
+      "supportsMsi": true,
+      "supportsMsiX": true,
+      "maxMessages": 33
+    }
+  },
+  {
+    "instanceId": "ROOT\\ACPI_HAL\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "ACPI x64-based PC",
+    "className": "Computer",
+    "classGuid": "4d36e966-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "acpiapic"
+    ],
+    "compatibleIds": [
+      "DETECTEDInternal\\ACPI_HAL",
+      "DETECTED\\ACPI_HAL"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "\\Driver\\ACPI_HAL",
+    "manufacturer": "(Standard computers)",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "hal.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\BasicDisplay\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Basic Display Driver",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\BasicDisplay"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "BasicDisplay",
+    "manufacturer": "(Standard display types)",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8521",
+      "date": "2006-06-21",
+      "infName": "basicdisplay.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\BasicRender\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Basic Render Driver",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\BasicRender"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "BasicRender",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "basicrender.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\CompositeBus\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Composite Bus Enumerator",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\CompositeBus"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "CompositeBus",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "compositebus.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\hvservice\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Hypervisor Service",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\hvservice"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "hvservice",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8972",
+      "date": "2006-06-21",
+      "infName": "hvservice.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\KDNIC\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Kernel Debug Network Adapter",
+    "friendlyName": "Microsoft Kernel Debug Network Adapter",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "root\\kdnic"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "service": "kdnic",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8521",
+      "date": "2006-06-21",
+      "infName": "kdnic.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\mssmbios\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft System Management BIOS Driver",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\mssmbios"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "mssmbios",
+    "manufacturer": "(Standard system devices)",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "mssmbios.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\NdisVirtualBus\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "NDIS Virtual Network Adapter Enumerator",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\NdisVirtualBus"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "service": "NdisVirtualBus",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "ndisvirtualbus.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\RDPBUS\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Remote Desktop Device Redirector Bus",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\RDPBUS"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "service": "rdpbus",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8972",
+      "date": "2006-06-21",
+      "infName": "rdpbus.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\spaceport\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Storage Spaces Controller",
+    "className": "SCSIAdapter",
+    "classGuid": "4d36e97b-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "Root\\Spaceport"
+    ],
+    "compatibleIds": [
+      "DETECTEDInternal\\spaceport",
+      "DETECTED\\spaceport"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "spaceport",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "spaceport.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\storvsp\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Hyper-V Virtual Disk Server",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "root\\storvsp"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "storvsp",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "wstorvsp.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\SYSTEM\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Plug and Play Software Device Enumerator",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\SWENUM"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "swenum",
+    "manufacturer": "(Standard system devices)",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.4202",
+      "date": "2025-05-23",
+      "infName": "swenum.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\UMBUS\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "UMBus Root Bus Enumerator",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "root\\umbus"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "service": "umbus",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1150",
+      "date": "2006-06-21",
+      "infName": "umbus.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\vdrvroot\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Virtual Drive Enumerator",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\vdrvroot"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "service": "vdrvroot",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1591",
+      "date": "2006-06-21",
+      "infName": "vdrvroot.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\VID\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Hyper-V Virtualization Infrastructure Driver",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\VID"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "Vid",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "wvid.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\VMBus\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Hyper-V Virtual Machine Bus Provider",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "root\\VMBus"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "vmbusr",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "wvmbusr.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\volmgr\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Volume Manager",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "ROOT\\VOLMGR"
+    ],
+    "compatibleIds": [
+      "DETECTEDInternal\\volmgr",
+      "DETECTED\\volmgr"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "volmgr",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "volmgr.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "ROOT\\VPCIVSP\\0000",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Microsoft Hyper-V PCI Server",
+    "className": "System",
+    "classGuid": "4d36e97d-e325-11ce-bfc1-08002be10318",
+    "enumerator": "ROOT",
+    "hardwareIds": [
+      "root\\Vpcivsp"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "vpcivsp",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8972",
+      "date": "2006-06-21",
+      "infName": "wvpcivsp.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03\\8&90aabfd&0&02",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID-compliant consumer control device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "RZVIRTUAL",
+    "hardwareIds": [
+      "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03"
+    ],
+    "compatibleIds": [
+      "RAZER\\VCONDevice"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "RzDev_02b0",
+    "manufacturer": "Razer Inc",
+    "locationInfo": "RazerBus",
+    "address": 2,
+    "driver": {
+      "provider": "Razer Inc",
+      "version": "10.0.15063.0",
+      "date": "2025-10-02",
+      "infName": "oem16.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03\\8&90aabfd&0&04",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID-compliant consumer control device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "RZVIRTUAL",
+    "hardwareIds": [
+      "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03"
+    ],
+    "compatibleIds": [
+      "RAZER\\VCONDevice"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "RzDev_02b0",
+    "manufacturer": "Razer Inc",
+    "locationInfo": "RazerBus",
+    "address": 4,
+    "driver": {
+      "provider": "Razer Inc",
+      "version": "10.0.15063.0",
+      "date": "2025-10-02",
+      "infName": "oem16.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03\\8&90aabfd&0&06",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "description": "HID-compliant consumer control device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "RZVIRTUAL",
+    "hardwareIds": [
+      "RZVIRTUAL\\VID_1532&PID_02B0&MI_00&Col03"
+    ],
+    "compatibleIds": [
+      "RAZER\\VCONDevice"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "RzDev_02b0",
+    "manufacturer": "Razer Inc",
+    "locationInfo": "RazerBus",
+    "address": 6,
+    "driver": {
+      "provider": "Razer Inc",
+      "version": "10.0.15063.0",
+      "date": "2025-10-02",
+      "infName": "oem16.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "SCSI\\Disk&Ven_NVMe&Prod_CT1000P3PSSD8\\5&380431e2&0&000000",
+    "parentInstanceId": "PCI\\VEN_1344&DEV_5416&SUBSYS_11001344&REV_01\\4&12f54805&0&0009",
+    "description": "Disk drive",
+    "friendlyName": "CT1000P3PSSD8",
+    "className": "DiskDrive",
+    "classGuid": "4d36e967-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SCSI",
+    "hardwareIds": [
+      "SCSI\\DiskNVMe_______________________________CT1000P3PSSD8_P9CR413",
+      "SCSI\\DiskNVMe_______________________________CT1000P3PSSD8",
+      "SCSI\\DiskNVMe____CT1000P3PSSD8___R413",
+      "SCSI\\DiskNVMe____CT1000P3PSSD8___",
+      "SCSI\\DiskNVMe____",
+      "SCSI\\NVMe____CT1000P3PSSD8___R",
+      "NVMe____CT1000P3PSSD8___R",
+      "GenDisk"
+    ],
+    "compatibleIds": [
+      "SCSI\\Disk",
+      "SCSI\\RAW",
+      "Disk1667"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "disk",
+    "manufacturer": "(Standard disk drives)",
+    "locationInfo": "Bus Number 0, Target Id 0, LUN 0",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "disk.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\VolumeSnapshot\\ANON16901559",
+    "parentInstanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000007500000",
+    "description": "Generic volume shadow copy",
+    "className": "VolumeSnapshot",
+    "classGuid": "533c5b84-ec70-11d2-9505-00c04f79deaf",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\VolumeSnapshot"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "volsnap.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\VolumeSnapshot\\ANON177DE2A0",
+    "parentInstanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000007500000",
+    "description": "Generic volume shadow copy",
+    "className": "VolumeSnapshot",
+    "classGuid": "533c5b84-ec70-11d2-9505-00c04f79deaf",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\VolumeSnapshot"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "volsnap.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\VolumeSnapshot\\ANON3D8E2910",
+    "parentInstanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000007500000",
+    "description": "Generic volume shadow copy",
+    "className": "VolumeSnapshot",
+    "classGuid": "533c5b84-ec70-11d2-9505-00c04f79deaf",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\VolumeSnapshot"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "volsnap.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\VolumeSnapshot\\ANON3DF9BAD4",
+    "parentInstanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000007500000",
+    "description": "Generic volume shadow copy",
+    "className": "VolumeSnapshot",
+    "classGuid": "533c5b84-ec70-11d2-9505-00c04f79deaf",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\VolumeSnapshot"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "volsnap.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\VolumeSnapshot\\ANON9699CFBE",
+    "parentInstanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000007500000",
+    "description": "Generic volume shadow copy",
+    "className": "VolumeSnapshot",
+    "classGuid": "533c5b84-ec70-11d2-9505-00c04f79deaf",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\VolumeSnapshot"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "volsnap.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\VolumeSnapshot\\ANONC09DCF73",
+    "parentInstanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000007500000",
+    "description": "Generic volume shadow copy",
+    "className": "VolumeSnapshot",
+    "classGuid": "533c5b84-ec70-11d2-9505-00c04f79deaf",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\VolumeSnapshot"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "volsnap.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\VolumeSnapshot\\ANONF1456C5A",
+    "parentInstanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000007500000",
+    "description": "Generic volume shadow copy",
+    "className": "VolumeSnapshot",
+    "classGuid": "533c5b84-ec70-11d2-9505-00c04f79deaf",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\VolumeSnapshot"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "volsnap.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\VolumeSnapshot\\ANONF632381F",
+    "parentInstanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000007500000",
+    "description": "Generic volume shadow copy",
+    "className": "VolumeSnapshot",
+    "classGuid": "533c5b84-ec70-11d2-9505-00c04f79deaf",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\VolumeSnapshot"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "volsnap.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000000100000",
+    "parentInstanceId": "ROOT\\volmgr\\0000",
+    "description": "Volume",
+    "className": "Volume",
+    "classGuid": "71a27cdd-812a-11d0-bec7-08002be2092f",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\Volume"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "volume",
+    "manufacturer": "Microsoft",
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.5074",
+      "date": "2006-06-21",
+      "infName": "volume.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000006500000",
+    "parentInstanceId": "ROOT\\volmgr\\0000",
+    "description": "Volume",
+    "className": "Volume",
+    "classGuid": "71a27cdd-812a-11d0-bec7-08002be2092f",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\Volume"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "volume",
+    "manufacturer": "Microsoft",
+    "address": 2,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.5074",
+      "date": "2006-06-21",
+      "infName": "volume.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#0000000007500000",
+    "parentInstanceId": "ROOT\\volmgr\\0000",
+    "description": "Volume",
+    "className": "Volume",
+    "classGuid": "71a27cdd-812a-11d0-bec7-08002be2092f",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\Volume"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "volume",
+    "manufacturer": "Microsoft",
+    "address": 3,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.5074",
+      "date": "2006-06-21",
+      "infName": "volume.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#000000E825100000",
+    "parentInstanceId": "ROOT\\volmgr\\0000",
+    "description": "Volume",
+    "className": "Volume",
+    "classGuid": "71a27cdd-812a-11d0-bec7-08002be2092f",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\Volume"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "volume",
+    "manufacturer": "Microsoft",
+    "address": 4,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.5074",
+      "date": "2006-06-21",
+      "infName": "volume.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#000000E871B00000",
+    "parentInstanceId": "ROOT\\volmgr\\0000",
+    "description": "Volume",
+    "className": "Volume",
+    "classGuid": "71a27cdd-812a-11d0-bec7-08002be2092f",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\Volume"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "volume",
+    "manufacturer": "Microsoft",
+    "address": 5,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.5074",
+      "date": "2006-06-21",
+      "infName": "volume.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "STORAGE\\Volume\\{7eeca3a0-d0f6-11f1-8035-806e6f6e6963}#000000E8B1000000",
+    "parentInstanceId": "ROOT\\volmgr\\0000",
+    "description": "Volume",
+    "className": "Volume",
+    "classGuid": "71a27cdd-812a-11d0-bec7-08002be2092f",
+    "enumerator": "STORAGE",
+    "hardwareIds": [
+      "STORAGE\\Volume"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "volume",
+    "manufacturer": "Microsoft",
+    "address": 6,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.5074",
+      "date": "2006-06-21",
+      "infName": "volume.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\COMPUTER\\MFG_Micro-Star_International_Co.__Ltd.&FAM_To_be_filled_by_O.E.M.&PROD_MS-7C91&SKU_To_be_filled_by_O.E.M.",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Computer Device",
+    "friendlyName": "Micro-Star International Co., Ltd. MS-7C91",
+    "className": "Computer",
+    "classGuid": "4d36e966-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "COMPUTER\\{CC249791-91FF-509F-B648-22C6EBB40AFB}",
+      "COMPUTER\\{4B0A3FAB-4652-52CC-9F08-C472974D4334}",
+      "COMPUTER\\{AAE8B3F9-4980-5C54-A888-519AF30B9AB7}",
+      "COMPUTER\\{08932E48-3C86-59C2-A856-9C06FE410099}",
+      "COMPUTER\\{3F7B6030-27C1-5564-B940-2EC556CA8684}",
+      "COMPUTER\\{DDEC9CA6-0F8F-53CD-9AD0-6BECDC8CA423}",
+      "COMPUTER\\{43B1B0AC-7BDF-5458-9C2B-5AF6B9066E87}",
+      "COMPUTER\\{E821E0E2-E11A-5E94-BF5D-FFE53C5E5048}",
+      "COMPUTER\\{71C0B3A1-2D29-5A0F-AF5E-A3CB4155EFF0}",
+      "COMPUTER\\{DAEB6E5E-BA13-585F-BE65-FFD74E0F5909}",
+      "COMPUTER\\{43B1B0AC-7BDF-5458-9C2B-5AF6B9066E87}",
+      "COMPUTER\\{E821E0E2-E11A-5E94-BF5D-FFE53C5E5048}"
+    ],
+    "compatibleIds": [
+      "COMPUTER\\Generic",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "compdev.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\DRIVERENUM\\{96bedf2c-18cb-4a15-b821-5e95ed0fea61}#VocaEffectPack&1&24fd3df4&0",
+    "parentInstanceId": "SWD\\COMPUTER\\MFG_Micro-Star_International_Co.__Ltd.&FAM_To_be_filled_by_O.E.M.&PROD_MS-7C91&SKU_To_be_filled_by_O.E.M.",
+    "description": "Voice Clarity",
+    "className": "AudioProcessingObject",
+    "classGuid": "5989fce8-9cd0-467d-8a6a-5419e31529d4",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "SWC\\VEN_MSFT&AUDIO_EFFECTPACK_VOICECLARITY"
+    ],
+    "compatibleIds": [
+      "SWC\\Generic",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "manufacturer": "Microsoft Corporation",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft Corporation",
+      "version": "1.0.4.7057",
+      "date": "2026-06-16",
+      "infName": "oem8.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "SWD\\MIDISRV\\ANON4B6F9691",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Generic software device",
+    "friendlyName": "MIDI 2.0 Virtual Devices",
+    "className": "SoftwareDevice",
+    "classGuid": "62f9c741-b25a-46ce-b54c-9bccce08b6f2",
+    "enumerator": "SWD",
+    "hardwareIds": [],
+    "compatibleIds": [
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "c_swdevice.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MIDISRV\\ANON4C0EFF34",
+    "parentInstanceId": "SWD\\MIDISRV\\ANON8AC6810A",
+    "description": "MIDI Endpoint",
+    "friendlyName": "Service Test Loopback B",
+    "className": "MidiEndpoint",
+    "classGuid": "762ec895-f9c4-4107-a81a-08d8e437c3e5",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "MIDISRV\\MidiEndpoints"
+    ],
+    "compatibleIds": [
+      "GenericMidiEndpoint",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8328",
+      "date": "2006-06-21",
+      "infName": "c_midi.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MIDISRV\\ANON716E783C",
+    "parentInstanceId": "SWD\\MIDISRV\\ANON8AC6810A",
+    "description": "MIDI Endpoint",
+    "friendlyName": "Service Test Ping (Internal)",
+    "className": "MidiEndpoint",
+    "classGuid": "762ec895-f9c4-4107-a81a-08d8e437c3e5",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "MIDISRV\\MidiEndpoints"
+    ],
+    "compatibleIds": [
+      "GenericMidiEndpoint",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8328",
+      "date": "2006-06-21",
+      "infName": "c_midi.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MIDISRV\\ANON7EACCA9F",
+    "parentInstanceId": "SWD\\MIDISRV\\ANON8AC6810A",
+    "description": "MIDI Endpoint",
+    "friendlyName": "Service Test Loopback A",
+    "className": "MidiEndpoint",
+    "classGuid": "762ec895-f9c4-4107-a81a-08d8e437c3e5",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "MIDISRV\\MidiEndpoints"
+    ],
+    "compatibleIds": [
+      "GenericMidiEndpoint",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.8328",
+      "date": "2006-06-21",
+      "infName": "c_midi.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MIDISRV\\ANON8582332E",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Generic software device",
+    "friendlyName": "MIDI 2.0 Loop Devices",
+    "className": "SoftwareDevice",
+    "classGuid": "62f9c741-b25a-46ce-b54c-9bccce08b6f2",
+    "enumerator": "SWD",
+    "hardwareIds": [],
+    "compatibleIds": [
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "c_swdevice.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MIDISRV\\ANON8AC6810A",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Generic software device",
+    "friendlyName": "MIDI 2.0 Service Tests",
+    "className": "SoftwareDevice",
+    "classGuid": "62f9c741-b25a-46ce-b54c-9bccce08b6f2",
+    "enumerator": "SWD",
+    "hardwareIds": [],
+    "compatibleIds": [
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "c_swdevice.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MMDEVAPI\\ANON50463464",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Generic software device",
+    "friendlyName": "Microsoft GS Wavetable Synth",
+    "className": "SoftwareDevice",
+    "classGuid": "62f9c741-b25a-46ce-b54c-9bccce08b6f2",
+    "enumerator": "SWD",
+    "hardwareIds": [],
+    "compatibleIds": [
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "manufacturer": "Microsoft",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "c_swdevice.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{1e119694-78f9-4ab0-8b95-519fae9105ce}",
+    "parentInstanceId": "HDAUDIO\\FUNC_01&VEN_10DE&DEV_0093&SUBSYS_10DE1F06&REV_1001\\5&10f7cd6&0&0001",
+    "description": "Audio Endpoint",
+    "friendlyName": "GS25F2 (NVIDIA High Definition Audio)",
+    "className": "AudioEndpoint",
+    "classGuid": "c166523c-fe0c-4a94-a586-f1a80cfbbf3e",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "MMDEVAPI\\AudioEndpoints"
+    ],
+    "compatibleIds": [
+      "GenericAudioEndpoint",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2024-03-31",
+      "infName": "audioendpoint.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{33e1921c-0f6a-4eba-a7fa-b7ea7902cca9}",
+    "parentInstanceId": "HDAUDIO\\FUNC_01&VEN_10EC&DEV_0B00&SUBSYS_1462EC91&REV_1000\\5&23eca7d1&0&0001",
+    "description": "Audio Endpoint",
+    "friendlyName": "Speakers (High Definition Audio Device)",
+    "className": "AudioEndpoint",
+    "classGuid": "c166523c-fe0c-4a94-a586-f1a80cfbbf3e",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "MMDEVAPI\\AudioEndpoints"
+    ],
+    "compatibleIds": [
+      "GenericAudioEndpoint",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2024-03-31",
+      "infName": "audioendpoint.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{46eb6c53-119e-4b00-aa2a-a9fc6a75edeb}",
+    "parentInstanceId": "HDAUDIO\\FUNC_01&VEN_10DE&DEV_0093&SUBSYS_10DE1F06&REV_1001\\5&10f7cd6&0&0001",
+    "description": "Audio Endpoint",
+    "friendlyName": "DigitalOutput (NVIDIA High Definition Audio)",
+    "className": "AudioEndpoint",
+    "classGuid": "c166523c-fe0c-4a94-a586-f1a80cfbbf3e",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "MMDEVAPI\\AudioEndpoints"
+    ],
+    "compatibleIds": [
+      "GenericAudioEndpoint",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2024-03-31",
+      "infName": "audioendpoint.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{d6893022-0b58-40c8-a59d-08f35a00f19a}",
+    "parentInstanceId": "HDAUDIO\\FUNC_01&VEN_10EC&DEV_0B00&SUBSYS_1462EC91&REV_1000\\5&23eca7d1&0&0001",
+    "description": "Audio Endpoint",
+    "friendlyName": "Digital Audio (S/PDIF) (High Definition Audio Device)",
+    "className": "AudioEndpoint",
+    "classGuid": "c166523c-fe0c-4a94-a586-f1a80cfbbf3e",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "MMDEVAPI\\AudioEndpoints"
+    ],
+    "compatibleIds": [
+      "GenericAudioEndpoint",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2024-03-31",
+      "infName": "audioendpoint.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MMDEVAPI\\{0.0.1.00000000}.{6d2b95a5-e5be-41f3-b893-634640956068}",
+    "parentInstanceId": "HDAUDIO\\FUNC_01&VEN_10EC&DEV_0B00&SUBSYS_1462EC91&REV_1000\\5&23eca7d1&0&0001",
+    "description": "Audio Endpoint",
+    "friendlyName": "Microphone (High Definition Audio Device)",
+    "className": "AudioEndpoint",
+    "classGuid": "c166523c-fe0c-4a94-a586-f1a80cfbbf3e",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "MMDEVAPI\\AudioEndpoints"
+    ],
+    "compatibleIds": [
+      "GenericAudioEndpoint",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2024-03-31",
+      "infName": "audioendpoint.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MSRRAS\\ANON21155CAC",
+    "parentInstanceId": "SWD\\MSRRAS\\{5e259276-bc7e-40e3-b93b-8f89b5f3abc0}",
+    "description": "WAN Miniport (IPv6)",
+    "friendlyName": "WAN Miniport (IPv6)",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "ms_ndiswanipv6"
+    ],
+    "compatibleIds": [
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "NdisWan",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "netrasa.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MSRRAS\\ANON6C5B7063",
+    "parentInstanceId": "SWD\\MSRRAS\\{5e259276-bc7e-40e3-b93b-8f89b5f3abc0}",
+    "description": "WAN Miniport (PPPOE)",
+    "friendlyName": "WAN Miniport (PPPOE)",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "ms_pppoeminiport"
+    ],
+    "compatibleIds": [
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "RasPppoe",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "netrasa.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MSRRAS\\ANON6F648C6C",
+    "parentInstanceId": "SWD\\MSRRAS\\{5e259276-bc7e-40e3-b93b-8f89b5f3abc0}",
+    "description": "WAN Miniport (Network Monitor)",
+    "friendlyName": "WAN Miniport (Network Monitor)",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "ms_ndiswanbh"
+    ],
+    "compatibleIds": [
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "NdisWan",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "netrasa.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MSRRAS\\ANON8D72D035",
+    "parentInstanceId": "SWD\\MSRRAS\\{5e259276-bc7e-40e3-b93b-8f89b5f3abc0}",
+    "description": "WAN Miniport (SSTP)",
+    "friendlyName": "WAN Miniport (SSTP)",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "ms_sstpminiport"
+    ],
+    "compatibleIds": [
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "RasSstp",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "netsstpa.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MSRRAS\\ANONB7E38D17",
+    "parentInstanceId": "SWD\\MSRRAS\\{5e259276-bc7e-40e3-b93b-8f89b5f3abc0}",
+    "description": "WAN Miniport (PPTP)",
+    "friendlyName": "WAN Miniport (PPTP)",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "ms_pptpminiport"
+    ],
+    "compatibleIds": [
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "PptpMiniport",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "netrasa.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MSRRAS\\ANONCD544241",
+    "parentInstanceId": "SWD\\MSRRAS\\{5e259276-bc7e-40e3-b93b-8f89b5f3abc0}",
+    "description": "WAN Miniport (IP)",
+    "friendlyName": "WAN Miniport (IP)",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "ms_ndiswanip"
+    ],
+    "compatibleIds": [
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "NdisWan",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "netrasa.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MSRRAS\\ANOND07E20AE",
+    "parentInstanceId": "SWD\\MSRRAS\\{5e259276-bc7e-40e3-b93b-8f89b5f3abc0}",
+    "description": "WAN Miniport (L2TP)",
+    "friendlyName": "WAN Miniport (L2TP)",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "ms_l2tpminiport"
+    ],
+    "compatibleIds": [
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "Rasl2tp",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "netrasa.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MSRRAS\\ANOND8E0047B",
+    "parentInstanceId": "SWD\\MSRRAS\\{5e259276-bc7e-40e3-b93b-8f89b5f3abc0}",
+    "description": "WAN Miniport (IKEv2)",
+    "friendlyName": "WAN Miniport (IKEv2)",
+    "className": "Net",
+    "classGuid": "4d36e972-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "ms_agilevpnminiport"
+    ],
+    "compatibleIds": [
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "RasAgileVpn",
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "netavpna.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\MSRRAS\\{5e259276-bc7e-40e3-b93b-8f89b5f3abc0}",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Generic software device",
+    "friendlyName": "Microsoft RRAS Root Enumerator",
+    "className": "SoftwareDevice",
+    "classGuid": "62f9c741-b25a-46ce-b54c-9bccce08b6f2",
+    "enumerator": "SWD",
+    "hardwareIds": [],
+    "compatibleIds": [
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "manufacturer": "Microsoft",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "c_swdevice.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\PRINTENUM\\ANON1E4094D1",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Local Print Queue",
+    "friendlyName": "Root Print Queue",
+    "className": "PrintQueue",
+    "classGuid": "1ed2bbf9-11f0-4084-b21f-ad83a8e6dcdc",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "PRINTENUM\\LocalPrintQueue"
+    ],
+    "compatibleIds": [
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": true,
+    "isDisabled": true,
+    "problemCode": 22,
+    "manufacturer": "Microsoft",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "printqueue.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\PRINTENUM\\{31D166B8-8198-478F-810B-85B314BC3B4F}",
+    "parentInstanceId": "SWD\\PRINTENUM\\ANON1E4094D1",
+    "description": "Local Print Queue",
+    "friendlyName": "Microsoft Print to PDF",
+    "className": "PrintQueue",
+    "classGuid": "1ed2bbf9-11f0-4084-b21f-ad83a8e6dcdc",
+    "enumerator": "SWD",
+    "hardwareIds": [
+      "PRINTENUM\\{084f01fa-e634-4d77-83ee-074817c03581}",
+      "PRINTENUM\\LocalPrintQueue",
+      "{084f01fa-e634-4d77-83ee-074817c03581}"
+    ],
+    "compatibleIds": [
+      "GenPrintQueue",
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "printqueue.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SWD\\RADIO\\{3DB5895D-CC28-44B3-AD3D-6F01A782B8D2}",
+    "parentInstanceId": "HTREE\\ROOT\\0",
+    "description": "Generic software device",
+    "friendlyName": "Microsoft Radio Device Enumeration Bus",
+    "className": "SoftwareDevice",
+    "classGuid": "62f9c741-b25a-46ce-b54c-9bccce08b6f2",
+    "enumerator": "SWD",
+    "hardwareIds": [],
+    "compatibleIds": [
+      "SWD\\GenericRaw",
+      "SWD\\Generic"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "manufacturer": "Microsoft",
+    "busNumber": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "c_swdevice.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SW\\{96E080C7-143C-11D1-B40F-00A0C9223196}\\{3C0D501A-140B-11D1-B40F-00A0C9223196}",
+    "parentInstanceId": "ROOT\\SYSTEM\\0000",
+    "description": "Microsoft Streaming Service Proxy",
+    "className": "MEDIA",
+    "classGuid": "4d36e96c-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SW",
+    "hardwareIds": [
+      "SW\\{96E080C7-143C-11D1-B40F-00A0C9223196}"
+    ],
+    "compatibleIds": [],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "MSKSSRV",
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "ksfilter.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SW\\{cfd669f1-9bc2-11d0-8299-0000f822fe8a}\\{0A4252A0-7E70-11D0-A5D6-28DB04C10000}",
+    "parentInstanceId": "ROOT\\SYSTEM\\0000",
+    "description": "Microsoft Streaming Tee/Sink-to-Sink Converter",
+    "className": "MEDIA",
+    "classGuid": "4d36e96c-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SW",
+    "hardwareIds": [
+      "SW\\{cfd669f1-9bc2-11d0-8299-0000f822fe8a}"
+    ],
+    "compatibleIds": [],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "MSTEE",
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "ksfilter.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "SW\\{cfd669f1-9bc2-11d0-8299-0000f822fe8a}\\{CF1DDA2C-9743-11D0-A3EE-00A0C9223196}",
+    "parentInstanceId": "ROOT\\SYSTEM\\0000",
+    "description": "Microsoft Streaming Tee/Sink-to-Sink Converter",
+    "className": "MEDIA",
+    "classGuid": "4d36e96c-e325-11ce-bfc1-08002be10318",
+    "enumerator": "SW",
+    "hardwareIds": [
+      "SW\\{cfd669f1-9bc2-11d0-8299-0000f822fe8a}"
+    ],
+    "compatibleIds": [],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "MSTEE",
+    "manufacturer": "Microsoft",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.1",
+      "date": "2006-06-21",
+      "infName": "ksfilter.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\ROOT_HUB30\\5&201a262c&0&0",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_43EE&SUBSYS_11421B21&REV_00\\4&5f22ecf&0&000A",
+    "description": "USB Root Hub (USB 3.0)",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\ROOT_HUB30&VID1022&PID43EE&REV0000",
+      "USB\\ROOT_HUB30&VID1022&PID43EE",
+      "USB\\ROOT_HUB30"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "USBHUB3",
+    "manufacturer": "(Standard USB HUBs)",
+    "busNumber": 0,
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-09",
+      "infName": "usbhub3.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\ROOT_HUB30\\5&2eda9e40&0&0",
+    "parentInstanceId": "PCI\\VEN_1022&DEV_149C&SUBSYS_D4731022&REV_00\\4&1fde7688&0&0341",
+    "description": "USB Root Hub (USB 3.0)",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\ROOT_HUB30&VID1022&PID149C&REV0000",
+      "USB\\ROOT_HUB30&VID1022&PID149C",
+      "USB\\ROOT_HUB30"
+    ],
+    "compatibleIds": [],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "USBHUB3",
+    "manufacturer": "(Standard USB HUBs)",
+    "busNumber": 0,
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-09",
+      "infName": "usbhub3.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\ROOT_HUB30\\5&36309db6&0&0",
+    "parentInstanceId": "PCI\\VEN_10DE&DEV_1ADA&SUBSYS_1F0610DE&REV_A1\\4&2283f625&0&0219",
+    "description": "USB Root Hub (USB 3.0)",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\ROOT_HUB30&VID10DE&PID1ADA&REV00A1",
+      "USB\\ROOT_HUB30&VID10DE&PID1ADA",
+      "USB\\ROOT_HUB30"
+    ],
+    "compatibleIds": [],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "USBHUB3",
+    "manufacturer": "(Standard USB HUBs)",
+    "address": 0,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-09",
+      "infName": "usbhub3.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_046D&PID_C54D&MI_00\\7&7958379&0&0000",
+    "parentInstanceId": "USB\\VID_046D&PID_C54D\\ANON73CD6B9D",
+    "description": "USB Input Device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_046D&PID_C54D&REV_1403&MI_00",
+      "USB\\VID_046D&PID_C54D&MI_00"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_046d&Class_03&SubClass_01&Prot_02",
+      "USB\\COMPAT_VID_046d&Class_03&SubClass_01",
+      "USB\\COMPAT_VID_046d&Class_03",
+      "USB\\Class_03&SubClass_01&Prot_02",
+      "USB\\Class_03&SubClass_01",
+      "USB\\Class_03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HidUsb",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "002d.0000.0003.004.000.000.000.000.000",
+    "busNumber": 0,
+    "address": 4,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_046D&PID_C54D&MI_01\\7&7958379&0&0001",
+    "parentInstanceId": "USB\\VID_046D&PID_C54D\\ANON73CD6B9D",
+    "description": "USB Input Device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_046D&PID_C54D&REV_1403&MI_01",
+      "USB\\VID_046D&PID_C54D&MI_01"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_046d&Class_03&SubClass_01&Prot_01",
+      "USB\\COMPAT_VID_046d&Class_03&SubClass_01",
+      "USB\\COMPAT_VID_046d&Class_03",
+      "USB\\Class_03&SubClass_01&Prot_01",
+      "USB\\Class_03&SubClass_01",
+      "USB\\Class_03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HidUsb",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "002d.0000.0003.004.000.000.000.000.000",
+    "busNumber": 0,
+    "address": 5,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_046D&PID_C54D&MI_02\\7&7958379&0&0002",
+    "parentInstanceId": "USB\\VID_046D&PID_C54D\\ANON73CD6B9D",
+    "description": "USB Input Device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_046D&PID_C54D&REV_1403&MI_02",
+      "USB\\VID_046D&PID_C54D&MI_02"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_046d&Class_03&SubClass_00&Prot_00",
+      "USB\\COMPAT_VID_046d&Class_03&SubClass_00",
+      "USB\\COMPAT_VID_046d&Class_03",
+      "USB\\Class_03&SubClass_00&Prot_00",
+      "USB\\Class_03&SubClass_00",
+      "USB\\Class_03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HidUsb",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "002d.0000.0003.004.000.000.000.000.000",
+    "busNumber": 0,
+    "address": 6,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_046D&PID_C54D\\ANON73CD6B9D",
+    "parentInstanceId": "USB\\ROOT_HUB30\\5&2eda9e40&0&0",
+    "description": "USB Composite Device",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_046D&PID_C54D&REV_1403",
+      "USB\\VID_046D&PID_C54D"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_046D&DevClass_00&SubClass_00&Prot00",
+      "USB\\COMPAT_VID_046D&DevClass_00&SubClass_00",
+      "USB\\COMPAT_VID_046D&DevClass_00",
+      "USB\\DevClass_00&SubClass_00&Prot_00",
+      "USB\\DevClass_00&SubClass_00",
+      "USB\\DevClass_00",
+      "USB\\COMPOSITE"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "usbccgp",
+    "manufacturer": "(Standard USB Host Controller)",
+    "locationInfo": "Port_#0004.Hub_#0002",
+    "busNumber": 0,
+    "address": 4,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "usb.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_05E3&PID_0608\\6&28cf390b&0&6",
+    "parentInstanceId": "USB\\ROOT_HUB30\\5&201a262c&0&0",
+    "description": "Generic USB Hub",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_05E3&PID_0608&REV_6070",
+      "USB\\VID_05E3&PID_0608"
+    ],
+    "compatibleIds": [
+      "USB\\USB20_HUB"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "USBHUB3",
+    "manufacturer": "(Standard USB HUBs)",
+    "locationInfo": "Port_#0006.Hub_#0001",
+    "busNumber": 0,
+    "address": 6,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2026-10-09",
+      "infName": "usbhub3.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_1462&PID_7C91\\ANON2DF07988",
+    "parentInstanceId": "USB\\ROOT_HUB30\\5&201a262c&0&0",
+    "description": "USB Input Device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_1462&PID_7C91&REV_0001",
+      "USB\\VID_1462&PID_7C91"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_1462&Class_03&SubClass_00&Prot_00",
+      "USB\\COMPAT_VID_1462&Class_03&SubClass_00",
+      "USB\\COMPAT_VID_1462&Class_03",
+      "USB\\Class_03&SubClass_00&Prot_00",
+      "USB\\Class_03&SubClass_00",
+      "USB\\Class_03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HidUsb",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "Port_#0012.Hub_#0001",
+    "busNumber": 0,
+    "address": 12,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_1532&PID_02B0&MI_00\\7&2e899b0b&0&0000",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0\\ANONBB7E310E",
+    "description": "USB Input Device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_1532&PID_02B0&REV_0101&MI_00",
+      "USB\\VID_1532&PID_02B0&MI_00"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_01&Prot_01",
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_01",
+      "USB\\COMPAT_VID_1532&Class_03",
+      "USB\\Class_03&SubClass_01&Prot_01",
+      "USB\\Class_03&SubClass_01",
+      "USB\\Class_03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HidUsb",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "002d.0000.0003.001.000.000.000.000.000",
+    "busNumber": 0,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_1532&PID_02B0&MI_01\\7&2e899b0b&0&0001",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0\\ANONBB7E310E",
+    "description": "USB Input Device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_1532&PID_02B0&REV_0101&MI_01",
+      "USB\\VID_1532&PID_02B0&MI_01"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_00&Prot_01",
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_00",
+      "USB\\COMPAT_VID_1532&Class_03",
+      "USB\\Class_03&SubClass_00&Prot_01",
+      "USB\\Class_03&SubClass_00",
+      "USB\\Class_03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HidUsb",
+    "manufacturer": "Razer Inc",
+    "locationInfo": "002d.0000.0003.001.000.000.000.000.000",
+    "busNumber": 0,
+    "address": 2,
+    "driver": {
+      "provider": "Razer Inc",
+      "version": "10.0.15063.0",
+      "date": "2025-10-02",
+      "infName": "oem14.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "USB\\VID_1532&PID_02B0&MI_02\\7&2e899b0b&0&0002",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0\\ANONBB7E310E",
+    "description": "Razer Huntsman V3 Pro Mini",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_1532&PID_02B0&REV_0101&MI_02",
+      "USB\\VID_1532&PID_02B0&MI_02"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_01&Prot_02",
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_01",
+      "USB\\COMPAT_VID_1532&Class_03",
+      "USB\\Class_03&SubClass_01&Prot_02",
+      "USB\\Class_03&SubClass_01",
+      "USB\\Class_03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HidUsb",
+    "manufacturer": "Razer Inc",
+    "locationInfo": "002d.0000.0003.001.000.000.000.000.000",
+    "busNumber": 0,
+    "address": 3,
+    "driver": {
+      "provider": "Razer Inc",
+      "version": "6.2.9200.16549",
+      "date": "2017-01-02",
+      "infName": "oem11.inf",
+      "isMicrosoftGeneric": false
+    }
+  },
+  {
+    "instanceId": "USB\\VID_1532&PID_02B0&MI_04\\7&2e899b0b&0&0004",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0\\ANONBB7E310E",
+    "description": "USB Input Device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_1532&PID_02B0&REV_0101&MI_04",
+      "USB\\VID_1532&PID_02B0&MI_04"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_00&Prot_01",
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_00",
+      "USB\\COMPAT_VID_1532&Class_03",
+      "USB\\Class_03&SubClass_00&Prot_01",
+      "USB\\Class_03&SubClass_00",
+      "USB\\Class_03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HidUsb",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "002d.0000.0003.001.000.000.000.000.000",
+    "busNumber": 0,
+    "address": 5,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_1532&PID_02B0&MI_05\\7&2e899b0b&0&0005",
+    "parentInstanceId": "USB\\VID_1532&PID_02B0\\ANONBB7E310E",
+    "description": "USB Input Device",
+    "className": "HIDClass",
+    "classGuid": "745a17a0-74d3-11d0-b6fe-00a0c90f57da",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_1532&PID_02B0&REV_0101&MI_05",
+      "USB\\VID_1532&PID_02B0&MI_05"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_00&Prot_00",
+      "USB\\COMPAT_VID_1532&Class_03&SubClass_00",
+      "USB\\COMPAT_VID_1532&Class_03",
+      "USB\\Class_03&SubClass_00&Prot_00",
+      "USB\\Class_03&SubClass_00",
+      "USB\\Class_03"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "HidUsb",
+    "manufacturer": "(Standard system devices)",
+    "locationInfo": "002d.0000.0003.001.000.000.000.000.000",
+    "busNumber": 0,
+    "address": 6,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "input.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "USB\\VID_1532&PID_02B0\\ANONBB7E310E",
+    "parentInstanceId": "USB\\ROOT_HUB30\\5&2eda9e40&0&0",
+    "description": "USB Composite Device",
+    "className": "USB",
+    "classGuid": "36fc9e60-c465-11cf-8056-444553540000",
+    "enumerator": "USB",
+    "hardwareIds": [
+      "USB\\VID_1532&PID_02B0&REV_0101",
+      "USB\\VID_1532&PID_02B0"
+    ],
+    "compatibleIds": [
+      "USB\\COMPAT_VID_1532&DevClass_00&SubClass_00&Prot00",
+      "USB\\COMPAT_VID_1532&DevClass_00&SubClass_00",
+      "USB\\COMPAT_VID_1532&DevClass_00",
+      "USB\\DevClass_00&SubClass_00&Prot_00",
+      "USB\\DevClass_00&SubClass_00",
+      "USB\\DevClass_00",
+      "USB\\COMPOSITE"
+    ],
+    "isPresent": true,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "usbccgp",
+    "manufacturer": "(Standard USB Host Controller)",
+    "locationInfo": "Port_#0001.Hub_#0002",
+    "busNumber": 0,
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "usb.inf",
+      "isMicrosoftGeneric": true
+    }
+  },
+  {
+    "instanceId": "{8e7bd593-6e6c-4c52-86a6-77175494dd8e}\\MsVhdHba\\1&3030e83&0&01",
+    "parentInstanceId": "ROOT\\vdrvroot\\0000",
+    "description": "Microsoft VHD Loopback Controller",
+    "className": "SCSIAdapter",
+    "classGuid": "4d36e97b-e325-11ce-bfc1-08002be10318",
+    "enumerator": "{8E7BD593-6E6C-4C52-86A6-77175494DD8E}",
+    "hardwareIds": [
+      "{8e7bd593-6e6c-4c52-86a6-77175494dd8e}\\MsVhdHba"
+    ],
+    "compatibleIds": [
+      "{8e7bd593-6e6c-4c52-86a6-77175494dd8e}\\MsCompatibleVhdHba"
+    ],
+    "isPresent": false,
+    "isDisabled": false,
+    "problemCode": 0,
+    "service": "vhdmp",
+    "manufacturer": "Microsoft",
+    "locationInfo": "VHD Bus 0",
+    "address": 1,
+    "driver": {
+      "provider": "Microsoft",
+      "version": "10.0.26100.9711",
+      "date": "2006-06-21",
+      "infName": "vhdmp.inf",
+      "isMicrosoftGeneric": true
+    }
+  }
+]
