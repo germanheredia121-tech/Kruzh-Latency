@@ -19,7 +19,9 @@ public enum BackupTargetKind
     /// <summary>Dispositivo habilitado/deshabilitado (pnputil). Agregado al final: el journal guarda el número del enum.</summary>
     DeviceState,
     /// <summary>Casilla "Permitir que el equipo apague este dispositivo" (WMI MSPower_DeviceEnable). Siempre al final.</summary>
-    DevicePowerOff
+    DevicePowerOff,
+    /// <summary>Clave del registro exportada a un .reg antes de borrarla (TargetPath = archivo). Revertir = reg import.</summary>
+    RegistryExport
 }
 
 public sealed class AtomicBackupRecord

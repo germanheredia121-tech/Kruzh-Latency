@@ -66,16 +66,77 @@ public sealed partial class MainWindow
             DisplayMonitorsPanel.Children.Add(MonitorCard(a));
         }
 
+        _displayGhostIds = ghosts.Select(a => a.Monitor.InstanceId).ToList();
+        DisplayMonitorsPanel.Children.Add(CleanupCard(ghosts));
+    }
+
+    // ---------------------------------------------------------------- C4: limpieza
+
+    private List<string> _displayGhostIds = new();
+
+    private UIElement CleanupCard(IReadOnlyList<MonitorAnalysis> ghosts)
+    {
+        var s = new StackPanel { Spacing = 8 };
+        s.Children.Add(MicroLabel("LIMPIEZA"));
         if (ghosts.Count > 0)
         {
-            var g = new StackPanel { Spacing = 6 };
-            g.Children.Add(MicroLabel($"MONITORES NO CONECTADOS ({ghosts.Count})"));
-            foreach (var a in ghosts)
+            s.Children.Add(Muted($"Monitores no conectados ({ghosts.Count}): " + string.Join(", ", ghosts.Select(g => g.Monitor.Name))));
+        }
+        s.Children.Add(Muted("Borra los monitores fantasma y la configuración de pantallas que guarda Windows por cada monitor y cable " +
+                             "(GraphicsDrivers\\Configuration y \\Connectivity). Sirve cuando quedan modos viejos después de cambiar de monitor o de usar CRU. " +
+                             "Se exporta antes y se puede revertir. Al reiniciar, Windows la vuelve a armar: revisá que vuelvas a estar en tus Hz."));
+        var btn = new Button
+        {
+            Content = ghosts.Count > 0 ? "Limpiar fantasmas y caché de pantallas" : "Limpiar caché de pantallas",
+            Style = (Style)Application.Current.Resources["KruzhGhostButtonStyle"],
+            HorizontalAlignment = HorizontalAlignment.Left
+        };
+        btn.Click += DisplayCleanupBtn_Click;
+        s.Children.Add(btn);
+        return s;
+    }
+
+    private async void DisplayCleanupBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var ghosts = _displayGhostIds.ToList();
+        bool go = await ShowConfirmModalAsync("Limpiar pantallas",
+            (ghosts.Count > 0 ? $"Se borran {ghosts.Count} monitores no conectados (no se puede deshacer, pero si los volvés a conectar Windows los reinstala). " : "") +
+            "Se exporta y se borra la configuración guardada de pantallas; se puede revertir desde Monitor → Cambios aplicados. " +
+            "Antes se crea un punto de restauración. Después hay que reiniciar (nunca se reinicia el driver en caliente).",
+            "Limpiar");
+        if (!go) return;
+
+        var steps = new List<OverlayStep>
+        {
+            new("Punto de restauración", () =>
             {
-                g.Children.Add(Muted($"{a.Monitor.Name} · {a.Monitor.InstanceId}"));
-            }
-            g.Children.Add(Muted("Quedan de monitores, cables o drivers anteriores. La limpieza con backup llega en la próxima versión de esta sección."));
-            DisplayMonitorsPanel.Children.Add(g);
+                var r = new KruzhLatency.Infra.Wmi.WmiRestorePoint().CreateAsync("KRUZH LATENCY - limpieza de pantallas").GetAwaiter().GetResult();
+                return (true, r.Detail); // si Windows lo saltea (límite de 24 h) igual se sigue: hay export propio
+            }),
+            new("Exportar y limpiar la caché de pantallas", () =>
+            {
+                int n = App.AuditService.ResetDisplayCache("DisplayCacheReset");
+                return (true, $"{n} entradas borradas (export en la carpeta de backups de KRUZH).");
+            }, RequiresReboot: true)
+        };
+        foreach (var id in ghosts)
+        {
+            steps.Add(new OverlayStep($"Borrar monitor fantasma {id}", () =>
+            {
+                var (removed, detail) = new CfgMgrDeviceInventory().RemovePhantom(id);
+                return (removed, detail);
+            }));
+        }
+
+        await RunStepsWithOverlayAsync("Limpiando pantallas", "Caché de Windows y monitores fantasma", steps);
+        await RefreshDisplayUiAsync();
+
+        if (await ShowConfirmModalAsync("Reiniciar", "Para que Windows vuelva a detectar los monitores hay que reiniciar. ¿Reiniciar ahora?", "Reiniciar"))
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "shutdown.exe", Arguments = "/r /t 5", CreateNoWindow = true, UseShellExecute = false
+            });
         }
     }
 

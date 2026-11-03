@@ -73,3 +73,22 @@ public class InfraIntegrationTests
         Assert.Equal(original, power.GetAllowPowerOff(device.InstanceId));
     }
 }
+
+[Trait("Category", "Integration")]
+public class DisplayCacheIntegrationTests
+{
+    [IntegrationFact]
+    public void Export_GeneraUnRegValido_SinBorrarNada()
+    {
+        string file = Path.Combine(Path.GetTempPath(), $"kruzh-test-{Guid.NewGuid():N}.reg");
+        try
+        {
+            KruzhLatency.Infra.Display.DisplayCache.Export("Configuration", file);
+            Assert.StartsWith("Windows Registry Editor", File.ReadAllText(file).TrimStart('﻿'));
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+}

@@ -442,6 +442,38 @@ public sealed class TransactionalAuditService
     }
 
     /// <summary>
+    /// C4: exporta GraphicsDrivers\Configuration y \Connectivity a .reg (carpeta de backups de KRUZH), los registra en el
+    /// journal y borra sus subclaves. Revertir los vuelve a importar. Devuelve cuántas entradas se borraron.
+    /// </summary>
+    public int ResetDisplayCache(string tweakId)
+    {
+        string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "KruzhLatency", "Backups", $"pantallas-{DateTime.Now:yyyyMMdd-HHmmss}");
+        int removed = 0;
+        foreach (var key in KruzhLatency.Infra.Display.DisplayCache.CacheKeys)
+        {
+            string file = Path.Combine(dir, key + ".reg");
+            KruzhLatency.Infra.Display.DisplayCache.Export(key, file); // sin backup no se borra (lanza si falla)
+            lock (_sync)
+            {
+                RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
+                {
+                    TweakId = tweakId,
+                    TimestampUtc = DateTime.UtcNow,
+                    TargetKind = BackupTargetKind.RegistryExport,
+                    TargetPath = file,
+                    ValueName = $@"HKLM\{KruzhLatency.Infra.Display.DisplayCache.GraphicsDrivers}\{key}",
+                    PreviousValueExisted = true,
+                    PreviousSerializedValue = file,
+                    AppliedSerializedValue = "<CLEARED>"
+                });
+            }
+            removed += KruzhLatency.Infra.Display.DisplayCache.ClearSubKeys(key);
+        }
+        return removed;
+    }
+
+    /// <summary>
     /// Rescate (ADR-007): reactiva TODOS los dispositivos que KRUZH deshabilitó (journal: estado previo "Enabled") y
     /// quita esas entradas. No toca lo que el usuario ya tenía deshabilitado antes de KRUZH.
     /// Devuelve cuántos se reactivaron y los que fallaron.
@@ -656,6 +688,14 @@ public sealed class TransactionalAuditService
                         {
                             bool wasEnabled = !string.Equals(rec.PreviousSerializedValue, "Disabled", StringComparison.OrdinalIgnoreCase);
                             RunPnpUtil(wasEnabled ? "/enable-device" : "/disable-device", rec.TargetPath);
+                        }
+                        restoredCount++;
+                        break;
+
+                    case BackupTargetKind.RegistryExport:
+                        if (File.Exists(rec.TargetPath))
+                        {
+                            KruzhLatency.Infra.Display.DisplayCache.Import(rec.TargetPath);
                         }
                         restoredCount++;
                         break;
