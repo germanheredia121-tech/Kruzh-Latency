@@ -8,4 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\KruzhLatency.Core\KruzhLatency.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="4.0.0" />
+  </ItemGroup>
 </Project>

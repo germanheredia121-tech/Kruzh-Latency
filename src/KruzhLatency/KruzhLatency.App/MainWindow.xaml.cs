@@ -2689,6 +2689,105 @@ public sealed partial class MainWindow : Window
         MonGpuStatus.Foreground = neutral;
     }
 
+    // ---------------------------------------------------------------- Drivers con más latencia (ETW DPC/ISR)
+    private const int DpcAnalysisSeconds = 10;
+    private const double DpcWarnUs = 500;   // a partir de acá conviene mirar el driver
+    private const double DpcBadUs = 1000;   // arriba de 1 ms se nota como micro-stutter
+
+    private async void AnalyzeDpcDriversBtn_Click(object sender, RoutedEventArgs e)
+    {
+        AnalyzeDpcDriversBtn.IsEnabled = false;
+        AnalyzeDpcDriversBtn.Content = "Midiendo…";
+        DpcAnalysisProgress.Value = 0;
+        DpcAnalysisProgress.Visibility = Visibility.Visible;
+
+        // Progreso visual de la ventana de 10 s (sin overlay: su animación sumaría carga a la medición).
+        using var progressCts = new System.Threading.CancellationTokenSource();
+        var progressTask = Task.Run(async () =>
+        {
+            var sw = Stopwatch.StartNew();
+            while (!progressCts.IsCancellationRequested)
+            {
+                double pct = Math.Min(100, sw.Elapsed.TotalSeconds / DpcAnalysisSeconds * 100);
+                DispatcherQueue.TryEnqueue(() => DpcAnalysisProgress.Value = pct);
+                try { await Task.Delay(200, progressCts.Token); } catch (OperationCanceledException) { break; }
+            }
+        });
+
+        try
+        {
+            var result = await KruzhLatency.Infra.Etw.DpcLatencyAnalyzer.AnalyzeAsync(TimeSpan.FromSeconds(DpcAnalysisSeconds));
+            ShowDpcAnalysis(result);
+        }
+        catch (Exception ex)
+        {
+            App.LogError("DPC analysis", ex);
+            ShowDpcAnalysis(KruzhLatency.Infra.Etw.DpcAnalysisResult.Failed(ex.Message));
+        }
+        finally
+        {
+            progressCts.Cancel();
+            try { await progressTask; } catch { }
+            DpcAnalysisProgress.Visibility = Visibility.Collapsed;
+            AnalyzeDpcDriversBtn.Content = "Analizar de nuevo";
+            AnalyzeDpcDriversBtn.IsEnabled = true;
+        }
+    }
+
+    private void ShowDpcAnalysis(KruzhLatency.Infra.Etw.DpcAnalysisResult result)
+    {
+        DpcSummaryPanel.Visibility = Visibility.Visible;
+
+        if (result.Error != null)
+        {
+            DpcVerdictText.Text = "No se pudo medir";
+            DpcVerdictText.Foreground = MonitorBadBrush;
+            DpcSummaryText.Text = result.Error;
+            DpcDriversHeader.Visibility = Visibility.Collapsed;
+            DpcDriversItemsControl.ItemsSource = null;
+            return;
+        }
+
+        var top = result.Drivers.Where(d => d.Count > 0).Take(8).ToList();
+        var worst = top.FirstOrDefault();
+        if (worst == null)
+        {
+            DpcVerdictText.Text = "No se registraron DPC ni interrupciones en la medición.";
+            DpcVerdictText.Foreground = (Brush)Application.Current.Resources["KruzhTextSecondaryBrush"];
+        }
+        else if (worst.MaxUs >= DpcBadUs)
+        {
+            DpcVerdictText.Text = $"{worst.Description} tuvo picos de {worst.MaxUs:0} µs: puede causar micro-stutters. Probá actualizar o reinstalar ese driver.";
+            DpcVerdictText.Foreground = MonitorBadBrush;
+        }
+        else if (worst.MaxUs >= DpcWarnUs)
+        {
+            DpcVerdictText.Text = $"Latencia aceptable. El peor fue {worst.Description} con {worst.MaxUs:0} µs.";
+            DpcVerdictText.Foreground = MonitorWarnBrush;
+        }
+        else
+        {
+            DpcVerdictText.Text = $"Bien: ningún driver supera {DpcWarnUs:0} µs (peor: {worst.Description}, {worst.MaxUs:0} µs).";
+            DpcVerdictText.Foreground = MonitorGoodBrush;
+        }
+
+        DpcSummaryText.Text =
+            $"Medido durante {result.Duration.TotalSeconds:0} s · {result.TotalDpc:N0} DPC · {result.TotalIsr:N0} interrupciones · " +
+            $"{result.Drivers.Count} drivers con actividad.";
+
+        var neutral = (Brush)Application.Current.Resources["KruzhTextSecondaryBrush"];
+        DpcDriversItemsControl.ItemsSource = top.Select(d => new DriverLatencyRow
+        {
+            Title = d.Description,
+            FileName = d.FileName,
+            MaxText = $"{d.MaxUs:0} µs",
+            AvgText = $"{(d.DpcCount + d.IsrCount > 0 ? (d.DpcAvgUs * d.DpcCount + d.IsrAvgUs * d.IsrCount) / (d.DpcCount + d.IsrCount) : 0):0.0} µs",
+            CountText = $"{d.Count:N0}",
+            MaxBrush = d.MaxUs >= DpcBadUs ? MonitorBadBrush : (d.MaxUs >= DpcWarnUs ? MonitorWarnBrush : neutral)
+        }).ToList();
+        DpcDriversHeader.Visibility = top.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     /// <summary>Nombre legible de un id del journal (tweak del catálogo, juego, o entradas internas viejas).</summary>
     private static string JournalTitleFor(string tweakId)
     {

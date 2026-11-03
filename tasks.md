@@ -102,3 +102,5 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 | U6 | GPU minimalista y dinámica por fabricante | ✅ |
 | U7 | Monitor legible (4 indicadores, 1 gráfico, cambios aplicados en lenguaje humano) | ✅ |
 | U8 | Quitar del catálogo los placebo de mouse/GPU/audio (M02-M04, G03, G07, I03, F02) — es T31 | pendiente |
+| U9 | Ronda 3: sidebar LeftCompact, titlebar unificada, overlay en toda acción, B2, Agregar juego inline, Interrupciones en Optimizaciones, import .nip | ✅ |
+| U10 | Monitor: drivers con más latencia (ETW DPC/ISR por driver, base de T70) | ✅ sin verificar con admin |

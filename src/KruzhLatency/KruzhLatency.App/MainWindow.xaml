@@ -1667,6 +1667,69 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- Drivers con más latencia (ETW: DPC + ISR por driver, a pedido) -->
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Drivers con más latencia" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                    <TextBlock Text="Mide durante 10 segundos cuánto tarda cada driver en atender sus interrupciones (DPC/ISR). Ideal: abrí el juego o mové el mouse mientras mide." FontSize="12.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                </StackPanel>
+                                <Button Grid.Column="1" x:Name="AnalyzeDpcDriversBtn" Click="AnalyzeDpcDriversBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}"
+                                        Content="Analizar 10 s" VerticalAlignment="Center" MinWidth="120" />
+                            </Grid>
+
+                            <ProgressBar x:Name="DpcAnalysisProgress" Visibility="Collapsed" Height="2" Margin="0,10,0,0" Maximum="100"
+                                         Foreground="{StaticResource KruzhTextPrimaryBrush}" Background="#1E1E1E" />
+
+                            <!-- Veredicto + números generales -->
+                            <Border x:Name="DpcSummaryPanel" Visibility="Collapsed" Margin="0,14,0,6" Padding="18,14"
+                                    Background="#0C0C0C" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" CornerRadius="6">
+                                <StackPanel Spacing="6">
+                                    <TextBlock x:Name="DpcVerdictText" Text="-" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                    <TextBlock x:Name="DpcSummaryText" Text="-" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Encabezado de columnas -->
+                            <Grid x:Name="DpcDriversHeader" Visibility="Collapsed" Padding="0,10,0,6" ColumnSpacing="14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="110" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Driver" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="Peor tiempo" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right"
+                                           ToolTipService.ToolTip="La ejecución más larga de un DPC o interrupción de este driver. Arriba de 1000 µs se nota como micro-stutter." />
+                                <TextBlock Grid.Column="2" Text="Promedio" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" />
+                                <TextBlock Grid.Column="3" Text="Llamadas" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+
+                            <ItemsControl x:Name="DpcDriversItemsControl" Margin="0,0,0,40">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="0,12" ColumnSpacing="14" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="110" />
+                                                <ColumnDefinition Width="110" />
+                                                <ColumnDefinition Width="110" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding FileName}" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding MaxText}" FontSize="13" FontWeight="SemiBold" Foreground="{Binding MaxBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="2" Text="{Binding AvgText}" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="3" Text="{Binding CountText}" FontSize="13" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
                             <!-- Cambios aplicados (journal) en lenguaje humano -->
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
