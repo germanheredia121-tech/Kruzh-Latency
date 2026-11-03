@@ -33,6 +33,12 @@ public sealed partial class CfgMgrDeviceInventory : IDeviceInventory, IDeviceMan
             return new DeviceRestartResult(false, 0, "El dispositivo no está presente.");
         }
 
+        // Un dispositivo deshabilitado (por el usuario o por KRUZH) nunca se reactiva como efecto colateral.
+        if (ProblemOf(devInst) == CM_PROB_DISABLED)
+        {
+            return new DeviceRestartResult(false, CM_PROB_DISABLED, "Está deshabilitado: no se reinicia.");
+        }
+
         // CM_DISABLE_UI_NOT_OK: si el driver no admite apagarse en caliente, falla en vez de pedir reinicio.
         uint cr = CM_Disable_DevNode(devInst, CM_DISABLE_UI_NOT_OK);
         if (cr != CR_SUCCESS)

@@ -148,9 +148,6 @@ public sealed partial class DeclarativeTweakItem : ObservableObject
         "DirectXIndependentFlipAndFse" => "\uE740",
         "DisableMpo" => "\uE81E",
         "DisableHdcp" => "\uE72E",
-        "NicEnergySavingOff" => "\uE839",
-        "NicInterruptModerationConfigurable" => "\uE964",
-        "NicRingBuffersConfigurable" => "\uE8B7",
         "NicLsoAndFlowControlOff" => "\uE72A",
         "MmcssAndNetworkThrottlingSelector" => "\uE9F9",
         "TcpNagleAndRssOptimize" => "\uE968",
@@ -528,8 +525,6 @@ public sealed partial class DeclarativeTweakEngine
                             _ => "16"
                         },
                         "CpuPrioritySeparationSelector" => "38",
-                        "NicInterruptModerationConfigurable" => "Medium",
-                        "NicRingBuffersConfigurable" => "512",
                         "MmcssAndNetworkThrottlingSelector" => "Balanced10_Off",
                         _ => t.Options.LastOrDefault()?.Key ?? string.Empty
                     };
@@ -1364,170 +1359,30 @@ public sealed partial class DeclarativeTweakEngine
         });
 
         // ==================== CATEGORÍA 4: RED / DESYNC / JITTER ====================
-        _allTweaks.Add(new DeclarativeTweakItem
-        {
-            Id = "NicEnergySavingOff",
-            CodeNumber = "N01",
-            Title = "Desactivar Ahorro de Energía NIC (EEE, Green Ethernet, ULP, Idle D3)",
-            Category = TweakCategory.NetworkDesync,
-            CategoryDisplay = "Red & Desync",
-            TechnicalDescription = "Apaga Energy Efficient Ethernet (802.3az), Green Ethernet, Ultra Low Power y Wake-on-LAN D3 en la placa de red para eliminar micro-drops.",
-            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972...}\00XX -> *EEE=0, AdvancedEEE=0, EnableGreenEthernet=0, PnPCapabilities=24, AllowIdleIrpInD3=0",
-            SourceAttribution = "Realtek / Intel Ethernet Low-Latency Spec",
-            Risk = RiskLevel.Low,
-            RequiresReboot = true,
-            InMinimal = false,
-            InCompetitivo = true,
-            InProfesional = true,
-            ReadLiveState = () => ReadFirstNetClassDword("PnPCapabilities") == 24,
-            ApplyAction = _ =>
-            {
-                SetAllNetClassValues("NicEnergySavingOff", keyPath =>
-                {
-                    _audit.SetRegistryValue("NicEnergySavingOff", RegistryHive.LocalMachine, keyPath, "PnPCapabilities", 24, RegistryValueKind.DWord);
-                    _audit.SetRegistryValue("NicEnergySavingOff", RegistryHive.LocalMachine, keyPath, "AllowIdleIrpInD3", 0, RegistryValueKind.DWord);
-                    foreach (string prop in new[] { "AdvancedEEE", "*EEE", "EEELinkAdvertisement", "ULPMode", "GigaLite", "EnableGreenEthernet", "PowerSavingMode", "AutoDisableGigabit" })
-                    {
-                        _audit.SetRegistryValue("NicEnergySavingOff", RegistryHive.LocalMachine, keyPath, prop, "0", RegistryValueKind.String);
-                    }
-                });
-                return (true, "Ahorros de energía NIC (EEE / GreenEthernet / D3) desactivados con backup en Journal.");
-            }
-        });
-
-        _allTweaks.Add(new DeclarativeTweakItem
-        {
-            Id = "NicInterruptModerationConfigurable",
-            CodeNumber = "N02",
-            Title = "Interrupt Moderation NIC Configurable (Medium vs Off — Medible)",
-            Category = TweakCategory.NetworkDesync,
-            CategoryDisplay = "Red & Desync",
-            TechnicalDescription = "No se fuerza a ciegas: permite elegir 'Medium / Adaptive' (suele dar menor latencia DPC en chips Realtek/Intel bajo tráfico) o 'Off' (procesamiento inmediato paquete por paquete).",
-            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972...}\00XX -> *InterruptModeration & *InterruptModerationRate",
-            SourceAttribution = "BoringBoredom PC-Tuning §11.34 / BlurBusters",
-            Risk = RiskLevel.Low,
-            RequiresReboot = true,
-            InMinimal = false,
-            InCompetitivo = true,
-            InProfesional = true,
-            SelectedOptionKey = "Medium",
-            Options = new List<TweakOptionChoice>
-            {
-                new() { Key = "Default", ShortLabel = "Auto", DisplayName = "Adaptive / Default", Description = "Moderación adaptativa por defecto." },
-                new() { Key = "Medium", ShortLabel = "Medium", DisplayName = "Moderation ON + Rate Medium (125) [RECOMENDADO — Menor DPC]", Description = "Evita tormentas de ISR en el CPU manteniendo baja latencia." },
-                new() { Key = "Off", ShortLabel = "Off", DisplayName = "Interrupt Moderation OFF (0) [Agresivo]", Description = "Desactiva todo agrupamiento; cada paquete genera una interrupción inmediata." }
-            },
-            ReadLiveState = () =>
-            {
-                string? im = ReadFirstNetClassString("*InterruptModeration");
-                string? rate = ReadFirstNetClassString("*InterruptModerationRate");
-                return im == "0" || rate == "125";
-            },
-            ReadLiveOptionKey = () =>
-            {
-                string? im = ReadFirstNetClassString("*InterruptModeration");
-                string? rate = ReadFirstNetClassString("*InterruptModerationRate");
-                if (im == "0") return "Off";
-                if (rate == "125") return "Medium";
-                return "Default";
-            },
-            ApplyAction = opt =>
-            {
-                if (string.Equals(opt, "Default", StringComparison.OrdinalIgnoreCase))
-                {
-                    SetAllNetClassValues("NicInterruptModerationConfigurable", keyPath =>
-                    {
-                        _audit.SetRegistryValue("NicInterruptModerationConfigurable", RegistryHive.LocalMachine, keyPath, "*InterruptModeration", "1", RegistryValueKind.String);
-                        _audit.SetRegistryValue("NicInterruptModerationConfigurable", RegistryHive.LocalMachine, keyPath, "*InterruptModerationRate", "255", RegistryValueKind.String);
-                    });
-                    return (true, "Interrupt Moderation restaurado a Adaptive/Default.");
-                }
-                bool off = string.Equals(opt, "Off", StringComparison.OrdinalIgnoreCase);
-                SetAllNetClassValues("NicInterruptModerationConfigurable", keyPath =>
-                {
-                    _audit.SetRegistryValue("NicInterruptModerationConfigurable", RegistryHive.LocalMachine, keyPath, "*InterruptModeration", off ? "0" : "1", RegistryValueKind.String);
-                    if (!off)
-                    {
-                        _audit.SetRegistryValue("NicInterruptModerationConfigurable", RegistryHive.LocalMachine, keyPath, "*InterruptModerationRate", "125", RegistryValueKind.String);
-                    }
-                });
-                return (true, off ? "Interrupt Moderation establecido en OFF (0)." : "Interrupt Moderation establecido en Medium (menor DPC).");
-            }
-        });
-
-        _allTweaks.Add(new DeclarativeTweakItem
-        {
-            Id = "NicRingBuffersConfigurable",
-            CodeNumber = "N03",
-            Title = "NDIS Ring Buffers (*ReceiveBuffers / *TransmitBuffers — Fuente Única)",
-            Category = TweakCategory.NetworkDesync,
-            CategoryDisplay = "Red & Desync",
-            TechnicalDescription = "Unifica los antiguos módulos [20] y [21]. Configura el tamaño de los buffers TX/RX de la placa de red.",
-            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972...}\00XX -> *ReceiveBuffers, *TransmitBuffers",
-            SourceAttribution = "Calypto / Realtek NDIS Tuning",
-            Risk = RiskLevel.Low,
-            RequiresReboot = true,
-            InMinimal = false,
-            InCompetitivo = false,
-            InProfesional = true,
-            SelectedOptionKey = "512",
-            Options = new List<TweakOptionChoice>
-            {
-                new() { Key = "Default", ShortLabel = "Auto", DisplayName = "Default del driver NIC", Description = "Valor por defecto del controlador de red." },
-                new() { Key = "256", ShortLabel = "256", DisplayName = "256 Buffers (Ultra Baja Latencia — Solo Juego)", Description = "Mínimo bufferbloat local en la NIC." },
-                new() { Key = "512", ShortLabel = "512", DisplayName = "512 Buffers (Equilibrio Seguro para Fibra 300M-1Gbps)", Description = "Baja latencia de cola sin descartar paquetes en ráfagas." },
-                new() { Key = "1024", ShortLabel = "1024", DisplayName = "1024 Buffers (Alto Caudal 2.5Gbps)", Description = "Evita packet loss si descargás o streameás mientras jugás." }
-            },
-            ReadLiveState = () => ReadFirstNetClassString("*ReceiveBuffers") is "256" or "512" or "1024",
-            ReadLiveOptionKey = () =>
-            {
-                string? rb = ReadFirstNetClassString("*ReceiveBuffers");
-                return rb is "256" or "512" or "1024" ? rb : "Default";
-            },
-            ApplyAction = opt =>
-            {
-                if (string.Equals(opt, "Default", StringComparison.OrdinalIgnoreCase))
-                {
-                    _audit.RevertTweakFromJournal("NicRingBuffersConfigurable", out _);
-                    return (true, "Buffers TX/RX de red restaurados al valor original del controlador.");
-                }
-                string val = string.IsNullOrWhiteSpace(opt) ? "512" : opt;
-                SetAllNetClassValues("NicRingBuffersConfigurable", keyPath =>
-                {
-                    _audit.SetRegistryValue("NicRingBuffersConfigurable", RegistryHive.LocalMachine, keyPath, "*ReceiveBuffers", val, RegistryValueKind.String);
-                    _audit.SetRegistryValue("NicRingBuffersConfigurable", RegistryHive.LocalMachine, keyPath, "*TransmitBuffers", val, RegistryValueKind.String);
-                });
-                return (true, $"Buffers TX/RX de red configurados en {val}.");
-            }
-        });
+        // Placas de red: un ítem por placa con ajustes validados contra su driver (spec 002 / B4).
+        BuildNicItems();
 
         _allTweaks.Add(new DeclarativeTweakItem
         {
             Id = "NicLsoAndFlowControlOff",
             CodeNumber = "N04",
-            Title = "Desactivar LSO (Large Send Offload v1/v2), RSC y Flow Control",
+            Title = "Desactivar RSC (Receive Segment Coalescing) de TCP",
             Category = TweakCategory.NetworkDesync,
             CategoryDisplay = "Red & Desync",
-            TechnicalDescription = "Desactiva la segmentación diferida LSO, el Receive Segment Coalescing (netsh rsc=disabled) y las tramas PAUSE de Flow Control que retienen paquetes.",
-            WhatItTouches = @"*LsoV2IPv4=0, *LsoV2IPv6=0, *FlowControl=0 + netsh int tcp set global rsc=disabled",
-            SourceAttribution = "BlurBusters Desync Guide / PC-Tuning §11.34",
+            TechnicalDescription = "RSC junta varios segmentos TCP recibidos en uno antes de entregarlos: menos interrupciones pero más espera. LSO y Flow Control los ajusta el ítem \"Placa de red\" según tu chip.",
+            WhatItTouches = @"netsh int tcp set global rsc=disabled",
+            SourceAttribution = "Microsoft Learn: Receive Segment Coalescing (RSC) · BlurBusters Desync Guide",
             Risk = RiskLevel.Low,
             RequiresReboot = false,
             InMinimal = false,
             InCompetitivo = true,
             InProfesional = true,
-            ReadLiveState = () => ReadFirstNetClassString("*LsoV2IPv4") == "0",
+            ReadLiveState = () => _audit.HasBackupForTweak("NicLsoAndFlowControlOff"),
             ApplyAction = _ =>
             {
-                SetAllNetClassValues("NicLsoAndFlowControlOff", keyPath =>
-                {
-                    _audit.SetRegistryValue("NicLsoAndFlowControlOff", RegistryHive.LocalMachine, keyPath, "*LsoV2IPv4", "0", RegistryValueKind.String);
-                    _audit.SetRegistryValue("NicLsoAndFlowControlOff", RegistryHive.LocalMachine, keyPath, "*LsoV2IPv6", "0", RegistryValueKind.String);
-                    _audit.SetRegistryValue("NicLsoAndFlowControlOff", RegistryHive.LocalMachine, keyPath, "*FlowControl", "0", RegistryValueKind.String);
-                });
                 _audit.RecordCustomReversibleAction("NicLsoAndFlowControlOff", BackupTargetKind.NetshTcpSetting, "global", "rsc", "enabled", "disabled");
                 TransactionalAuditService.RunHiddenProcess("netsh.exe", "int tcp set global rsc=disabled");
-                return (true, "LSO v2, Flow Control y TCP RSC desactivados.");
+                return (true, "TCP RSC desactivado.");
             }
         });
 
@@ -1594,11 +1449,11 @@ public sealed partial class DeclarativeTweakEngine
         {
             Id = "TcpNagleAndRssOptimize",
             CodeNumber = "N06",
-            Title = "Nagle OFF (TCPNoDelay=1) + RSS Multi-Core Queues + ECN Off",
+            Title = "Nagle OFF (TCPNoDelay=1) + RSS de TCP + ECN Off",
             Category = TweakCategory.NetworkDesync,
             CategoryDisplay = "Red & Desync",
-            TechnicalDescription = "Desactiva el algoritmo de agrupamiento de Nagle en todas las interfaces TCP/IP, activa Receive Side Scaling (RSS) multi-cola y desactiva ECN.",
-            WhatItTouches = @"Tcpip\Parameters\Interfaces\<GUID> -> TCPNoDelay=1, TcpAckFrequency=1 + *RSS=1",
+            TechnicalDescription = "Desactiva el algoritmo de agrupamiento de Nagle en todas las interfaces TCP/IP, activa RSS a nivel TCP (netsh) y desactiva ECN. Las colas RSS de cada placa las ajusta el ítem \"Placa de red\".",
+            WhatItTouches = @"Tcpip\Parameters\Interfaces\<GUID> -> TCPNoDelay=1, TcpAckFrequency=1 · ECNEnabled=0 · netsh int tcp set global rss=enabled ecncapability=disabled",
             SourceAttribution = "Estándar Red Competitiva",
             Risk = RiskLevel.Low,
             InMinimal = false,
@@ -1618,16 +1473,11 @@ public sealed partial class DeclarativeTweakEngine
                         _audit.SetRegistryValue("TcpNagleAndRssOptimize", RegistryHive.LocalMachine, path, "TcpAckFrequency", 1, RegistryValueKind.DWord);
                     }
                 }
-                int queues = Math.Min(4, _hwService.CurrentProfile.CpuPhysicalCores);
-                SetAllNetClassValues("TcpNagleAndRssOptimize", keyPath =>
-                {
-                    _audit.SetRegistryValue("TcpNagleAndRssOptimize", RegistryHive.LocalMachine, keyPath, "*RSS", "1", RegistryValueKind.String);
-                    _audit.SetRegistryValue("TcpNagleAndRssOptimize", RegistryHive.LocalMachine, keyPath, "*NumRssQueues", queues.ToString(), RegistryValueKind.String);
-                });
+                // RSS y colas por placa: los valida el ítem "Placa de red" contra el driver (spec 002 / B4).
                 _audit.SetRegistryValue("TcpNagleAndRssOptimize", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters", "ECNEnabled", 0, RegistryValueKind.DWord);
                 TransactionalAuditService.RunHiddenProcess("netsh.exe", "int tcp set global rss=enabled");
                 TransactionalAuditService.RunHiddenProcess("netsh.exe", "int tcp set global ecncapability=disabled");
-                return (true, $"Nagle OFF + RSS ({queues} colas) + ECN OFF aplicados.");
+                return (true, "Nagle OFF + RSS de TCP + ECN OFF aplicados.");
             }
         });
 
@@ -2196,44 +2046,6 @@ public sealed partial class DeclarativeTweakEngine
         }
     }
 
-    private static int? ReadFirstNetClassDword(string valueName)
-    {
-        using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-        using var cls = hklm.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}");
-        if (cls == null) return null;
-        foreach (string sub in cls.GetSubKeyNames())
-        {
-            if (sub.Length == 4 && char.IsDigit(sub[0]))
-            {
-                using var k = cls.OpenSubKey(sub);
-                if (k?.GetValue("DeviceInstanceID")?.ToString()?.StartsWith("PCI\\", StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    if (k.GetValue(valueName) is int v) return v;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static string? ReadFirstNetClassString(string valueName)
-    {
-        using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-        using var cls = hklm.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}");
-        if (cls == null) return null;
-        foreach (string sub in cls.GetSubKeyNames())
-        {
-            if (sub.Length == 4 && char.IsDigit(sub[0]))
-            {
-                using var k = cls.OpenSubKey(sub);
-                if (k?.GetValue("DeviceInstanceID")?.ToString()?.StartsWith("PCI\\", StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    return k.GetValue(valueName)?.ToString();
-                }
-            }
-        }
-        return null;
-    }
-
     private static void SetAllNetClassValues(string tweakId, Action<string> applyPerKey)
     {
         using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
@@ -2440,13 +2252,9 @@ public sealed partial class DeclarativeTweakEngine
                     SetAllDisplayClassDword("HDCP_Rev", "RMHdcpKeyglobZero", 0);
                     return (true, "HDCP restaurado (RMHdcpKeyglobZero = 0).");
 
-                case "NicEnergySavingOff":
-                    SetAllNetClassValues("NIC_Rev", kp => _audit.SetRegistryValue("NIC_Rev", RegistryHive.LocalMachine, kp, "PnPCapabilities", 0, RegistryValueKind.DWord));
-                    return (true, "PnPCapabilities restaurado a 0.");
-
                 case "NicLsoAndFlowControlOff":
-                    SetAllNetClassValues("LSO_Rev", kp => _audit.SetRegistryValue("LSO_Rev", RegistryHive.LocalMachine, kp, "*LsoV2IPv4", "1", RegistryValueKind.String));
-                    return (true, "LSO v2 restaurado a 1.");
+                    TransactionalAuditService.RunHiddenProcess("netsh.exe", "int tcp set global rsc=enabled");
+                    return (true, "TCP RSC reactivado.");
 
                 case "MmcssAndNetworkThrottlingSelector":
                     _audit.SetRegistryValue("MM_Rev", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "SystemResponsiveness", 20, RegistryValueKind.DWord);
