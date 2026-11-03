@@ -138,7 +138,7 @@ Spec: [specs/002-dpc-red-dispositivos-pantalla.md](specs/002-dpc-red-dispositivo
 ### Fase C — Pantalla
 | ID | Tarea | Deps | Hecho cuando |
 |---|---|---|---|
-| C1 | Parser EDID en Core: base, Established/Standard/Detailed, CTA-861 (data blocks), DisplayID 1.3/2.0 (Type I/VII), Hz exactos | A3 | fixture GS25F2: 200.000 vs 200.003 Hz |
+| C1 ✅ | Parser EDID en Core: base, Established/Standard/Detailed, CTA-861 (data blocks), DisplayID 1.3/2.0 (Type I/VII), Hz exactos | A3 | fixture GS25F2: 200.000 vs 200.003 Hz |
 | C2 [P] | Infra: monitores reales/fantasma, EDID y `EDID_OVERRIDE` del registro, modo actual (QueryDisplayConfig), cálculo DSC | A2 | lectura en la PC del autor |
 | C3 [P] | Sidebar "Pantalla" (ícono monitor): análisis completo del EDID (timings, data blocks, extensiones) | C1, C2 | revisión manual |
 | C4 | Limpieza: monitores fantasma + `GraphicsDrivers\Configuration/Connectivity` con export previo, reinicio | C2, B2 | revisión manual |
