@@ -37,6 +37,19 @@ public sealed class TransactionalAuditService
         }
     }
 
+    /// <summary>Cambios ACTIVOS (con backup pendiente de revertir), agrupados por tweak: cantidad de valores y fecha del último.</summary>
+    public IReadOnlyList<(string TweakId, int ValueCount, DateTime LastChangeUtc)> GetActiveBackupSummary()
+    {
+        lock (_sync)
+        {
+            return _journal.TweakBackups
+                .Where(kv => kv.Value.Count > 0)
+                .Select(kv => (kv.Key, kv.Value.Count, kv.Value.Max(r => r.TimestampUtc)))
+                .OrderByDescending(x => x.Item3)
+                .ToList();
+        }
+    }
+
     public bool HasBackupForTweak(string tweakId)
     {
         lock (_sync)

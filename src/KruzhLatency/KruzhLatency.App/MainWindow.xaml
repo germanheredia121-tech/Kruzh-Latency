@@ -1568,77 +1568,132 @@
                         x:Name="ViewMonitorAudit"
                         Visibility="Collapsed"
                         VerticalScrollBarVisibility="Auto"
-                        HorizontalScrollBarVisibility="Disabled">
+                        HorizontalScrollBarVisibility="Disabled"
+                        HorizontalScrollMode="Disabled">
+                        <StackPanel Padding="48,34,48,40" Spacing="0" MaxWidth="1100" HorizontalAlignment="Stretch">
 
-                        <StackPanel Padding="48,18,48,36" Spacing="28" MaxWidth="1280" HorizontalAlignment="Stretch">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Monitor en tiempo real y auditoría" Style="{StaticResource KruzhPageTitleStyle}" />
-                                <TextBlock Text="Telemetría de resolución de timer del kernel, carga DPC y reversión transaccional desde el Backup Journal." Style="{StaticResource KruzhPageSubtitleStyle}" />
+                            <!-- Encabezado -->
+                            <StackPanel Spacing="6" Margin="0,0,0,30">
+                                <TextBlock Text="SISTEMA" FontSize="10.5" FontWeight="SemiBold" CharacterSpacing="80" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                <TextBlock Text="Monitor" FontSize="30" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                <TextBlock Text="Cómo está respondiendo tu PC ahora mismo, y qué cambios hizo KRUZH LATENCY." FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
                             </StackPanel>
 
-                            <StackPanel Spacing="12">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="GRÁFICO EN VIVO (TIMER &amp; KERNEL DPC)" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                        <Button Click="QuickTestInterruptModMediumBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Probar InterruptModeration = Medium" />
-                                        <Button Click="QuickTestInterruptModOffBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Probar InterruptModeration = Off" />
-                                    </StackPanel>
-                                </Grid>
+                            <!-- 4 indicadores en vivo: valor + qué significa -->
+                            <Grid ColumnSpacing="12" Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
 
-                                <Border Style="{StaticResource KruzhCardStyle}">
-                                    <StackPanel Spacing="14">
-                                        <TextBlock x:Name="LiveMonitorStatsText" Text="-" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
-                                        <Border Style="{StaticResource KruzhSubCardStyle}" Height="150" Padding="8">
-                                            <Canvas x:Name="LiveTelemetryCanvas" Height="134">
-                                                <Polyline x:Name="TimerChartPolyline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="1.5" />
-                                                <Polyline x:Name="DpcChartPolyline" Stroke="{StaticResource KruzhSparklineBrush}" StrokeThickness="2" />
-                                            </Canvas>
-                                        </Border>
+                                <Border Grid.Column="0" Padding="18,16" Background="#0C0C0C" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" CornerRadius="6"
+                                        ToolTipService.ToolTip="Cada cuánto el kernel atiende temporizadores. En reposo Windows usa 15,6 ms; los juegos piden 1 ms o 0,5 ms solos al abrirse.">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Precisión del timer" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                        <TextBlock x:Name="MonTimerValue" Text="-" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        <TextBlock x:Name="MonTimerStatus" Text="-" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
                                     </StackPanel>
                                 </Border>
-                            </StackPanel>
 
-                            <StackPanel Spacing="12">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="REGISTRO TRANSACCIONAL DE CAMBIOS (BACKUP JOURNAL)" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                        <Button Click="OpenJournalFolderBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Abrir carpeta de Journal" />
-                                        <Button Click="RevertAllFromJournalBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Revertir todo desde el Journal" />
+                                <Border Grid.Column="1" Padding="18,16" Background="#0C0C0C" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" CornerRadius="6"
+                                        ToolTipService.ToolTip="Porcentaje del procesador que se va en atender interrupciones y DPC de drivers. Si sube mucho, un driver está generando latencia.">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Interrupciones y DPC" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                        <TextBlock x:Name="MonDpcValue" Text="-" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        <TextBlock x:Name="MonDpcStatus" Text="-" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
                                     </StackPanel>
-                                </Grid>
+                                </Border>
 
-                                <ItemsControl x:Name="JournalEntriesItemsControl">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Style="{StaticResource KruzhCardStyle}" Padding="18,14" Margin="0,0,0,8">
-                                                <Grid ColumnSpacing="14">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="170" />
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="210" />
-                                                        <ColumnDefinition Width="210" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" Text="{Binding TweakId}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Grid.Column="1" Text="{Binding TargetPath}" FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" FontFamily="Consolas" TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Grid.Column="2" Text="{Binding PreviousSerializedValue}" FontSize="11" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Grid.Column="3" Text="{Binding AppliedSerializedValue}" FontSize="11" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                                <Border Grid.Column="2" Padding="18,16" Background="#0C0C0C" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" CornerRadius="6">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Uso de CPU" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                        <TextBlock x:Name="MonCpuValue" Text="-" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        <TextBlock x:Name="MonCpuStatus" Text="-" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="3" Padding="18,16" Background="#0C0C0C" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" CornerRadius="6">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Uso de GPU" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                        <TextBlock x:Name="MonGpuValue" Text="-" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        <TextBlock x:Name="MonGpuStatus" Text="-" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Un solo gráfico: interrupciones y DPC, últimos 60 s -->
+                            <Border Padding="18,16" Background="#0C0C0C" BorderBrush="{StaticResource KruzhHairlineBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,40">
+                                <StackPanel Spacing="10">
+                                    <Grid>
+                                        <TextBlock Text="Interrupciones y DPC · últimos 60 segundos" FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                        <TextBlock x:Name="LiveMonitorStatsText" Text="-" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" />
+                                    </Grid>
+                                    <Grid Height="130">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid Width="34" Margin="0,0,8,0">
+                                            <TextBlock x:Name="MonChartMaxLabel" Text="5 %" FontSize="10.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Top" HorizontalAlignment="Right" />
+                                            <TextBlock Text="0 %" FontSize="10.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Bottom" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Border Grid.Column="1" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="1,0,0,1">
+                                            <Canvas x:Name="LiveTelemetryCanvas" Height="128">
+                                                <Polyline x:Name="DpcChartPolyline" Stroke="{StaticResource KruzhTextPrimaryBrush}" StrokeThickness="1.5" Opacity="0.85" />
+                                            </Canvas>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Cambios aplicados (journal) en lenguaje humano -->
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Cambios aplicados" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                    <TextBlock Text="Todo lo que KRUZH LATENCY modificó, con el valor original guardado para volver atrás." FontSize="12.5" TextWrapping="Wrap" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <Button x:Name="RevertAllFromJournalBtn" Click="RevertAllFromJournalBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir todo" />
+                                    <Button Background="Transparent" BorderThickness="0" Padding="8" Foreground="{StaticResource KruzhTextSecondaryBrush}" ToolTipService.ToolTip="Más opciones">
+                                        <FontIcon Glyph="&#xE712;" FontSize="14" />
+                                        <Button.Flyout>
+                                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                <MenuFlyoutItem Text="Abrir carpeta de backups" Click="OpenJournalFolderBtn_Click" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock x:Name="JournalEmptyText" Text="Todavía no aplicaste cambios." Visibility="Collapsed" Margin="0,18,0,0"
+                                       FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+
+                            <ItemsControl x:Name="JournalEntriesItemsControl">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="0,16" ColumnSpacing="14" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Detail}" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Tag="{Binding TweakId}" Click="RevertSingleJournalEntryBtn_Click"
+                                                    Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
-
                     <!-- ======================================================================= -->
                     <!-- VIEW 8: CONFIGURACIÓN (PARÁMETROS DE HARDWARE, SPECS & LICENCIA)        -->
                     <!-- ======================================================================= -->

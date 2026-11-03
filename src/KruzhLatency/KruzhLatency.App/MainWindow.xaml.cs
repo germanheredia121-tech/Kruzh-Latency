@@ -2444,9 +2444,7 @@ public sealed partial class MainWindow : Window
         }
         else if (ViewMonitorAudit.Visibility == Visibility.Visible)
         {
-            double p99Dpc = _dpcSamples.OrderByDescending(x => x).FirstOrDefault();
-            double avgDpc = _dpcSamples.Average();
-            LiveMonitorStatsText.Text = $"Timer: {curTimerMs:F3} ms · CPU: {cpuPct:F1}% · GPU: {gpuPct:F1}% · DPC/ISR actual: {dpcPct:F2}% · Promedio: {avgDpc:F2}% · Pico P99: {p99Dpc:F2}%";
+            UpdateMonitorTiles(curTimerMs, dpcPct, cpuPct, gpuPct);
             RenderTelemetryChartPolylines();
         }
     }
@@ -2494,62 +2492,148 @@ public sealed partial class MainWindow : Window
         return pts;
     }
 
+    /// <summary>Gráfico de Monitor: solo interrupciones + DPC, con escala que se adapta (mínimo 5 %) y su etiqueta.</summary>
     private void RenderTelemetryChartPolylines()
     {
-        double width = LiveTelemetryCanvas.ActualWidth > 100 ? LiveTelemetryCanvas.ActualWidth : 900;
-        double height = 120;
-
-        var dpcPoints = new PointCollection();
-        var timerPoints = new PointCollection();
-
         int count = _dpcSamples.Count;
         if (count < 2) return;
 
+        double width = LiveTelemetryCanvas.ActualWidth > 100 ? LiveTelemetryCanvas.ActualWidth : 900;
+        double height = LiveTelemetryCanvas.ActualHeight > 40 ? LiveTelemetryCanvas.ActualHeight : 128;
+        double scaleMax = Math.Max(5.0, Math.Ceiling(_dpcSamples.Max()));
+        MonChartMaxLabel.Text = $"{scaleMax:0} %";
+
+        var points = new PointCollection();
         double stepX = width / Math.Max(1, count - 1);
         for (int i = 0; i < count; i++)
         {
-            double x = i * stepX;
-            double dpcNorm = Math.Clamp(_dpcSamples[i] / 20.0, 0.0, 1.0);
-            double yDpc = height - (dpcNorm * (height - 10)) - 5;
-            dpcPoints.Add(new Point(x, yDpc));
-
-            double timerNorm = Math.Clamp(_timerSamples[i] / 2.0, 0.0, 1.0);
-            double yTimer = height - (timerNorm * (height - 10)) - 5;
-            timerPoints.Add(new Point(x, yTimer));
+            double norm = Math.Clamp(_dpcSamples[i] / scaleMax, 0.0, 1.0);
+            points.Add(new Point(i * stepX, height - (norm * (height - 6)) - 3));
         }
+        DpcChartPolyline.Points = points;
 
-        DpcChartPolyline.Points = dpcPoints;
-        TimerChartPolyline.Points = timerPoints;
+        double avg = _dpcSamples.Average();
+        double peak = _dpcSamples.Max();
+        LiveMonitorStatsText.Text = $"promedio {avg:F2} % · pico {peak:F2} %";
     }
 
-    private void QuickTestInterruptModMediumBtn_Click(object sender, RoutedEventArgs e)
+    private static readonly SolidColorBrush MonitorGoodBrush = new(Windows.UI.Color.FromArgb(255, 99, 192, 136));
+    private static readonly SolidColorBrush MonitorWarnBrush = new(Windows.UI.Color.FromArgb(255, 214, 170, 92));
+    private static readonly SolidColorBrush MonitorBadBrush = new(Windows.UI.Color.FromArgb(255, 205, 102, 102));
+
+    /// <summary>Los 4 indicadores de Monitor: valor + una frase que explica si está bien, en lenguaje simple.</summary>
+    private void UpdateMonitorTiles(double timerMs, double dpcPct, double cpuPct, double gpuPct)
     {
-        var item = App.TweakEngine.AllTweaks.FirstOrDefault(t => t.Id == "NicInterruptModerationConfigurable");
-        if (item != null)
+        var neutral = (Brush)Application.Current.Resources["KruzhTextTertiaryBrush"];
+
+        MonTimerValue.Text = timerMs > 0 ? $"{timerMs:0.###} ms" : "-";
+        if (timerMs > 0 && timerMs <= 1.05)
         {
-            item.SelectedOptionKey = "Medium";
-            var rep = App.TweakEngine.ExecuteApply(item);
-            RefreshLiveTweaksStateInPlace();
-            SetStatus($"Prueba en vivo: {rep.Message}");
+            MonTimerStatus.Text = "Alta precisión activa.";
+            MonTimerStatus.Foreground = MonitorGoodBrush;
         }
+        else
+        {
+            // En reposo 15,6 ms es lo normal: CS2 / VALORANT piden 1 ms o menos al abrirse.
+            MonTimerStatus.Text = "Normal en reposo. Los juegos la suben solos.";
+            MonTimerStatus.Foreground = neutral;
+        }
+
+        MonDpcValue.Text = $"{dpcPct:0.00} %";
+        if (dpcPct <= 2.0)
+        {
+            MonDpcStatus.Text = "Bien: los drivers responden rápido.";
+            MonDpcStatus.Foreground = MonitorGoodBrush;
+        }
+        else if (dpcPct <= 5.0)
+        {
+            MonDpcStatus.Text = "Moderado: puede haber picos de latencia.";
+            MonDpcStatus.Foreground = MonitorWarnBrush;
+        }
+        else
+        {
+            MonDpcStatus.Text = "Alto: un driver está generando latencia.";
+            MonDpcStatus.Foreground = MonitorBadBrush;
+        }
+
+        MonCpuValue.Text = $"{cpuPct:0} %";
+        MonCpuStatus.Text = cpuPct >= 90 ? "Al límite." : "Uso actual del procesador.";
+        MonCpuStatus.Foreground = cpuPct >= 90 ? MonitorWarnBrush : neutral;
+
+        MonGpuValue.Text = $"{gpuPct:0} %";
+        MonGpuStatus.Text = "Uso actual de la placa de video.";
+        MonGpuStatus.Foreground = neutral;
     }
 
-    private void QuickTestInterruptModOffBtn_Click(object sender, RoutedEventArgs e)
+    /// <summary>Nombre legible de un id del journal (tweak del catálogo, juego, o entradas internas viejas).</summary>
+    private static string JournalTitleFor(string tweakId)
     {
-        var item = App.TweakEngine.AllTweaks.FirstOrDefault(t => t.Id == "NicInterruptModerationConfigurable");
-        if (item != null)
+        var item = App.TweakEngine.AllTweaks.FirstOrDefault(t => t.Id == tweakId);
+        if (item != null) return item.Title;
+        if (tweakId.StartsWith("Game:", StringComparison.OrdinalIgnoreCase)) return $"Optimizaciones del juego · {tweakId[5..]}";
+        if (tweakId == "NvidiaTelemetryOff") return "Telemetría de NVIDIA desactivada";
+        if (tweakId.EndsWith("_Rev", StringComparison.Ordinal)) return "Restauración automática (versión anterior)";
+        return tweakId;
+    }
+
+    private static string RelativeTime(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        if (span.TotalMinutes < 1) return "recién";
+        if (span.TotalMinutes < 60) return $"hace {(int)span.TotalMinutes} min";
+        if (span.TotalHours < 24) return $"hace {(int)span.TotalHours} h";
+        if (span.TotalDays < 30) return $"hace {(int)span.TotalDays} días";
+        return utc.ToLocalTime().ToString("dd/MM/yyyy");
+    }
+
+    private async void RevertSingleJournalEntryBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not string tweakId) return;
+        btn.IsEnabled = false;
+        try
         {
-            item.SelectedOptionKey = "Off";
-            var rep = App.TweakEngine.ExecuteApply(item);
+            var item = App.TweakEngine.AllTweaks.FirstOrDefault(t => t.Id == tweakId);
+            if (item != null)
+            {
+                var (ok, detail) = await Task.Run(() => App.TweakEngine.RunRevertActions(item));
+                var report = App.TweakEngine.CompleteRevert(item, ok, detail);
+                SetStatus(report.Message);
+            }
+            else
+            {
+                var (ok, msg) = await Task.Run(() =>
+                {
+                    bool reverted = App.AuditService.RevertTweakFromJournal(tweakId, out string m);
+                    return (reverted, m);
+                });
+                SetStatus(msg);
+            }
+        }
+        catch (Exception ex)
+        {
+            App.LogError($"Revert journal {tweakId}", ex);
+        }
+        finally
+        {
+            RefreshJournalAndLicenseUi();
             RefreshLiveTweaksStateInPlace();
-            SetStatus($"Prueba en vivo: {rep.Message}");
         }
     }
 
     private void RefreshJournalAndLicenseUi()
     {
-        var history = App.AuditService.GetAuditHistory();
-        JournalEntriesItemsControl.ItemsSource = history;
+        // "Cambios aplicados": un renglón por tweak con cambios activos, en lenguaje humano (no IDs ni rutas de registro).
+        var summary = App.AuditService.GetActiveBackupSummary()
+            .Select(s => new JournalSummaryItem
+            {
+                TweakId = s.TweakId,
+                Title = JournalTitleFor(s.TweakId),
+                Detail = $"{s.ValueCount} {(s.ValueCount == 1 ? "valor modificado" : "valores modificados")} · {RelativeTime(s.LastChangeUtc)}"
+            })
+            .ToList();
+        JournalEntriesItemsControl.ItemsSource = summary;
+        JournalEmptyText.Visibility = summary.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        RevertAllFromJournalBtn.IsEnabled = summary.Count > 0;
 
         HwidReadOnlyBox.Text = App.LicenseService.CurrentHwid;
         bool licensed = App.LicenseService.IsLicensedAndValid;

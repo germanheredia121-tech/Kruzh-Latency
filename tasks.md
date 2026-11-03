@@ -90,3 +90,15 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 5. **T40 | T41 | T42** · T50 → **T51 | T52 | T55** · T61
 6. T71 → T72/T73 → T54 · T53, T56, T62
 7. T80 → T81 → T82 → T83
+
+## Pedidos de UI fuera del plan original (2026-11-02) — hechos sobre la app v3, se migran a Pages en T50
+| ID | Tarea | Estado |
+|---|---|---|
+| U1 | Overlay de aplicar + box-loader blanco + splash | ✅ |
+| U2 | Juegos: modal solo con opciones reales y aplicables a la PC, hover de cards, solo CS2/VALORANT | ✅ |
+| U3 | Independent Flip sin contradicciones FSO/MPO (ADR-006) | ✅ |
+| U4 | Sidebar sin "pop" al abrir | ✅ |
+| U5 | Optimizaciones minimalista | ✅ |
+| U6 | GPU minimalista y dinámica por fabricante | ✅ |
+| U7 | Monitor legible (4 indicadores, 1 gráfico, cambios aplicados en lenguaje humano) | ✅ |
+| U8 | Quitar del catálogo los placebo de mouse/GPU/audio (M02-M04, G03, G07, I03, F02) — es T31 | pendiente |
