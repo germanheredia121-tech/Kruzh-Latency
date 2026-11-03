@@ -2054,7 +2054,7 @@
                     <!-- Cabecera: Loader + Titulo + Punto de restauracion -->
                     <StackPanel HorizontalAlignment="Center" Spacing="8">
                         <Grid Width="180" Height="180" HorizontalAlignment="Center">
-                            <Grid x:Name="OverlayFallbackSpinner" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid x:Name="OverlayFallbackSpinner" Visibility="Collapsed" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Ellipse Stroke="#222222" StrokeThickness="3" Width="40" Height="40" />
                                 <Canvas Width="40" Height="40">
                                     <Path Stroke="#63C088" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"

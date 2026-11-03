@@ -19,6 +19,7 @@ Límite duro (ADR-004): nunca inyectar ni leer/escribir archivos o memoria de lo
 - Tests: `dotnet test KruzhLatency.sln`
 Antes de decir "listo": build + tests en verde.
 (Si `dotnet` no está en PATH: `%LOCALAPPDATA%\Microsoft\dotnet\dotnet.exe`.)
+Si KRUZH LATENCY está abierto, el build hacia `bin` se corta a propósito (un build a medias deja exe viejo + XAML nuevo = "XAML parsing failed"). Con la app abierta: compilar con `-p:OutDir=<carpeta temporal>` y testear los proyectos de test directamente (no el `.sln`, que compila la app en `bin`).
 
 ## Reglas
 - Lógica en `KruzhLatency.Core`. Nada de `Microsoft.Win32.Registry`, `Process` ni `ServiceController` fuera de `KruzhLatency.Infra`.

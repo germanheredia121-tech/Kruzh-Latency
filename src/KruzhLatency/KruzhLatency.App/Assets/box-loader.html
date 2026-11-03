@@ -92,5 +92,11 @@
       <div class="box box-4"><div class="face face-front"></div><div class="face face-right"></div><div class="face face-top"></div><div class="face face-back"></div></div>
     </div>
   </div>
+  <script>
+    // Avisa a la app cuando ya hay un frame pintado con las cajas en 3D (dos rAF): recién ahí se muestra el WebView.
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      try { window.chrome.webview.postMessage("painted"); } catch (e) {}
+    }); });
+  </script>
 </body>
 </html>

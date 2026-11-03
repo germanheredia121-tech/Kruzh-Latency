@@ -59,6 +59,33 @@
     (MSB4062), por eso está apagada arriba y acá se genera con makepri.exe del paquete Microsoft.Windows.SDK.BuildTools.
     Corre en cada build (Debug, Release, CI) y se copia también al publicar.
   -->
+  <!-- Si la app está abierta, el build fallaba a mitad de la copia: quedaba un .exe viejo con XAML nuevo
+       ("XAML parsing failed" al abrir). Se corta ANTES de copiar nada si el exe de salida está en uso. -->
+  <UsingTask TaskName="KruzhIsFileLocked" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Path ParameterType="System.String" Required="true" />
+      <Locked ParameterType="System.Boolean" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Locked = false;
+        if (System.IO.File.Exists(Path))
+        {
+            try { using (System.IO.File.Open(Path, System.IO.FileMode.Open, System.IO.FileAccess.ReadWrite, System.IO.FileShare.None)) { } }
+            catch (System.IO.IOException) { Locked = true; }
+            catch (System.UnauthorizedAccessException) { Locked = true; }
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Target Name="KruzhFailIfAppRunning" BeforeTargets="PrepareForBuild" Condition="'$(OS)' == 'Windows_NT'">
+    <KruzhIsFileLocked Path="$(OutDir)$(AssemblyName).exe">
+      <Output TaskParameter="Locked" PropertyName="_KruzhExeLocked" />
+    </KruzhIsFileLocked>
+    <Error Condition="'$(_KruzhExeLocked)' == 'true'"
+           Text="KRUZH LATENCY está abierto ($(OutDir)$(AssemblyName).exe en uso). Cerralo antes de compilar: si no, la carpeta de salida queda con archivos mezclados y la app falla al abrir." />
+  </Target>
+
   <Target Name="KruzhGenerateResourcesPri" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
     <!-- Propiedades DENTRO del target: IntermediateOutputPath recién está definido en tiempo de ejecución
          (a nivel de proyecto vale vacío y la carpeta temporal terminaba en la raíz del proyecto). -->

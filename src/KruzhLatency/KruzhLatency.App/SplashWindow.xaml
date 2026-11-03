@@ -13,7 +13,7 @@
 
             <!-- Box-loader (WebView2 180x180 = contenedor .relative del HTML; más chico se corta). Spinner XAML solo si WebView2 no está disponible. -->
             <Grid Width="180" Height="180" HorizontalAlignment="Center">
-                <Grid x:Name="SplashFallbackSpinner" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid x:Name="SplashFallbackSpinner" Visibility="Collapsed" Width="46" Height="46" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Ellipse Stroke="#1C1C1C" StrokeThickness="3" Width="40" Height="40" />
                     <Canvas Width="40" Height="40">
                         <Path Stroke="#63C088" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"

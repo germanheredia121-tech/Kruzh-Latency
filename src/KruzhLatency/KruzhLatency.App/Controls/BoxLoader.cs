@@ -57,22 +57,29 @@ internal static class BoxLoader
             settings.IsZoomControlEnabled = false;
             settings.IsStatusBarEnabled = false;
 
-            var completed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            // Se muestra cuando la página avisa que YA pintó las cajas (doble requestAnimationFrame en el HTML).
+            // NavigationCompleted llega antes del primer frame: mostrar ahí dejaba ver un recuadro un instante.
+            var painted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            void OnMessage(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
+            {
+                if (args.TryGetWebMessageAsString() == "painted") painted.TrySetResult(true);
+            }
             void OnCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args)
             {
-                view.NavigationCompleted -= OnCompleted;
-                completed.TrySetResult(args.IsSuccess);
+                if (!args.IsSuccess) painted.TrySetResult(false);
             }
+            view.WebMessageReceived += OnMessage;
             view.NavigationCompleted += OnCompleted;
 
             // Navigate() exige una URI: con una ruta "C:\..." tiraba excepción y siempre quedaba el spinner de respaldo.
             view.Source = new Uri(htmlPath);
 
-            var winner = await Task.WhenAny(completed.Task, Task.Delay(NavigationTimeout));
-            bool ok = winner == completed.Task && completed.Task.Result;
-            if (!ok)
+            var winner = await Task.WhenAny(painted.Task, Task.Delay(NavigationTimeout));
+            view.WebMessageReceived -= OnMessage;
+            view.NavigationCompleted -= OnCompleted;
+            if (winner != painted.Task || !painted.Task.Result)
             {
-                view.NavigationCompleted -= OnCompleted;
+                ShowFallback(fallback);
                 return false;
             }
 
@@ -83,7 +90,11 @@ internal static class BoxLoader
         catch (Exception ex)
         {
             App.LogError("BoxLoader", ex);
+            ShowFallback(fallback);
             return false;
         }
     }
+
+    /// <summary>El spinner XAML arranca oculto (evita el salto spinner → cajas); solo aparece si WebView2 falla.</summary>
+    private static void ShowFallback(UIElement fallback) => fallback.Visibility = Visibility.Visible;
 }

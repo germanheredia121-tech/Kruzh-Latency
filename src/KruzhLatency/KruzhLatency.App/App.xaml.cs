@@ -32,13 +32,43 @@ public partial class App : Application
         this.InitializeComponent();
     }
 
+    /// <summary>Una sola instancia: abrirla dos veces duplicaba sesiones ETW y escrituras al sistema.</summary>
+    private static System.Threading.Mutex? _singleInstance;
+
+    private static bool AcquireSingleInstance()
+    {
+        _singleInstance = new System.Threading.Mutex(true, @"Local\KruzhLatency.SingleInstance", out bool createdNew);
+        if (createdNew) return true;
+
+        // Ya hay una abierta (quizás detrás de otras ventanas): se la trae al frente y esta se cierra.
+        using var current = System.Diagnostics.Process.GetCurrentProcess();
+        foreach (var p in System.Diagnostics.Process.GetProcessesByName(current.ProcessName))
+        {
+            using (p)
+            {
+                if (p.Id != current.Id && p.MainWindowHandle != IntPtr.Zero)
+                {
+                    Controls.WindowReveal.BringToFront(p.MainWindowHandle);
+                    break;
+                }
+            }
+        }
+        return false;
+    }
+
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         try
         {
-            // 1. Mostrar Splash INMEDIATO (< 50ms)
+            if (!AcquireSingleInstance())
+            {
+                Exit();
+                return;
+            }
+
+            // 1. Splash inmediato, sin flash: se ve recién cuando XAML ya pintó (WindowReveal).
             var splash = new SplashWindow();
-            splash.Activate();
+            Controls.WindowReveal.ActivateWithoutFlash(splash);
 
             // 2. Ejecutar detección pesada en hilo secundario (async)
             System.Threading.Tasks.Task.Run(() =>
@@ -75,12 +105,16 @@ public partial class App : Application
                         try
                         {
                             MainAppWindow = new MainWindow();
-                            MainAppWindow.Activate();
-                            splash.Close();
+                            // La principal se abre encubierta y al frente; el splash se cierra cuando ya se ve
+                            // (antes quedaba detrás de otras ventanas y parecía que no abría).
+                            Controls.WindowReveal.ActivateWithoutFlash(MainAppWindow, () => splash.Close());
                         }
                         catch (Exception ex)
                         {
                             LogAndDisplayFatalError("MainWindow Initialization Error", ex);
+                            // Sin ventana principal no hay app: cerrar para no dejar un proceso huérfano con el mutex.
+                            splash.Close();
+                            Current.Exit();
                         }
                     });
                 }
