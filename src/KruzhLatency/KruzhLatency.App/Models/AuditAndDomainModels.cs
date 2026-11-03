@@ -15,7 +15,9 @@ public enum BackupTargetKind
     FsutilSetting,
     MsiInterruptSetting,
     IrqAffinitySetting,
-    DefenderExclusion
+    DefenderExclusion,
+    /// <summary>Dispositivo habilitado/deshabilitado (pnputil). Agregado al final: el journal guarda el número del enum.</summary>
+    DeviceState
 }
 
 public sealed class AtomicBackupRecord

@@ -108,6 +108,14 @@ public sealed partial class DeclarativeTweakItem : ObservableObject
 
     public string PendingBadgeText => "Pendiente";
 
+    /// <summary>Desde qué perfil se aplica este ítem (se muestra chico en la fila).</summary>
+    public string ProfileHintText =>
+        InMinimal ? "Desde Normal"
+        : InCompetitivo ? "Desde Competitivo"
+        : InProfesional ? "Desde Profesional"
+        : InEntusiasta ? "Solo Entusiasta"
+        : "Manual";
+
     public Microsoft.UI.Xaml.Media.Brush RowBackgroundBrush => IsPending
         ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 28, 30, 33)) // #1C1E21
         : new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(0, 0, 0, 0));
@@ -340,7 +348,7 @@ public sealed partial class DeclarativeTweakItem : ObservableObject
     }
 }
 
-public sealed class DeclarativeTweakEngine
+public sealed partial class DeclarativeTweakEngine
 {
     private readonly TransactionalAuditService _audit;
     private readonly HardwareChassisService _hwService;
@@ -364,6 +372,7 @@ public sealed class DeclarativeTweakEngine
 
         InitializeDefaultGames();
         BuildDeclarativeCatalog();
+        BuildServiceAndDeviceCatalog();
         RefreshAll();
     }
 
@@ -1114,26 +1123,25 @@ public sealed class DeclarativeTweakEngine
         {
             Id = "ServicesAndTasksDebloat",
             CodeNumber = "C09",
-            Title = "Debloat Reversible de Servicios y Tareas Programadas de Telemetría",
+            Title = "Tareas programadas de telemetría",
             Category = TweakCategory.SystemCpu,
             CategoryDisplay = "Sistema & CPU",
-            TechnicalDescription = "Desactiva con backup en Journal los servicios DiagTrack (Connected User Experiences/Telemetry), MapsBroker y tareas programadas de telemetría (Compatibility Appraiser, Consolidator, UsbCeip) que causan picos de CPU/disco en partida.",
-            WhatItTouches = @"Servicios: DiagTrack, MapsBroker (Start=4) + Tareas: Microsoft Compatibility Appraiser, Consolidator, UsbCeip",
+            TechnicalDescription = "Desactiva con backup las tareas programadas de telemetría (Compatibility Appraiser, ProgramDataUpdater, Consolidator, UsbCeip) que se disparan en segundo plano y causan picos de CPU/disco en partida. Los servicios se manejan en la pestaña Servicios.",
+            WhatItTouches = @"Tareas: Microsoft Compatibility Appraiser, ProgramDataUpdater, Consolidator, UsbCeip",
             SourceAttribution = "BoringBoredom PC-Tuning §11.14",
             Risk = RiskLevel.Low,
             InMinimal = false,
             InCompetitivo = true,
             InProfesional = true,
-            ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\DiagTrack", "Start") == 4,
+            // Leer el estado real de una tarea programada requiere lanzar schtasks en cada refresco: se usa el journal.
+            ReadLiveState = () => _audit.HasBackupForTweak("ServicesAndTasksDebloat"),
             ApplyAction = _ =>
             {
-                _audit.SetServiceStartup("ServicesAndTasksDebloat", "DiagTrack", 4, stopIfRunning: true);
-                _audit.SetServiceStartup("ServicesAndTasksDebloat", "MapsBroker", 4, stopIfRunning: true);
                 _audit.SetScheduledTaskEnabled("ServicesAndTasksDebloat", @"\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser", false);
                 _audit.SetScheduledTaskEnabled("ServicesAndTasksDebloat", @"\Microsoft\Windows\Application Experience\ProgramDataUpdater", false);
                 _audit.SetScheduledTaskEnabled("ServicesAndTasksDebloat", @"\Microsoft\Windows\Customer Experience Improvement Program\Consolidator", false);
                 _audit.SetScheduledTaskEnabled("ServicesAndTasksDebloat", @"\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip", false);
-                return (true, "Servicios de telemetría y tareas programadas en segundo plano desactivados (100% reversibles).");
+                return (true, "Tareas programadas de telemetría desactivadas (reversibles).");
             }
         });
 
@@ -1882,11 +1890,11 @@ public sealed class DeclarativeTweakEngine
         {
             Id = "SysMainAndMemoryManagement",
             CodeNumber = "S05",
-            Title = "SysMain (Superfetch) OFF en SSD + DisablePagingExecutive + Memory Compression Off",
+            Title = "Kernel siempre en RAM (DisablePagingExecutive)",
             Category = TweakCategory.StorageMemory,
             CategoryDisplay = "USB, Disco & Memoria",
-            TechnicalDescription = "En equipos con SSD/NVMe y >=16GB de RAM, desactiva SysMain, mantiene los drivers del kernel en RAM física (DisablePagingExecutive=1) y evita micro-stutters por compresión de páginas en CPU.",
-            WhatItTouches = @"Servicio SysMain (Start=4) + Session Manager\Memory Management -> DisablePagingExecutive=1, LargeSystemCache=0",
+            TechnicalDescription = "Con SSD/NVMe y 16 GB o más de RAM, mantiene los drivers y el código del kernel en RAM física (DisablePagingExecutive=1) en vez de mandarlos al archivo de paginación. SysMain se maneja en la pestaña Servicios.",
+            WhatItTouches = @"Session Manager\Memory Management -> DisablePagingExecutive=1, LargeSystemCache=0",
             SourceAttribution = "BoringBoredom PC-Tuning §11.18 & §11.33",
             Risk = RiskLevel.Low,
             RequiresReboot = true,
@@ -1899,10 +1907,9 @@ public sealed class DeclarativeTweakEngine
             ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "DisablePagingExecutive") == 1,
             ApplyAction = _ =>
             {
-                _audit.SetServiceStartup("SysMainAndMemoryManagement", "SysMain", 4, stopIfRunning: true);
                 _audit.SetRegistryValue("SysMainAndMemoryManagement", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "DisablePagingExecutive", 1, RegistryValueKind.DWord);
                 _audit.SetRegistryValue("SysMainAndMemoryManagement", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "LargeSystemCache", 0, RegistryValueKind.DWord);
-                return (true, "SysMain desactivado y ejecutivos del kernel fijados en RAM física.");
+                return (true, "Código del kernel fijado en RAM física.");
             }
         });
 
@@ -2404,9 +2411,6 @@ public sealed class DeclarativeTweakEngine
                     _audit.SetRegistryValue("WGM_Rev", RegistryHive.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects", "VisualFXSetting", 0, RegistryValueKind.DWord);
                     return (true, "Efectos visuales restaurados a automático.");
 
-                case "ServicesAndTasksDebloat":
-                    _audit.SetServiceStartup("STD_Rev", "DiagTrack", 2, stopIfRunning: false);
-                    return (true, "Servicio DiagTrack restaurado a inicio automático.");
 
                 case "GpuHardwareSchedulingHags":
                     _audit.SetRegistryValue("HAGS_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode", 1, RegistryValueKind.DWord);
@@ -2479,9 +2483,8 @@ public sealed class DeclarativeTweakEngine
                     return (true, "NTFS 8.3 restaurado al valor estándar.");
 
                 case "SysMainAndMemoryManagement":
-                    _audit.SetServiceStartup("SM_Rev", "SysMain", 2, stopIfRunning: false);
                     _audit.SetRegistryValue("SM_Rev", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "DisablePagingExecutive", 0, RegistryValueKind.DWord);
-                    return (true, "SysMain y DisablePagingExecutive restaurados.");
+                    return (true, "DisablePagingExecutive restaurado.");
 
                 case "GameIfeoHighPriority":
                     _audit.SetRegistryValue("IFEO_Rev", RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\cs2.exe\PerfOptions", "CpuPriorityClass", 2, RegistryValueKind.DWord);

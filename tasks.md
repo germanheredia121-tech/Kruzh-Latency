@@ -103,4 +103,7 @@ Regla: cada tarea = 1 rama = 1 PR, con `dotnet build -warnaserror` + `dotnet tes
 | U7 | Monitor legible (4 indicadores, 1 gráfico, cambios aplicados en lenguaje humano) | ✅ |
 | U8 | Quitar del catálogo los placebo de mouse/GPU/audio (M02-M04, G03, G07, I03, F02) — es T31 | pendiente |
 | U9 | Ronda 3: sidebar LeftCompact, titlebar unificada, overlay en toda acción, B2, Agregar juego inline, Interrupciones en Optimizaciones, import .nip | ✅ |
-| U10 | Monitor: drivers con más latencia (ETW DPC/ISR por driver, base de T70) | ✅ sin verificar con admin |
+| U10 | Monitor: drivers con más latencia (ETW DPC/ISR por driver, base de T70) | ✅ verificado por el usuario |
+| U11 | Ronda 4: ancho de vistas fijo, sidebar que empuja con cierre animado, modal propio, medición DPC continua | ✅ |
+| U12 | Optimizaciones: pestañas Tweaks · Servicios · Device Manager (catálogo dinámico por PC, perfiles aplican todo) — adelanta T40 y parte de F6 | ✅ |
+| U13 | Debloat de apps AppX (pestaña aparte) — T41 | pendiente |

@@ -526,7 +526,7 @@
                                 </Grid>
 
                                 <!-- Perfiles (chips de texto) -->
-                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,30">
+                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,24">
                                     <TextBlock Text="Perfil" FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
                                     <Button Tag="Minimal" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Normal" />
                                     <Button Tag="Competitivo" Click="SelectPresetProfile_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Competitivo" />
@@ -536,6 +536,23 @@
                                             Foreground="{StaticResource KruzhDangerMutedBrush}"
                                             ToolTipService.ToolTip="Tweak total: incluye cambios que pueden afectar al anticheat o la seguridad" />
                                 </StackPanel>
+
+                                <!-- Pestañas: Tweaks · Servicios · Device Manager. Los perfiles de arriba aplican sobre las tres. -->
+                                <Grid Margin="0,0,0,8" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal" Spacing="26">
+                                        <Button x:Name="OptTabTweaksBtn" Tag="Tweaks" Click="OptTab_Click" Background="Transparent" BorderThickness="0,0,0,2"
+                                                BorderBrush="{StaticResource KruzhTextPrimaryBrush}" Padding="0,8" CornerRadius="0"
+                                                Foreground="{StaticResource KruzhTextPrimaryBrush}" FontSize="13.5" FontWeight="SemiBold" Content="Tweaks" />
+                                        <Button x:Name="OptTabServicesBtn" Tag="Services" Click="OptTab_Click" Background="Transparent" BorderThickness="0,0,0,2"
+                                                BorderBrush="Transparent" Padding="0,8" CornerRadius="0"
+                                                Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="13.5" Content="Servicios" />
+                                        <Button x:Name="OptTabDevicesBtn" Tag="Devices" Click="OptTab_Click" Background="Transparent" BorderThickness="0,0,0,2"
+                                                BorderBrush="Transparent" Padding="0,8" CornerRadius="0"
+                                                Foreground="{StaticResource KruzhTextSecondaryBrush}" FontSize="13.5" Content="Device Manager" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock x:Name="OptTabNoteText" Visibility="Collapsed" Margin="0,8,0,18" TextWrapping="Wrap"
+                                           FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" Text="-" />
 
                                 <!-- Filtros: fuera de la vista (minimalismo). Se mantienen colapsados porque el código los usa:
                                      categoría = todas, compuerta = solo compatibles con esta PC, sin búsqueda. -->
@@ -590,6 +607,8 @@
                                                                 </StackPanel>
 
                                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                                    <!-- Desde qué perfil se aplica (Normal / Competitivo / Profesional / Entusiasta) -->
+                                                                    <TextBlock Text="{Binding ProfileHintText}" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" />
                                                                     <Border Width="22" Height="22" CornerRadius="11" Background="Transparent"
                                                                             VerticalAlignment="Center" Tag="{Binding}"
                                                                             PointerEntered="TweakInfoIcon_PointerEntered"
@@ -632,7 +651,7 @@
                                 </ItemsControl>
 
                                 <!-- Interrupciones (avanzado): lista PCI / MSI. Se reemplaza por el auto-tune MSI (T70-T72). -->
-                            <Expander Margin="0,10,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            <Expander x:Name="InterruptsExpander" Margin="0,10,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                                       Background="Transparent" BorderBrush="{StaticResource KruzhHairlineBorderBrush}">
                                 <Expander.Header>
                                     <StackPanel Spacing="2" Padding="0,8">

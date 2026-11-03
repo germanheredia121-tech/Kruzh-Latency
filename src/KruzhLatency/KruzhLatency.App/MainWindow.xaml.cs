@@ -569,12 +569,58 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    // ---------------------------------------------------------------- pestañas de Optimizaciones
+    private string _currentOptTab = "Tweaks";
+
+    private void OptTab_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not string tag) return;
+        _currentOptTab = tag;
+        foreach (var b in new[] { OptTabTweaksBtn, OptTabServicesBtn, OptTabDevicesBtn })
+        {
+            bool active = ReferenceEquals(b, btn);
+            b.Foreground = (Brush)Application.Current.Resources[active ? "KruzhTextPrimaryBrush" : "KruzhTextSecondaryBrush"];
+            b.BorderBrush = active ? (Brush)Application.Current.Resources["KruzhTextPrimaryBrush"] : TransparentBrush;
+            b.FontWeight = active ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal;
+        }
+        RefreshTweaksListUi();
+    }
+
+    private bool IsInCurrentOptTab(DeclarativeTweakItem t) => _currentOptTab switch
+    {
+        "Services" => t.Category == TweakCategory.Services,
+        "Devices" => t.Category == TweakCategory.Devices,
+        _ => t.Category != TweakCategory.Services && t.Category != TweakCategory.Devices
+    };
+
+    private void UpdateOptTabNote(TweakCategory? tab, int shown)
+    {
+        if (tab == null)
+        {
+            OptTabNoteText.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        OptTabNoteText.Visibility = Visibility.Visible;
+        OptTabNoteText.Text = tab == TweakCategory.Services
+            ? (shown == 0
+                ? "No encontramos servicios para optimizar en esta PC."
+                : $"Analizamos los servicios de tu PC: estos {shown} se pueden desactivar sin afectar el juego. " +
+                  $"Los que usan FACEIT AC, Vanguard, la red, el audio y Windows ({DeclarativeTweakEngine.ProtectedServices.Count} protegidos) no se tocan nunca.")
+            : (shown == 0
+                ? "No encontramos dispositivos para desactivar en esta PC."
+                : $"Analizamos el Administrador de dispositivos: estos {shown} no se usan para jugar y se pueden deshabilitar. " +
+                  "Se aplica al reiniciar y se revierte desde Monitor.");
+    }
+
     private void UpdateTweaksSummarySubtitle()
     {
         if (TweaksSummaryCounterText == null) return;
-        int totalApplicable = App.TweakEngine.AllTweaks.Count(t => t.IsApplicableBool);
-        int liveApplied = App.TweakEngine.AllTweaks.Count(t => t.IsApplicableBool && t.IsLiveApplied);
-        int hiddenByHw = App.TweakEngine.AllTweaks.Count(t => !t.IsApplicableBool);
+        // El contador refleja la pestaña actual (Tweaks / Servicios / Device Manager).
+        var inTab = App.TweakEngine.AllTweaks.Where(IsInCurrentOptTab).ToList();
+        int totalApplicable = inTab.Count(t => t.IsApplicableBool);
+        int liveApplied = inTab.Count(t => t.IsApplicableBool && t.IsLiveApplied);
+        int hiddenByHw = inTab.Count(t => !t.IsApplicableBool);
         TweaksSummaryCounterText.Text =
             hiddenByHw > 0
                 ? $"{liveApplied} de {totalApplicable} activas · {hiddenByHw} no aplican a tu PC y no se muestran."
@@ -812,6 +858,23 @@ public sealed partial class MainWindow : Window
                 ("Juegos",                t => t.Category == TweakCategory.FpsBoostGames)
             };
 
+            // Pestaña actual: Tweaks (categorías clásicas) · Servicios · Device Manager (secciones por CategoryDisplay).
+            var tabCategory = _currentOptTab switch
+            {
+                "Services" => (TweakCategory?)TweakCategory.Services,
+                "Devices" => TweakCategory.Devices,
+                _ => null
+            };
+            if (tabCategory != null)
+            {
+                var tabItems = filtered.Where(t => t.Category == tabCategory).ToList();
+                categoryOrder = tabItems
+                    .Select(t => t.CategoryDisplay)
+                    .Distinct()
+                    .Select(section => (section, (Func<DeclarativeTweakItem, bool>)(t => t.Category == tabCategory && t.CategoryDisplay == section)))
+                    .ToArray();
+            }
+
             var groups = new List<TweakCategoryGroup>();
             foreach (var (secTitle, pred) in categoryOrder)
             {
@@ -831,6 +894,8 @@ public sealed partial class MainWindow : Window
             }
 
             TweaksGroupsItemsControl.ItemsSource = groups;
+            InterruptsExpander.Visibility = tabCategory == null ? Visibility.Visible : Visibility.Collapsed;
+            UpdateOptTabNote(tabCategory, groups.Sum(g => g.Items.Count));
             UpdateTweaksSummarySubtitle();
             UpdatePendingChangesBar();
         }

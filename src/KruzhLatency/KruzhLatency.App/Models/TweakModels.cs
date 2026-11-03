@@ -14,7 +14,9 @@ public enum TweakCategory
     SystemCpu,
     IrqMsiAudio,
     StorageMemory,
-    FpsBoostGames
+    FpsBoostGames,
+    Services,
+    Devices
 }
 
 public enum RecommendationLevel

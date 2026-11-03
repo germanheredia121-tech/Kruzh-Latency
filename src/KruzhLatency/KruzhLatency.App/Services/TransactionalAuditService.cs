@@ -356,6 +356,77 @@ public sealed class TransactionalAuditService
         RunHiddenProcess("schtasks.exe", $"/Change /TN \"{taskFullPath}\" {flag}");
     }
 
+    /// <summary>CONFIGFLAG_DISABLED (0x1) en Enum\&lt;instancia&gt;\ConfigFlags = deshabilitado en el Administrador de dispositivos.</summary>
+    public static bool IsDeviceDisabled(string instanceId)
+    {
+        using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+        using var k = hklm.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{instanceId}");
+        return k?.GetValue("ConfigFlags") is int flags && (flags & 0x1) != 0;
+    }
+
+    /// <summary>
+    /// Habilita o deshabilita un dispositivo (como el Administrador de dispositivos) con pnputil, guardando el estado
+    /// original en el journal. Lanza si pnputil falla, para que el lote lo reporte como error.
+    /// </summary>
+    public void SetDeviceEnabled(string tweakId, string instanceId, bool enable)
+    {
+        bool wasDisabled = IsDeviceDisabled(instanceId);
+        lock (_sync)
+        {
+            RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
+            {
+                TweakId = tweakId,
+                TimestampUtc = DateTime.UtcNow,
+                TargetKind = BackupTargetKind.DeviceState,
+                TargetPath = instanceId,
+                ValueName = "Enabled",
+                PreviousValueExisted = true,
+                PreviousSerializedValue = wasDisabled ? "Disabled" : "Enabled",
+                AppliedSerializedValue = enable ? "Enabled" : "Disabled"
+            });
+        }
+
+        if (wasDisabled == !enable) return; // ya está en el estado pedido
+        var (exit, output) = RunPnpUtil(enable ? "/enable-device" : "/disable-device", instanceId);
+        // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED (se aplica al reiniciar)
+        if (exit != 0 && exit != 3010)
+        {
+            throw new InvalidOperationException($"pnputil terminó con código {exit} para {instanceId}: {output.Trim()}");
+        }
+    }
+
+    private static (int ExitCode, string Output) RunPnpUtil(string verb, string instanceId)
+    {
+        try
+        {
+            using var proc = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "pnputil.exe",
+                    Arguments = $"{verb} \"{instanceId}\"",
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                }
+            };
+            proc.Start();
+            var stdout = proc.StandardOutput.ReadToEndAsync();
+            var stderr = proc.StandardError.ReadToEndAsync();
+            if (!proc.WaitForExit(30000))
+            {
+                try { proc.Kill(); } catch { }
+                return (-1, "pnputil no respondió a tiempo.");
+            }
+            return (proc.ExitCode, stdout.Result + stderr.Result);
+        }
+        catch (Exception ex)
+        {
+            return (-1, ex.Message);
+        }
+    }
+
     public void RecordCustomReversibleAction(
         string tweakId,
         BackupTargetKind kind,
@@ -458,6 +529,15 @@ public sealed class TransactionalAuditService
                         if (!string.IsNullOrEmpty(rec.PreviousSerializedValue))
                         {
                             RunHiddenProcess("fsutil.exe", $"behavior set {rec.ValueName} {rec.PreviousSerializedValue}");
+                        }
+                        restoredCount++;
+                        break;
+
+                    case BackupTargetKind.DeviceState:
+                        if (!string.IsNullOrEmpty(rec.TargetPath))
+                        {
+                            bool wasEnabled = !string.Equals(rec.PreviousSerializedValue, "Disabled", StringComparison.OrdinalIgnoreCase);
+                            RunPnpUtil(wasEnabled ? "/enable-device" : "/disable-device", rec.TargetPath);
                         }
                         restoredCount++;
                         break;
