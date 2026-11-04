@@ -122,8 +122,15 @@ public static class NicTuningPlanner
         Want("*RSS", "1", "Reparte la recepción entre varios núcleos.");
         if (QueuesFor(nic.Get("*NumRssQueues"), physicalCores) is { } queues)
         {
-            Want("*NumRssQueues", queues, "Hasta 4 colas RSS (sin pasar los núcleos físicos).");
+            Want("*NumRssQueues", queues, "2 colas RSS (decisión E2): la red en dos hilos y el resto de los núcleos libres para USB y GPU.");
         }
+
+        // E1: energía y descubrimiento en segundo plano (keywords estándar NDIS de power management).
+        Want("*PMARPOffload", "0", "ARP Offload: el chip responde ARP por su cuenta en reposo; apagado no procesa sondeos de fondo.");
+        Want("*PMNSOffload", "0", "NS Offload: lo mismo para descubrimiento de vecinos IPv6.");
+        Want("*WakeOnMagicPacket", "0", "Wake on LAN: el chip deja de vigilar paquetes para despertar la PC.");
+        Want("*WakeOnPattern", "0", "Despertar por patrón de paquete: desactivado.");
+        Want("*ModernStandbyWoLMagicPacket", "0", "Wake on LAN en Modern Standby: desactivado.");
 
         if (chip.Family == NicChipFamily.Realtek)
         {
@@ -133,6 +140,10 @@ public static class NicTuningPlanner
             Want("EnableGreenEthernet", "0", "Ahorro de energía propietario de Realtek.");
             Want("GigaLite", "0", "Baja la velocidad del enlace para ahorrar energía.");
             Want("PowerSavingMode", "0", "Ahorro de energía propietario de Realtek.");
+            Want("S5WakeOnLan", "0", "Wake on LAN con la PC apagada (Realtek).");
+            Want("WolShutdownLinkSpeed", "2", "Not Speed Down: el enlace no baja de velocidad al apagar ni al suspender.");
+            Want("PowerDownPll", "0", "Realtek: no apaga el reloj interno (PLL) del chip en los silencios de tráfico (el chat le atribuye picos de ndis.sys).");
+            Want("EEE", "0", "Variante vieja (sin asterisco) del Energy-Efficient Ethernet en algunos drivers Realtek.");
         }
         else
         {
@@ -148,7 +159,7 @@ public static class NicTuningPlanner
     private static string? QueuesFor(NdiParam? p, int physicalCores)
     {
         if (p?.Enum is null) return null;
-        int cap = Math.Max(1, Math.Min(4, physicalCores));
+        int cap = Math.Max(1, Math.Min(2, physicalCores)); // E2 (decisión del autor): 2 colas
         return p.Enum.Keys
             .Select(k => int.TryParse(k, NumberStyles.Integer, CultureInfo.InvariantCulture, out int v) ? v : -1)
             .Where(v => v > 0 && v <= cap)

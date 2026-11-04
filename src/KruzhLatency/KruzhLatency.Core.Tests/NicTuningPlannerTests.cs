@@ -22,7 +22,7 @@ public class NicTuningPlannerTests
         Assert.Equal("0", c["*InterruptModeration"].Target);
         Assert.Equal("512", c["*ReceiveBuffers"].Target);
         Assert.Equal("128", c["*TransmitBuffers"].Target);
-        Assert.Equal("4", c["*NumRssQueues"].Target);
+        Assert.Equal("2", c["*NumRssQueues"].Target);       // E2: decisión del autor, 2 colas
         Assert.Equal("0", c["*SpeedDuplex"].Target);       // spec 002: negociada
         Assert.Equal("6", c["*SpeedDuplex"].Current);      // hoy está fija en 1 Gbps
         foreach (var k in new[] { "*FlowControl", "*EEE", "*LsoV2IPv4", "*LsoV2IPv6", "AdvancedEEE", "EnableGreenEthernet", "GigaLite", "PowerSavingMode" })
@@ -51,6 +51,26 @@ public class NicTuningPlannerTests
     {
         Assert.Equal("2", PlanFor("ndi-params-rtl8125.json", cores: 2)["*NumRssQueues"].Target);
         Assert.Equal("1", PlanFor("ndi-params-rtl8125.json", cores: 1)["*NumRssQueues"].Target);
+        Assert.Equal("2", PlanFor("ndi-params-rtl8125.json", cores: 16)["*NumRssQueues"].Target);
+    }
+
+    [Theory]
+    [InlineData("ndi-params-rtl8125.json")]
+    [InlineData("ndi-params-rtl8111.json")]
+    public void E1_EnergiaYWakeOnLan_Apagados(string file)
+    {
+        var c = PlanFor(file);
+
+        foreach (var k in new[] { "*PMARPOffload", "*PMNSOffload", "*WakeOnMagicPacket", "*WakeOnPattern", "S5WakeOnLan" })
+        {
+            Assert.Equal("0", c[k].Target);
+            Assert.False(c[k].IsAlreadySet); // hoy están activados
+        }
+        Assert.Equal("2", c["WolShutdownLinkSpeed"].Target); // Not Speed Down
+        Assert.True(c["*ModernStandbyWoLMagicPacket"].IsAlreadySet);
+        // El driver no declara estas opciones: no se escriben a ciegas.
+        Assert.False(c.ContainsKey("PowerDownPll"));
+        Assert.False(c.ContainsKey("EEE"));
     }
 
     [Fact]
