@@ -35,6 +35,83 @@ public sealed partial class DeclarativeTweakEngine
 
         BuildWindowsNagTasksItem();
         BuildOneDriveItem();
+        BuildHardwareAccelItem();
+        BuildSvcHostGroupingItem();
+    }
+
+    // ---------------------------------------------------------------- aceleración por hardware (CPU como límite)
+
+    private void BuildHardwareAccelItem()
+    {
+        IReadOnlyList<KruzhLatency.Core.Debloat.AccelApp> apps;
+        try { apps = HardwareAccelerationProbe.Detect(); }
+        catch (Exception ex) { App.LogError("Aceleración por hardware: detectar", ex); return; }
+        if (apps.Count == 0) return;
+
+        _allTweaks.Add(new DeclarativeTweakItem
+        {
+            Id = "AppsHardwareAccelOn",
+            CodeNumber = "AP",
+            Title = "Aceleración por hardware en Discord y el navegador",
+            Category = TweakCategory.Apps,
+            CategoryDisplay = "Segundo plano",
+            TechnicalDescription = "En CS2 y VALORANT a cientos de FPS el límite es la CPU, no la GPU. Si Discord o el navegador tienen la aceleración por hardware " +
+                                   "APAGADA, dibujan su interfaz y decodifican video (streams, YouTube, Twitch) con la CPU y compiten con el juego. " +
+                                   "Activada, ese trabajo va a la GPU, que tiene margen, y el video usa su decodificador dedicado (NVDEC/VCN), separado del render del juego. " +
+                                   "El consejo de apagarla solo sirve si tu juego está limitado por la GPU.\n" +
+                                   "En tu PC: " + string.Join(" · ", apps.Select(a => $"{a.Name}: {(a.Enabled ? "activada ✓" : "APAGADA")}")) + ".\n" +
+                                   "Para activarla: " + string.Join(" ", apps.Where(a => !a.Enabled).Select(a => $"{a.Name}: {a.HowToEnable}")).TrimEnd() +
+                                   (apps.All(a => a.Enabled) ? "ya está activada en todas." : ""),
+            WhatItTouches = "Nada: KRUZH solo lee la configuración de cada app (Local State de Chromium, settings.json de Discord). El cambio lo hacés en la app.",
+            SourceAttribution = "Chromium / Discord: aceleración de hardware · PresentMon (CPU vs GPU Busy) · medición en docs/AUDITORIA.md",
+            Risk = RiskLevel.Low,
+            InMinimal = false, InCompetitivo = false, InProfesional = false, InEntusiasta = false,
+            EvaluateGate = _ => apps.All(a => a.Enabled)
+                ? EvaluationResult.Recommended("Ya está activada en todas tus apps.")
+                : EvaluationResult.Recommended("Activala: con la CPU como límite, apagarla resta FPS en el juego."),
+            ReadLiveState = () => HardwareAccelerationProbe.Detect().All(a => a.Enabled),
+            ApplyAction = _ =>
+            {
+                var off = HardwareAccelerationProbe.Detect().Where(a => !a.Enabled).ToList();
+                return off.Count == 0
+                    ? (true, "La aceleración por hardware ya está activada en todas tus apps.")
+                    : (false, "Activala en: " + string.Join(" ", off.Select(a => $"{a.Name}: {a.HowToEnable}")));
+            }
+        });
+    }
+
+    // ---------------------------------------------------------------- servicios agrupados en menos svchost
+
+    private void BuildSvcHostGroupingItem()
+    {
+        const string id = "SvcHostGrouping";
+        const string key = @"SYSTEM\CurrentControlSet\Control";
+        const int neverSplit = unchecked((int)0xFFFFFFFF);
+
+        _allTweaks.Add(new DeclarativeTweakItem
+        {
+            Id = id,
+            CodeNumber = "SV",
+            Title = "Agrupar servicios en menos procesos svchost",
+            Category = TweakCategory.Services,
+            CategoryDisplay = "Rendimiento en segundo plano",
+            TechnicalDescription = "Con más de 3,5 GB de RAM, Windows pone cada servicio en su propio proceso svchost (por eso hay 60 o más). " +
+                                   "Subiendo el umbral vuelven a compartir procesos, como en Windows 10 anterior a 1703 y en los Windows modificados: " +
+                                   "baja mucho la cantidad de procesos y algo de memoria. La CPU que usan los servicios es la misma, así que no esperes FPS por esto solo: " +
+                                   "medí antes y después. Si un servicio falla, arrastra a los de su grupo. Requiere reiniciar.",
+            WhatItTouches = $@"HKLM\{key} -> SvcHostSplitThresholdInKB = 0xFFFFFFFF",
+            SourceAttribution = "Microsoft Learn: Changes to Service Host grouping in Windows 10 (SvcHostSplitThresholdInKB)",
+            Risk = RiskLevel.Low,
+            RequiresReboot = true,
+            InMinimal = false, InCompetitivo = false, InProfesional = false, InEntusiasta = false, // sin medición propia todavía (ADR-002)
+            EvaluateGate = _ => EvaluationResult.Neutral("Opcional: menos procesos y algo menos de RAM; el efecto en FPS no está medido."),
+            ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, key, "SvcHostSplitThresholdInKB") == neverSplit,
+            ApplyAction = _ =>
+            {
+                _audit.SetRegistryValue(id, RegistryHive.LocalMachine, key, "SvcHostSplitThresholdInKB", neverSplit, RegistryValueKind.DWord);
+                return (true, "Servicios agrupados: reiniciá para ver menos procesos svchost.");
+            }
+        });
     }
 
     // ---------------------------------------------------------------- Edge
