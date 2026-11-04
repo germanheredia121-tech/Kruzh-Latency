@@ -339,6 +339,33 @@ public sealed class TransactionalAuditService
         KruzhLatency.Infra.Network.NetAdapterBindingStore.SetEnabled(adapterName, componentId, enabled);
     }
 
+    /// <summary>
+    /// E12: crea una tarea programada propia. Si ya existía una con esa ruta, no se registra como creada por KRUZH
+    /// (revertir no la borraría): solo se reemplaza su definición.
+    /// </summary>
+    public void CreateScheduledTask(string tweakId, string taskPath, string xml)
+    {
+        bool existed = KruzhLatency.Infra.Debloat.ScheduledTaskStore.IsEnabled(taskPath) is not null;
+        if (!existed)
+        {
+            lock (_sync)
+            {
+                RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
+                {
+                    TweakId = tweakId,
+                    TimestampUtc = DateTime.UtcNow,
+                    TargetKind = BackupTargetKind.ScheduledTaskCreated,
+                    TargetPath = taskPath,
+                    ValueName = "Created",
+                    PreviousValueExisted = false,
+                    PreviousSerializedValue = null,
+                    AppliedSerializedValue = "Created"
+                });
+            }
+        }
+        KruzhLatency.Infra.Debloat.ScheduledTaskStore.Register(taskPath, xml);
+    }
+
     private static void RestoreBcdRecord(AtomicBackupRecord rec)
     {
         if (KruzhLatency.Infra.Wmi.WmiBcdStore.FromBcdEditName(rec.ValueName) is not { } element)
@@ -762,6 +789,11 @@ public sealed class TransactionalAuditService
                         {
                             KruzhLatency.Infra.Network.NetTcpGlobalStore.Write(rec.TargetPath, rec.ValueName, oldTcp);
                         }
+                        restoredCount++;
+                        break;
+
+                    case BackupTargetKind.ScheduledTaskCreated:
+                        KruzhLatency.Infra.Debloat.ScheduledTaskStore.Delete(rec.TargetPath);
                         restoredCount++;
                         break;
 

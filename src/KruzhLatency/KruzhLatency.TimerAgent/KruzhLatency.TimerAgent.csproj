@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    ADR-010 / E12: residente opcional del timer de 0,5 ms. Sin ventana y sin elevar (asInvoker): lo lanza una tarea
+    programada al iniciar sesión. Toda la lógica vive en Infra (TimerResidentAgent); acá solo está el punto de entrada.
+    Mismo RuntimeIdentifier y SelfContained que la app: se copia junto a KruzhLatency.exe y usa su runtime.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <RootNamespace>KruzhLatency.TimerAgent</RootNamespace>
+    <AssemblyName>KruzhLatency.TimerAgent</AssemblyName>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KruzhLatency.Infra\KruzhLatency.Infra.csproj" />
+  </ItemGroup>
+</Project>

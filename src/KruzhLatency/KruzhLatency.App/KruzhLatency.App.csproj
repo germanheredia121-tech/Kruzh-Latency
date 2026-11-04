@@ -46,6 +46,8 @@
   <ItemGroup>
     <ProjectReference Include="..\KruzhLatency.Core\KruzhLatency.Core.csproj" />
     <ProjectReference Include="..\KruzhLatency.Infra\KruzhLatency.Infra.csproj" />
+    <!-- ADR-010: el residente del timer se copia junto al exe (mismo runtime self-contained). -->
+    <ProjectReference Include="..\KruzhLatency.TimerAgent\KruzhLatency.TimerAgent.csproj" />
   </ItemGroup>
 
   <ItemGroup>

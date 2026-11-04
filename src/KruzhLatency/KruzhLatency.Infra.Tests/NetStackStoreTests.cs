@@ -38,6 +38,14 @@ public class NetStackStoreTests
     }
 
     [IntegrationFact]
+    public void TimerResolution_SeLee_EntreLaMasFinaYLaMasGruesa()
+    {
+        var r = KruzhLatency.Infra.Timer.TimerResolution.Query()!.Value;
+        Assert.InRange(r.Current, r.Finest, r.Coarsest);
+        Assert.True(r.Finest <= 5000u); // Windows ofrece 0,5 ms o menos
+    }
+
+    [IntegrationFact]
     public void Bindings_PlacasFisicasConTcpip()
     {
         var adapters = NetAdapterBindingStore.PhysicalAdapters();

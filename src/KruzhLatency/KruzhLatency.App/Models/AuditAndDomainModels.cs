@@ -29,7 +29,9 @@ public enum BackupTargetKind
     /// <summary>Ajuste global TCP/IP por WMI (TargetPath = clase[:plantilla], ValueName = propiedad, valor uint). Reemplaza a NetshTcpSetting.</summary>
     NetTcpGlobal,
     /// <summary>Protocolo ligado/desligado de una placa (TargetPath = nombre de la placa, ValueName = ComponentID, valor True/False).</summary>
-    NetAdapterBinding
+    NetAdapterBinding,
+    /// <summary>Tarea programada creada por KRUZH (TargetPath = ruta de la tarea). Revertir = detenerla y borrarla.</summary>
+    ScheduledTaskCreated
 }
 
 public sealed class AtomicBackupRecord

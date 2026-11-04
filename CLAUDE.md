@@ -12,7 +12,7 @@ Límite duro (ADR-004): nunca inyectar ni leer/escribir archivos o memoria de lo
 - Decisiones: `docs/decisions/` (respetarlas; si una tarea las contradice, frenar y preguntar)
 
 ## Proyectos (`src/KruzhLatency/`)
-- `KruzhLatency.Core` (net8.0, lógica pura) · `KruzhLatency.Infra` (adaptadores Windows) · `KruzhLatency.Core.Tests` (xUnit) · `KruzhLatency.Infra.Tests` (integración: se saltean salvo `KRUZH_INTEGRATION=1`) · `KruzhLatency.App` (WinUI, exe `KruzhLatency.exe`)
+- `KruzhLatency.Core` (net8.0, lógica pura) · `KruzhLatency.Infra` (adaptadores Windows) · `KruzhLatency.Core.Tests` (xUnit) · `KruzhLatency.Infra.Tests` (integración: se saltean salvo `KRUZH_INTEGRATION=1`) · `KruzhLatency.App` (WinUI, exe `KruzhLatency.exe`) · `KruzhLatency.TimerAgent` (residente opcional del timer, ADR-010; sin ventana ni elevación, se copia junto a la app)
 
 ## Comandos (desde `src/KruzhLatency/`)
 - Build: `dotnet build KruzhLatency.sln -c Debug -warnaserror` (la config "Any CPU" de la solución compila la app en x64)

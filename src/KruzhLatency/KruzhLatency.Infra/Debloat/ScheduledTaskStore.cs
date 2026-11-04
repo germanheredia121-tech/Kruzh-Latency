@@ -60,6 +60,71 @@ public static class ScheduledTaskStore
         }
     }
 
+    /// <summary>Crea o reemplaza una tarea desde su XML (crea la carpeta si falta). Corre con el token del usuario conectado.</summary>
+    public static void Register(string taskPath, string xml)
+    {
+        lock (Cache) Cache.Remove(taskPath);
+        int slash = taskPath.LastIndexOf('\\');
+        string folder = slash <= 0 ? "\\" : taskPath[..slash];
+        string name = taskPath[(slash + 1)..];
+
+        dynamic service = Connect();
+        dynamic? root = null, f = null, registered = null;
+        try
+        {
+            root = service.GetFolder("\\");
+            try { f = service.GetFolder(folder); }
+            catch (Exception ex) when (ex is COMException or IOException) { f = root.CreateFolder(folder, Type.Missing); }
+            const int TASK_CREATE_OR_UPDATE = 6, TASK_LOGON_INTERACTIVE_TOKEN = 3;
+            registered = f.RegisterTask(name, xml, TASK_CREATE_OR_UPDATE, null, null, TASK_LOGON_INTERACTIVE_TOKEN, Type.Missing);
+        }
+        finally
+        {
+            Release(registered); Release(f); Release(root); Release(service);
+        }
+    }
+
+    /// <summary>Arranca la tarea ahora (no espera). Lanza si no existe.</summary>
+    public static void Run(string taskPath)
+    {
+        dynamic? task = Find(taskPath) ?? throw new InvalidOperationException($"La tarea {taskPath} no existe.");
+        dynamic? running = null;
+        try { running = task.Run(null); }
+        finally { Release(running); Release(task); }
+    }
+
+    /// <summary>Detiene las instancias en curso y borra la tarea. No hace nada si no existe.</summary>
+    public static void Delete(string taskPath)
+    {
+        lock (Cache) Cache.Remove(taskPath);
+        dynamic? task = Find(taskPath);
+        if (task is null) return;
+        try { task.Stop(0); }
+        catch (COMException) { /* no estaba corriendo */ }
+        finally { Release(task); }
+
+        int slash = taskPath.LastIndexOf('\\');
+        dynamic service = Connect();
+        dynamic? f = null;
+        try
+        {
+            f = service.GetFolder(slash <= 0 ? "\\" : taskPath[..slash]);
+            f.DeleteTask(taskPath[(slash + 1)..], 0);
+        }
+        finally
+        {
+            Release(f); Release(service);
+        }
+    }
+
+    private static dynamic Connect()
+    {
+        var type = Type.GetTypeFromProgID("Schedule.Service") ?? throw new InvalidOperationException("Programador de tareas no disponible.");
+        dynamic service = Activator.CreateInstance(type)!;
+        service.Connect();
+        return service;
+    }
+
     private static void Release(object? com)
     {
         if (com is not null && Marshal.IsComObject(com)) Marshal.ReleaseComObject(com);

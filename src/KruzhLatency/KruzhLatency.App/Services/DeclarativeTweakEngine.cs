@@ -855,14 +855,17 @@ public sealed partial class DeclarativeTweakEngine
             Title = "GlobalTimerResolutionRequests (Sincronización Global 0.5ms)",
             Category = TweakCategory.SystemCpu,
             CategoryDisplay = "Sistema & CPU",
-            TechnicalDescription = "Hace que las solicitudes de temporizador de alta resolución (0.5ms) se apliquen globalmente a todo el kernel y subsistema de ventanas.",
+            TechnicalDescription = "En Windows 11 un pedido de timer fino (ej. 0,5 ms) solo vale para la ventana del programa que lo pide; con este valor vuelve a aplicarse a todo el sistema, como en Windows 10. Lo necesita el modo residente (C16).",
             WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel -> GlobalTimerResolutionRequests = 1",
-            SourceAttribution = "Microsoft Kernel Timer Documentation / PC-Tuning §11.50",
+            SourceAttribution = "Microsoft Learn: timeBeginPeriod (cambios de Windows 11) / PC-Tuning §11.50",
             Risk = RiskLevel.Low,
             RequiresReboot = true,
             InMinimal = true,
             InCompetitivo = true,
             InProfesional = true,
+            ApplicableGate = hw => hw.IsWindows11
+                ? ApplicabilityResult.Applicable("Windows 11")
+                : ApplicabilityResult.NotApplicable("En Windows 10 los pedidos de timer ya son globales."),
             ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "GlobalTimerResolutionRequests") == 1,
             ApplyAction = _ =>
             {
@@ -870,6 +873,7 @@ public sealed partial class DeclarativeTweakEngine
                 return (true, "GlobalTimerResolutionRequests = 1 aplicado.");
             }
         });
+        BuildTimerItems(); // E12 / ADR-010
 
         // ADR-008: en Windows 11 ningún perfil toca useplatformtick / disabledynamictick. C03 solo deja el reloj por defecto.
         _allTweaks.Add(new DeclarativeTweakItem
@@ -1246,6 +1250,7 @@ public sealed partial class DeclarativeTweakEngine
                 return (true, "DisableDynamicPstate = 1 aplicado en el adaptador NVIDIA.");
             }
         });
+        BuildNvidiaRegistryItems(); // E10, E11
 
         _allTweaks.Add(new DeclarativeTweakItem
         {
