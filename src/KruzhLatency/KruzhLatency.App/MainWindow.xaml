@@ -669,11 +669,12 @@
                                 <Expander.Header>
                                     <StackPanel Spacing="2" Padding="0,8">
                                         <TextBlock Text="Interrupciones (avanzado)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                        <TextBlock Text="Modo MSI y prioridad por dispositivo. El ajuste automático por medición llega en una próxima versión." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                        <TextBlock Text="Modo MSI y prioridad por dispositivo, y afinidad de la GPU elegida midiendo en tu PC." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Expander.Header>
                                 <StackPanel Spacing="14">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Click="AutoGpuAffinityBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Medir afinidad de GPU (auto)" />
                                         <Button Click="ApplySafeMsiAllBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Activar MSI seguro" />
                                         <Button Click="ScanPciDevicesBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Re-escanear" />
                                         <Button Click="RevertAllPciIrqMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir" />

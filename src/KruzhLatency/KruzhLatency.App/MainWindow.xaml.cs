@@ -2082,10 +2082,67 @@ public sealed partial class MainWindow : Window
         AfterPciChange();
     }
 
+    /// <summary>Spec 003 / G4: mide cada núcleo para la GPU con carga sintética y aplica el ganador o nada.</summary>
+    private async void AutoGpuAffinityBtn_Click(object sender, RoutedEventArgs e)
+    {
+        var svc = new AutoGpuAffinityService(App.AuditService, () => App.HardwareService.CurrentProfile.CoreTopology);
+        var (gpu, problem) = await Task.Run(svc.FindGpu);
+        if (gpu is null)
+        {
+            await ShowSimpleInfoModalAsync("Medir afinidad de GPU", problem ?? "No se puede medir en esta PC.");
+            return;
+        }
+
+        var candidates = svc.Candidates();
+        double perRunSec = (AutoGpuAffinityService.Warmup + AutoGpuAffinityService.Capture).TotalSeconds + 4;
+        int minutes = (int)Math.Ceiling(candidates.Count * (AutoGpuAffinityService.TrialsPerCandidate * perRunSec + 10) / 60);
+        bool go = await ShowConfirmModalAsync("Medir afinidad de GPU",
+            $"KRUZH va a probar {candidates.Count} opciones (como viene Windows + un núcleo por vez) para las interrupciones de tu {gpu.Name}, " +
+            $"con una carga 3D propia medida por PresentMon. Tarda unos {minutes} minutos.\n\n" +
+            "• La pantalla va a parpadear cada vez que se reinicia el driver de video.\n" +
+            "• Cerrá juegos y no uses la PC mientras mide.\n" +
+            "• Al final aplica solo lo que gane por encima del ruido; si nada gana, deja todo como estaba.",
+            "Empezar");
+        if (!go) return;
+
+        using var cts = new CancellationTokenSource();
+        bool failed = false;
+        string report = string.Empty;
+        var steps = candidates
+            .Select(c => new OverlayStep(c.Name == KruzhLatency.Core.Benchmark.TrialComparer.Default ? "Como viene Windows" : $"GPU en {c.Name}", () =>
+            {
+                if (failed) return (false, "Saltado: falló un paso anterior.");
+                var r = svc.Measure(gpu, c, cts.Token);
+                failed |= !r.Ok;
+                return r;
+            }))
+            .Append(new OverlayStep("Elegir y aplicar", () =>
+            {
+                if (failed)
+                {
+                    svc.Abort(gpu);
+                    return (false, "Medición cortada: se dejó la afinidad original.");
+                }
+                var (ok, detail, rep) = svc.Finish(gpu, candidates);
+                report = rep;
+                return (ok, detail);
+            }))
+            .ToList();
+
+        await RunStepsWithOverlayAsync("Midiendo afinidad de GPU", "Carga 3D + PresentMon · no uses la PC", steps);
+        if (report.Length > 0) await ShowSimpleInfoModalAsync("Resultado: afinidad de GPU", report);
+        AfterPciChange();
+    }
+
     private async void RevertAllPciIrqMsiBtn_Click(object sender, RoutedEventArgs e)
     {
         await RunStepsWithOverlayAsync("Revirtiendo cambios", "Interrupciones y MSI", new[]
         {
+            new OverlayStep("Afinidad de GPU medida", () =>
+            {
+                bool ok = App.AuditService.RevertTweakFromJournal(AutoGpuAffinityService.TweakId, out string m);
+                return (true, ok ? m : "No había afinidad de GPU medida para revertir.");
+            }, RequiresReboot: true),
             new OverlayStep("Modo MSI", () =>
             {
                 bool ok = App.AuditService.RevertTweakFromJournal("PciMsiModeV3", out string m);

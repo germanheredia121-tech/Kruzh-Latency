@@ -1,0 +1,22 @@
+KRUZH LATENCY incluye los siguientes componentes de terceros, sin modificaciones, bajo sus licencias.
+
+1. PresentMon 2.6.0 (Tools\PresentMon\PresentMon.exe)
+   Copyright (C) 2017-2024 Intel Corporation. Licencia MIT: Tools\PresentMon\LICENSE.txt
+   https://github.com/GameTechDev/PresentMon
+   Uso: medir FPS, 1% y 0,1% low de la carga sintética del auto-tune (spec 003).
+
+2. liblava 0.7.3 — demo lava-triangle (Tools\liblava\lava-triangle.exe y Tools\liblava\res\triangle\*)
+   Copyright (c) 2018-present, Lava Block OÜ and contributors. Licencia MIT: Tools\liblava\LICENSE.txt
+   https://github.com/liblava/liblava
+   Uso: carga de GPU reproducible para el auto-tune de afinidad de GPU.
+
+3. Microsoft Visual C++ Redistributable (Tools\liblava\vcruntime140*.dll, msvcp140*.dll, concrt140.dll)
+   Copyright (c) Microsoft Corporation. Archivos redistribuibles según los términos de Visual Studio,
+   incluidos para que lava-triangle funcione sin instalar el redistribuible.
+
+4. Método de AutoGpuAffinity (https://github.com/valleyofdoom/AutoGpuAffinity, GPL-3.0)
+   KRUZH NO incluye código de AutoGpuAffinity: reimplementa de forma independiente el método (afinidad de GPU a un
+   núcleo, reinicio del driver, medición con una carga de liblava y PresentMon).
+
+5. CPUSetSetter (https://github.com/SimonvBez/CPUSetSetter), Copyright (c) SimonvBez. Licencia MIT.
+   La aplicación de CPU Sets por juego del KRUZH Agent está basada en su enfoque.
