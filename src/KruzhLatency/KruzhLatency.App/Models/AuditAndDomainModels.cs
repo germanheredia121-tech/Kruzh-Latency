@@ -25,7 +25,11 @@ public enum BackupTargetKind
     /// <summary>App AppX quitada para el usuario (TargetPath = PackageFullName). Revertir = volver a registrarla.</summary>
     AppxRemoved,
     /// <summary>App AppX desaprovisionada (TargetPath = PackageFamilyName). No se puede revertir desde KRUZH (se avisa).</summary>
-    AppxDeprovisioned
+    AppxDeprovisioned,
+    /// <summary>Ajuste global TCP/IP por WMI (TargetPath = clase[:plantilla], ValueName = propiedad, valor uint). Reemplaza a NetshTcpSetting.</summary>
+    NetTcpGlobal,
+    /// <summary>Protocolo ligado/desligado de una placa (TargetPath = nombre de la placa, ValueName = ComponentID, valor True/False).</summary>
+    NetAdapterBinding
 }
 
 public sealed class AtomicBackupRecord

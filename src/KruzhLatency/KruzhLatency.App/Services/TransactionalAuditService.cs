@@ -291,6 +291,54 @@ public sealed class TransactionalAuditService
         }
     }
 
+    /// <summary>E3: ajuste global TCP/IP por WMI con backup del valor anterior (sin netsh).</summary>
+    public void SetNetTcpGlobal(string tweakId, string target, string property, uint value)
+    {
+        uint? previous = KruzhLatency.Infra.Network.NetTcpGlobalStore.Read(target, property)
+            ?? throw new InvalidOperationException($"{target}.{property} no existe en este Windows.");
+        if (previous == value) return;
+
+        lock (_sync)
+        {
+            RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
+            {
+                TweakId = tweakId,
+                TimestampUtc = DateTime.UtcNow,
+                TargetKind = BackupTargetKind.NetTcpGlobal,
+                TargetPath = target,
+                ValueName = property,
+                PreviousValueExisted = true,
+                PreviousSerializedValue = previous.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                AppliedSerializedValue = value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            });
+        }
+        KruzhLatency.Infra.Network.NetTcpGlobalStore.Write(target, property, value);
+    }
+
+    /// <summary>E6: liga o desliga un protocolo de una placa (WMI MSFT_NetAdapterBindingSettingData) con backup.</summary>
+    public void SetAdapterBinding(string tweakId, string adapterName, string componentId, bool enabled)
+    {
+        bool previous = KruzhLatency.Infra.Network.NetAdapterBindingStore.IsEnabled(adapterName, componentId)
+            ?? throw new InvalidOperationException($"{adapterName} no tiene el protocolo {componentId}.");
+        if (previous == enabled) return;
+
+        lock (_sync)
+        {
+            RecordBaselineIfNotExistsLocked(new AtomicBackupRecord
+            {
+                TweakId = tweakId,
+                TimestampUtc = DateTime.UtcNow,
+                TargetKind = BackupTargetKind.NetAdapterBinding,
+                TargetPath = adapterName,
+                ValueName = componentId,
+                PreviousValueExisted = true,
+                PreviousSerializedValue = previous ? "True" : "False",
+                AppliedSerializedValue = enabled ? "True" : "False"
+            });
+        }
+        KruzhLatency.Infra.Network.NetAdapterBindingStore.SetEnabled(adapterName, componentId, enabled);
+    }
+
     private static void RestoreBcdRecord(AtomicBackupRecord rec)
     {
         if (KruzhLatency.Infra.Wmi.WmiBcdStore.FromBcdEditName(rec.ValueName) is not { } element)
@@ -704,6 +752,25 @@ public sealed class TransactionalAuditService
                         if (!string.IsNullOrEmpty(rec.PreviousSerializedValue))
                         {
                             RunHiddenProcess("netsh.exe", $"int tcp set global {rec.ValueName}={rec.PreviousSerializedValue}");
+                        }
+                        restoredCount++;
+                        break;
+
+                    case BackupTargetKind.NetTcpGlobal:
+                        if (uint.TryParse(rec.PreviousSerializedValue, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out uint oldTcp)
+                            && KruzhLatency.Infra.Network.NetTcpGlobalStore.Read(rec.TargetPath, rec.ValueName) is { } nowTcp && nowTcp != oldTcp)
+                        {
+                            KruzhLatency.Infra.Network.NetTcpGlobalStore.Write(rec.TargetPath, rec.ValueName, oldTcp);
+                        }
+                        restoredCount++;
+                        break;
+
+                    case BackupTargetKind.NetAdapterBinding:
+                        // Si la placa ya no existe no hay nada que volver a ligar.
+                        if (KruzhLatency.Infra.Network.NetAdapterBindingStore.IsEnabled(rec.TargetPath, rec.ValueName) is not null)
+                        {
+                            KruzhLatency.Infra.Network.NetAdapterBindingStore.SetEnabled(rec.TargetPath, rec.ValueName,
+                                string.Equals(rec.PreviousSerializedValue, "True", StringComparison.OrdinalIgnoreCase));
                         }
                         restoredCount++;
                         break;

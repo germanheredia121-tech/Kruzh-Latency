@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using KruzhLatency.Core.Abstractions;
 using KruzhLatency.Core.Devices;
 using KruzhLatency.Infra.Devices;
+using KruzhLatency.Infra.Network;
 using KruzhLatency.Infra.Wmi;
 using KruzhLatency.Models;
 using Microsoft.Win32;
@@ -1179,6 +1180,8 @@ public sealed partial class DeclarativeTweakEngine
             }
         });
 
+        BuildMaintenanceItems(); // E4
+
         // ==================== CATEGORÍA 3: GPU & DISPLAY ====================
         _allTweaks.Add(new DeclarativeTweakItem
         {
@@ -1403,6 +1406,7 @@ public sealed partial class DeclarativeTweakEngine
         // Placas de red: un ítem por placa con ajustes validados contra su driver (spec 002 / B4).
         BuildNicItems();
         BuildNetworkAdviceItems(); // filtros NDIS, optimizadores y driver NetAdapterCx (B5)
+        BuildTcpStackItems();      // auto-tuning, Ndu y protocolos ligados (E3, E5, E6)
 
         _allTweaks.Add(new DeclarativeTweakItem
         {
@@ -1412,19 +1416,21 @@ public sealed partial class DeclarativeTweakEngine
             Category = TweakCategory.NetworkDesync,
             CategoryDisplay = "Red & Desync",
             TechnicalDescription = "RSC junta varios segmentos TCP recibidos en uno antes de entregarlos: menos interrupciones pero más espera. LSO y Flow Control los ajusta el ítem \"Placa de red\" según tu chip.",
-            WhatItTouches = @"netsh int tcp set global rsc=disabled",
-            SourceAttribution = "Microsoft Learn: Receive Segment Coalescing (RSC) · BlurBusters Desync Guide",
+            WhatItTouches = @"WMI root\StandardCimv2 MSFT_NetOffloadGlobalSetting -> ReceiveSegmentCoalescing = 0 (Disabled)",
+            SourceAttribution = "Microsoft Learn: Receive Segment Coalescing (RSC) · Set-NetOffloadGlobalSetting · BlurBusters Desync Guide",
             Risk = RiskLevel.Low,
             RequiresReboot = false,
             InMinimal = false,
             InCompetitivo = true,
             InProfesional = true,
-            ReadLiveState = () => _audit.HasBackupForTweak("NicLsoAndFlowControlOff"),
+            ApplicableGate = _ => NetTcpGlobalStore.Read(NetTcpGlobalStore.OffloadClass, "ReceiveSegmentCoalescing") is null
+                ? ApplicabilityResult.NotApplicable("Este Windows no expone el ajuste global de RSC.")
+                : ApplicabilityResult.Applicable(),
+            ReadLiveState = () => NetTcpGlobalStore.Read(NetTcpGlobalStore.OffloadClass, "ReceiveSegmentCoalescing") == 0,
             ApplyAction = _ =>
             {
-                _audit.RecordCustomReversibleAction("NicLsoAndFlowControlOff", BackupTargetKind.NetshTcpSetting, "global", "rsc", "enabled", "disabled");
-                TransactionalAuditService.RunHiddenProcess("netsh.exe", "int tcp set global rsc=disabled");
-                return (true, "TCP RSC desactivado.");
+                _audit.SetNetTcpGlobal("NicLsoAndFlowControlOff", NetTcpGlobalStore.OffloadClass, "ReceiveSegmentCoalescing", 0);
+                return (true, "TCP RSC desactivado (verificado por WMI).");
             }
         });
 
@@ -1494,8 +1500,8 @@ public sealed partial class DeclarativeTweakEngine
             Title = "Nagle OFF (TCPNoDelay=1) + RSS de TCP + ECN Off",
             Category = TweakCategory.NetworkDesync,
             CategoryDisplay = "Red & Desync",
-            TechnicalDescription = "Desactiva el algoritmo de agrupamiento de Nagle en todas las interfaces TCP/IP, activa RSS a nivel TCP (netsh) y desactiva ECN. Las colas RSS de cada placa las ajusta el ítem \"Placa de red\".",
-            WhatItTouches = @"Tcpip\Parameters\Interfaces\<GUID> -> TCPNoDelay=1, TcpAckFrequency=1 · ECNEnabled=0 · netsh int tcp set global rss=enabled ecncapability=disabled",
+            TechnicalDescription = "Desactiva el algoritmo de agrupamiento de Nagle en todas las interfaces TCP/IP, activa RSS a nivel TCP y desactiva ECN (por WMI, sin netsh). Las colas RSS de cada placa las ajusta el ítem \"Placa de red\".",
+            WhatItTouches = @"Tcpip\Parameters\Interfaces\<GUID> -> TCPNoDelay=1, TcpAckFrequency=1 · ECNEnabled=0 · WMI MSFT_NetOffloadGlobalSetting.ReceiveSideScaling=1 · MSFT_NetTCPSetting (Internet, InternetCustom).EcnCapability=0",
             SourceAttribution = "Estándar Red Competitiva",
             Risk = RiskLevel.Low,
             InMinimal = false,
@@ -1517,8 +1523,14 @@ public sealed partial class DeclarativeTweakEngine
                 }
                 // RSS y colas por placa: los valida el ítem "Placa de red" contra el driver (spec 002 / B4).
                 _audit.SetRegistryValue("TcpNagleAndRssOptimize", RegistryHive.LocalMachine, @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters", "ECNEnabled", 0, RegistryValueKind.DWord);
-                TransactionalAuditService.RunHiddenProcess("netsh.exe", "int tcp set global rss=enabled");
-                TransactionalAuditService.RunHiddenProcess("netsh.exe", "int tcp set global ecncapability=disabled");
+                if (NetTcpGlobalStore.Read(NetTcpGlobalStore.OffloadClass, "ReceiveSideScaling") is not null)
+                {
+                    _audit.SetNetTcpGlobal("TcpNagleAndRssOptimize", NetTcpGlobalStore.OffloadClass, "ReceiveSideScaling", 1);
+                }
+                foreach (string template in ClientTcpTemplates("EcnCapability"))
+                {
+                    _audit.SetNetTcpGlobal("TcpNagleAndRssOptimize", NetTcpGlobalStore.Target(NetTcpGlobalStore.TcpClass, template), "EcnCapability", 0);
+                }
                 return (true, "Nagle OFF + RSS de TCP + ECN OFF aplicados.");
             }
         });
