@@ -297,6 +297,12 @@ public sealed partial class MainWindow : Window
             // Spec 003 / G5: si una medición quedó a mitad (reinicio), ofrecer retomarla o cancelarla.
             _ = ResumePendingAutoTuneAsync();
 
+            // Spec 003: resultado guardado antes de reabrir KRUZH (tras reiniciar el driver de video).
+            if (KruzhLatency.Infra.Benchmark.AutoTuneSessionStore.TakeReport() is { } pendingReport)
+            {
+                _ = ShowSimpleInfoModalAsync(pendingReport.Title, pendingReport.Text);
+            }
+
             // T11: si el journal estaba dañado, avisar (nunca en silencio).
             switch (App.AuditService.JournalLoadOutcome)
             {
@@ -1271,7 +1277,7 @@ public sealed partial class MainWindow : Window
     /// Ejecuta los pasos uno por uno mostrando el overlay (cajas + carrusel + barra). Cada paso corre en background,
     /// un fallo no corta el resto, y al terminar el carrusel muestra el resultado. Devuelve el resultado de cada paso.
     /// </summary>
-    private async Task<IReadOnlyList<OverlayStepResult>> RunStepsWithOverlayAsync(string heading, string subtitle, IReadOnlyList<OverlayStep> steps)
+    private async Task<IReadOnlyList<OverlayStepResult>> RunStepsWithOverlayAsync(string heading, string subtitle, IReadOnlyList<OverlayStep> steps, bool showFailures = true)
     {
         var results = new List<OverlayStepResult>();
         if (steps.Count == 0 || _isApplyingBatch) return results;
@@ -1354,7 +1360,7 @@ public sealed partial class MainWindow : Window
         }
 
         var failures = results.Where(r => !r.Success).ToList();
-        if (failures.Count > 0)
+        if (showFailures && failures.Count > 0)
         {
             await ShowSimpleInfoModalAsync(
                 $"{failures.Count} acción(es) no se completaron",
@@ -2173,7 +2179,14 @@ public sealed partial class MainWindow : Window
             SetStatus("Reiniciando para seguir midiendo…");
             return;
         }
+        bool gpuRestarted = session.Data.ContainsKey("gpuRestarted");
         string report = await Task.Run(() => svc.Finish(session));
+        if (gpuRestarted)
+        {
+            KruzhLatency.Infra.Benchmark.AutoTuneSessionStore.SaveReport("Resultado: MSI", report);
+            App.RelaunchAndExit();
+            return;
+        }
         await ShowSimpleInfoModalAsync("Resultado: MSI", report);
         AfterPciChange();
     }
@@ -2251,6 +2264,14 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        // Chequeo previo sin tocar la GPU: si la carga 3D no abre, no se reinicia nada.
+        SetStatus("Probando la carga 3D…");
+        if (await Task.Run(svc.Preflight) is { } preflightError)
+        {
+            await ShowSimpleInfoModalAsync("Medir afinidad de GPU", preflightError);
+            return;
+        }
+
         var candidates = svc.Candidates();
         double perRunSec = (AutoGpuAffinityService.Warmup + AutoGpuAffinityService.Capture).TotalSeconds + 4;
         int minutes = (int)Math.Ceiling(candidates.Count * (AutoGpuAffinityService.TrialsPerCandidate * perRunSec + 10) / 60);
@@ -2287,8 +2308,21 @@ public sealed partial class MainWindow : Window
             }))
             .ToList();
 
-        await RunStepsWithOverlayAsync("Midiendo afinidad de GPU", "Carga 3D + PresentMon · no uses la PC", steps);
-        if (report.Length > 0) await ShowSimpleInfoModalAsync("Resultado: afinidad de GPU", report);
+        var results = await RunStepsWithOverlayAsync("Midiendo afinidad de GPU", "Carga 3D + PresentMon · no uses la PC", steps, showFailures: false);
+        if (report.Length == 0)
+        {
+            report = "La medición no terminó:\n" + string.Join("\n", results.Where(r => !r.Success).Select(r => $"• {r.Step.Title}: {r.Detail}"));
+        }
+
+        if (svc.GpuRestarted)
+        {
+            // Después de reiniciar el driver de video, WinUI puede quedar sin dibujar texto: se reabre KRUZH con ventana nueva
+            // y el resultado se muestra al volver.
+            KruzhLatency.Infra.Benchmark.AutoTuneSessionStore.SaveReport("Resultado: afinidad de GPU", report);
+            App.RelaunchAndExit();
+            return;
+        }
+        await ShowSimpleInfoModalAsync("Resultado: afinidad de GPU", report);
         AfterPciChange();
     }
 

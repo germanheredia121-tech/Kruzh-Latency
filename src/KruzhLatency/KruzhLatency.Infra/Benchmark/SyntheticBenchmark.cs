@@ -16,6 +16,24 @@ public static class SyntheticBenchmark
     public static bool ToolsPresent(string toolsDir) => File.Exists(LavaTriangle(toolsDir)) && File.Exists(PresentMon(toolsDir));
 
     /// <summary>
+    /// Chequeo previo sin tocar la GPU: abre la carga unos segundos y verifica que siga viva. null = OK, si no, el motivo.
+    /// </summary>
+    public static string? Preflight(string toolsDir, TimeSpan duration)
+    {
+        if (!ToolsPresent(toolsDir)) return "Faltan PresentMon o lava-triangle junto a KRUZH (reinstalá la app).";
+        using var p = Process.Start(new ProcessStartInfo(LavaTriangle(toolsDir))
+        {
+            WorkingDirectory = Path.GetDirectoryName(LavaTriangle(toolsDir))!,
+            UseShellExecute = false,
+        });
+        if (p is null) return "No se pudo abrir la carga de GPU.";
+        bool exited = p.WaitForExit((int)duration.TotalMilliseconds);
+        if (exited) return $"La carga de GPU (lava-triangle) se cerró sola al abrir (código 0x{p.ExitCode:X8}). No se tocó nada.";
+        try { p.Kill(); p.WaitForExit(5000); } catch (InvalidOperationException) { }
+        return null;
+    }
+
+    /// <summary>
     /// Abre la carga, espera el calentamiento, captura <paramref name="capture"/> con PresentMon y cierra todo.
     /// Devuelve el texto CSV o un error. Siempre cierra la carga aunque falle o se cancele.
     /// </summary>

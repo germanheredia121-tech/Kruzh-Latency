@@ -125,6 +125,7 @@ public sealed class AutoMsiService
                 _audit.DeleteRegistryValue(tweakId, RegistryHive.LocalMachine, MsiPath(instance), "MessageNumberLimit");
             }
             session.Data[$"{key}:applied"] = "1";
+            if (session.Data[$"{key}:kind"] == "GPU") session.Data["gpuRestarted"] = "1"; // la UI se reabre al terminar
             AutoTuneSessionService.Checkpoint(session);
 
             var restart = new CfgMgrDeviceInventory().Restart(instance, TimeSpan.FromSeconds(30));

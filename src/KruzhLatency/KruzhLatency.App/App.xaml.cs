@@ -35,6 +35,19 @@ public partial class App : Application
     /// <summary>Una sola instancia: abrirla dos veces duplicaba sesiones ETW y escrituras al sistema.</summary>
     private static System.Threading.Mutex? _singleInstance;
 
+    /// <summary>
+    /// Cierra KRUZH y lo vuelve a abrir con una ventana nueva. Se usa después de reiniciar el driver de video: WinUI no siempre
+    /// se recupera y la ventana queda en blanco. Llamar desde el hilo de UI (dueño del mutex de instancia única).
+    /// </summary>
+    public static void RelaunchAndExit()
+    {
+        try { _singleInstance?.ReleaseMutex(); } catch (ApplicationException) { }
+        _singleInstance?.Dispose();
+        _singleInstance = null;
+        if (Environment.ProcessPath is { } exe) KruzhLatency.Infra.Benchmark.SelfRelaunch.Start(exe);
+        Current.Exit();
+    }
+
     /// <summary>true cuando la ventana principal ya está visible; antes de eso cualquier error fatal cierra el proceso.</summary>
     private static volatile bool _startupCompleted;
 

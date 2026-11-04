@@ -66,29 +66,55 @@ public sealed class AutoGpuAffinityService
     private static string AffinityPath(IrqDevice gpu) =>
         $@"SYSTEM\CurrentControlSet\Enum\{gpu.InstanceId}\Device Parameters\Interrupt Management\Affinity Policy";
 
-    /// <summary>Un paso del overlay: aplica el candidato, reinicia el driver y mide 3 veces.</summary>
-    public (bool Ok, string Detail) Measure(IrqDevice gpu, Candidate c, CancellationToken cancel)
+    /// <summary>true si en algún momento se reinició el driver de video (la ventana de KRUZH conviene reabrirla).</summary>
+    public bool GpuRestarted { get; private set; }
+
+    /// <summary>Máscara actual de la GPU (null = sin afinidad fija, como viene Windows).</summary>
+    private static ulong? CurrentMask(IrqDevice gpu)
     {
+        using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+        using var k = hklm.OpenSubKey(AffinityPath(gpu));
+        return k?.GetValue("DevicePolicy") is int p && p == 4 && k.GetValue("AssignmentSetOverride") is byte[] b
+            ? InterruptAffinityPlanner.FromMaskBytes(b)
+            : null;
+    }
+
+    /// <summary>Escribe la afinidad del candidato y reinicia el driver SOLO si cambió algo.</summary>
+    private (bool Ok, string? Error) ApplyAndRestart(IrqDevice gpu, ulong? mask)
+    {
+        if (CurrentMask(gpu) == mask) return (true, null);
         string path = AffinityPath(gpu);
-        if (c.Mask is { } mask)
+        if (mask is { } m)
         {
             _audit.SetRegistryValue(TweakId, RegistryHive.LocalMachine, path, "DevicePolicy", 4, RegistryValueKind.DWord);
-            _audit.SetRegistryValue(TweakId, RegistryHive.LocalMachine, path, "AssignmentSetOverride", InterruptAffinityPlanner.ToMaskBytes(mask), RegistryValueKind.Binary);
+            _audit.SetRegistryValue(TweakId, RegistryHive.LocalMachine, path, "AssignmentSetOverride", InterruptAffinityPlanner.ToMaskBytes(m), RegistryValueKind.Binary);
         }
         else
         {
             _audit.DeleteRegistryValue(TweakId, RegistryHive.LocalMachine, path, "DevicePolicy");
             _audit.DeleteRegistryValue(TweakId, RegistryHive.LocalMachine, path, "AssignmentSetOverride");
         }
-
+        GpuRestarted = true;
         var restart = new CfgMgrDeviceInventory().Restart(gpu.InstanceId, TimeSpan.FromSeconds(30));
-        if (!restart.IsHealthy) return (false, $"El driver de video no volvió bien ({restart.Detail}): se corta la medición.");
+        if (!restart.IsHealthy) return (false, $"El driver de video no volvió bien ({restart.Detail}).");
+        Thread.Sleep(TimeSpan.FromSeconds(5)); // el driver termina de inicializar la salida de video
+        return (true, null);
+    }
+
+    /// <summary>Chequeo previo, sin tocar la GPU: la carga 3D abre y se mantiene.</summary>
+    public string? Preflight() => SyntheticBenchmark.Preflight(ToolsDir, TimeSpan.FromSeconds(4));
+
+    /// <summary>Un paso del overlay: aplica el candidato (reinicia el driver si cambió) y mide 3 veces.</summary>
+    public (bool Ok, string Detail) Measure(IrqDevice gpu, Candidate c, CancellationToken cancel)
+    {
+        var (ok, error) = ApplyAndRestart(gpu, c.Mask);
+        if (!ok) return (false, error + " Se corta la medición.");
 
         var runs = new List<FrameStats>();
         for (int i = 0; i < TrialsPerCandidate; i++)
         {
-            var (csv, error) = SyntheticBenchmark.RunGpuLoad(ToolsDir, Warmup, Capture, cancel);
-            if (error is not null) return (false, error);
+            var (csv, err) = SyntheticBenchmark.RunGpuLoad(ToolsDir, Warmup, Capture, cancel);
+            if (err is not null) return (false, err);
             if (FrameStats.From(PresentMonCsv.Parse(csv!, SyntheticBenchmark.LoadProcess + ".exe")) is { } stats) runs.Add(stats);
         }
         if (runs.Count < TrialsPerCandidate) return (false, "PresentMon no capturó suficientes frames.");
@@ -100,22 +126,27 @@ public sealed class AutoGpuAffinityService
     public (bool Ok, string Detail, string Report) Finish(IrqDevice gpu, IReadOnlyList<Candidate> candidates)
     {
         var decision = TrialComparer.Decide(_results);
-        _audit.RevertTweakFromJournal(TweakId, out _); // afinidad original
-        if (decision.Winner is { } w && candidates.FirstOrDefault(c => c.Name == w)?.Mask is { } mask)
+        var winnerMask = decision.Winner is { } w ? candidates.FirstOrDefault(c => c.Name == w)?.Mask : null;
+        _audit.RevertTweakFromJournal(TweakId, out _); // afinidad original en el registro
+        if (winnerMask is { } mask)
         {
             string path = AffinityPath(gpu);
             _audit.SetRegistryValue(TweakId, RegistryHive.LocalMachine, path, "DevicePolicy", 4, RegistryValueKind.DWord);
             _audit.SetRegistryValue(TweakId, RegistryHive.LocalMachine, path, "AssignmentSetOverride", InterruptAffinityPlanner.ToMaskBytes(mask), RegistryValueKind.Binary);
         }
-        new CfgMgrDeviceInventory().Restart(gpu.InstanceId, TimeSpan.FromSeconds(30));
+        if (GpuRestarted)
+        {
+            // El driver tiene que releer la afinidad final.
+            new CfgMgrDeviceInventory().Restart(gpu.InstanceId, TimeSpan.FromSeconds(30));
+        }
         return (true, decision.Reason, Report(decision));
     }
 
-    /// <summary>Si algo falla o se cancela: afinidad original y driver reiniciado.</summary>
+    /// <summary>Si algo falla o se cancela: afinidad original y, si se había reiniciado, driver reiniciado de nuevo.</summary>
     public void Abort(IrqDevice gpu)
     {
         _audit.RevertTweakFromJournal(TweakId, out _);
-        new CfgMgrDeviceInventory().Restart(gpu.InstanceId, TimeSpan.FromSeconds(30));
+        if (GpuRestarted) new CfgMgrDeviceInventory().Restart(gpu.InstanceId, TimeSpan.FromSeconds(30));
     }
 
     private static string Report(TrialDecision d)

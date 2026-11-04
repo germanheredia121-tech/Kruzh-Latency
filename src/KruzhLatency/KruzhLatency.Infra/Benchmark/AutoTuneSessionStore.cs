@@ -36,12 +36,42 @@ public static class AutoTuneSessionStore
         return null;
     }
 
+    private static string ReportPath => Path.Combine(Dir, "report.txt");
+
+    /// <summary>Resultado a mostrar la próxima vez que abra KRUZH (después de relanzarse por un reinicio del driver de video).</summary>
+    public static void SaveReport(string title, string text) => File.WriteAllText(ReportPath, title + "\n" + text);
+
+    /// <summary>Devuelve y borra el resultado pendiente (null si no hay).</summary>
+    public static (string Title, string Text)? TakeReport()
+    {
+        try
+        {
+            if (!File.Exists(ReportPath)) return null;
+            string all = File.ReadAllText(ReportPath);
+            File.Delete(ReportPath);
+            int nl = all.IndexOf('\n');
+            return nl < 0 ? ("Resultado", all) : (all[..nl], all[(nl + 1)..]);
+        }
+        catch (IOException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
+    }
+
     public static void Delete()
     {
         foreach (string p in new[] { PathJson, PathJson + ".bak", PathJson + ".tmp" })
         {
             try { File.Delete(p); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
+    }
+}
+
+/// <summary>Volver a abrir KRUZH (ventana nueva) después de reiniciar el driver de video.</summary>
+public static class SelfRelaunch
+{
+    public static bool Start(string exePath)
+    {
+        using var p = Process.Start(new ProcessStartInfo(exePath) { UseShellExecute = true });
+        return p is not null;
     }
 }
 
