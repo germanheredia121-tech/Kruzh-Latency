@@ -66,6 +66,7 @@ public sealed partial class MainWindow : Window
 
         // Spec 003 / G5: quién retoma cada tipo de medición después de un reinicio.
         AutoTuneSessionService.Runners[AutoMsiService.Kind] = RunAutoMsiAsync;
+        AutoTuneSessionService.Runners[AutoAffinityService.Kind] = RunAutoAffinityAsync;
     }
 
     private IntPtr GetWindowHandle() => WindowNative.GetWindowHandle(this);
@@ -2177,6 +2178,68 @@ public sealed partial class MainWindow : Window
         AfterPciChange();
     }
 
+    /// <summary>Spec 003 / G7: afinidad medida de la xHCI del mouse y del NVMe.</summary>
+    private async void AutoAffinityBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (AutoTuneSessionService.Pending() is not null)
+        {
+            await ShowSimpleInfoModalAsync("Medir afinidad", "Ya hay una medición en curso. Reiniciá KRUZH para retomarla o cancelarla.");
+            return;
+        }
+        if (App.AuditService.HasBackupForTweak("PciIrqSmartBalancer"))
+        {
+            await ShowSimpleInfoModalAsync("Medir afinidad", "Primero revertí \"Interrupciones por núcleo físico\" (I02): toca la misma afinidad.");
+            return;
+        }
+        var svc = new AutoAffinityService(App.AuditService, () => App.HardwareService.CurrentProfile.CoreTopology);
+        var session = await Task.Run(svc.BuildSession);
+        if (session.Steps.Count == 0)
+        {
+            await ShowSimpleInfoModalAsync("Medir afinidad", "No se encontró el USB del mouse ni un NVMe para medir.");
+            return;
+        }
+
+        int runs = session.Steps.Count(s => !s.Id.EndsWith(":decide", StringComparison.Ordinal));
+        int minutes = (int)Math.Ceiling(runs * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + 1;
+        bool go = await ShowConfirmModalAsync("Medir afinidad USB/NVMe (auto)",
+            $"KRUZH va a probar {runs} configuraciones (como viene Windows + núcleos) para el USB del mouse y el disco NVMe. Tarda unos {minutes} minutos.\n\n" +
+            "• En los pasos de USB, mové el mouse en círculos todo el tiempo que mide.\n" +
+            "• El NVMe de arranque necesita reiniciar Windows entre pruebas: KRUZH se abre solo al volver y sigue.\n" +
+            "• Solo queda lo que baja la latencia por encima del ruido; si nada gana, todo queda como estaba.",
+            "Empezar");
+        if (!go) return;
+
+        await App.AuditService.CreateSystemRestorePointAsync("KRUZH LATENCY — antes de medir afinidad");
+        await Task.Run(() => svc.Begin(session));
+        await RunAutoAffinityAsync(session);
+    }
+
+    private async Task RunAutoAffinityAsync(KruzhLatency.Core.Benchmark.AutoTuneSession session)
+    {
+        var svc = new AutoAffinityService(App.AuditService, () => App.HardwareService.CurrentProfile.CoreTopology);
+        using var cts = new CancellationTokenSource();
+        bool stop = false;
+        var pending = session.Steps.Where(s => s.Status is KruzhLatency.Core.Benchmark.AutoTuneStepStatus.Pending
+                                                         or KruzhLatency.Core.Benchmark.AutoTuneStepStatus.Running).ToList();
+        var steps = pending.Select(s => new OverlayStep(s.Title, () =>
+        {
+            if (stop) return (true, "Sigue después del reinicio.");
+            var (ok, detail, reboot) = svc.RunStep(session, s.Id, cts.Token);
+            stop |= reboot;
+            return (ok, detail);
+        })).ToList();
+
+        await RunStepsWithOverlayAsync("Midiendo afinidad", "No uses la PC (salvo mover el mouse en los pasos de USB)", steps);
+        if (stop)
+        {
+            SetStatus("Reiniciando para seguir midiendo…");
+            return;
+        }
+        string report = await Task.Run(() => svc.Finish(session));
+        await ShowSimpleInfoModalAsync("Resultado: afinidad USB/NVMe", report);
+        AfterPciChange();
+    }
+
     /// <summary>Spec 003 / G4: mide cada núcleo para la GPU con carga sintética y aplica el ganador o nada.</summary>
     private async void AutoGpuAffinityBtn_Click(object sender, RoutedEventArgs e)
     {
@@ -2243,6 +2306,12 @@ public sealed partial class MainWindow : Window
                 var ids = App.AuditService.TweakIdsStartingWith(AutoMsiService.TweakPrefix);
                 int n = ids.Count(id => App.AuditService.RevertTweakFromJournal(id, out _));
                 return (true, n == 0 ? "No había MSI medido para revertir." : $"{n} dispositivos vuelven a su MSI original.");
+            }, RequiresReboot: true),
+            new OverlayStep("Afinidad USB/NVMe medida", () =>
+            {
+                var ids = App.AuditService.TweakIdsStartingWith(AutoAffinityService.TweakPrefix);
+                int n = ids.Count(id => App.AuditService.RevertTweakFromJournal(id, out _));
+                return (true, n == 0 ? "No había afinidad medida para revertir." : $"{n} dispositivos vuelven a su afinidad original.");
             }, RequiresReboot: true),
             new OverlayStep("Modo MSI", () =>
             {
