@@ -175,7 +175,14 @@ public sealed partial class DeclarativeTweakEngine
             ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, regPath, "Start") == rule.TargetStart,
             ApplyAction = _ =>
             {
-                _audit.SetServiceStartup(id, rule.Name, rule.TargetStart, stopIfRunning: rule.TargetStart == 4);
+                try
+                {
+                    _audit.SetServiceStartup(id, rule.Name, rule.TargetStart, stopIfRunning: rule.TargetStart == 4);
+                }
+                catch (KruzhLatency.Infra.Services.ServiceProtectedException ex)
+                {
+                    return (false, ex.Message);
+                }
                 bool ok = ReadRegDword(RegistryHive.LocalMachine, regPath, "Start") == rule.TargetStart;
                 return ok
                     ? (true, $"{rule.Title}: {action}.")

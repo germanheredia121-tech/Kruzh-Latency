@@ -63,7 +63,8 @@ public sealed partial class DeclarativeTweakEngine
         _allTweaks.Add(RegistryPolicyItem("WidgetsPolicyOff", "Widgets y noticias de la barra de tareas", AppxCatalog.Assistant,
             "Apaga el panel de widgets por política: deja de cargar noticias y clima en segundo plano.",
             "Microsoft Learn: Policy CSP NewsAndInterests/AllowNewsAndInterests", Profile.Competitivo,
-            new[] { (RegistryHive.LocalMachine, @"SOFTWARE\Policies\Microsoft\Dsh", "AllowNewsAndInterests", 0) }));
+            new[] { (RegistryHive.LocalMachine, @"SOFTWARE\Policies\Microsoft\Dsh", "AllowNewsAndInterests", 0) },
+            blockedHint: "Para sacarlos igual, usá \"Widgets (Web Experience Pack)\" en esta misma pestaña: quita el paquete y los widgets desaparecen."));
 
         _allTweaks.Add(RegistryPolicyItem("CopilotPolicyOff", "Copilot de Windows (política)", AppxCatalog.Assistant,
             "Política \"Desactivar Windows Copilot\". En versiones nuevas Copilot es una app: quitala también en \"Copilot (app)\" si aparece.",
@@ -168,7 +169,7 @@ public sealed partial class DeclarativeTweakEngine
 
     /// <summary>Ítem de valores DWORD de registro/política con journal; aplicado = todos los valores en el objetivo.</summary>
     private DeclarativeTweakItem RegistryPolicyItem(string id, string title, string section, string why, string source, Profile from,
-        (RegistryHive Hive, string Path, string Name, int Value)[] values) => new()
+        (RegistryHive Hive, string Path, string Name, int Value)[] values, string? blockedHint = null) => new()
     {
         Id = id,
         CodeNumber = "AP",
@@ -187,9 +188,17 @@ public sealed partial class DeclarativeTweakEngine
         ReadLiveState = () => values.All(v => ReadRegDword(v.Hive, v.Path, v.Name) == v.Value),
         ApplyAction = _ =>
         {
-            foreach (var v in values)
+            try
             {
-                _audit.SetRegistryValue(id, v.Hive, v.Path, v.Name, v.Value, RegistryValueKind.DWord);
+                foreach (var v in values)
+                {
+                    _audit.SetRegistryValue(id, v.Hive, v.Path, v.Name, v.Value, RegistryValueKind.DWord);
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Administradores tiene permiso sobre la clave, pero Windows 11 bloquea la escritura (protección del sistema, ej. UCPD).
+                return (false, $"{title}: Windows bloquea este cambio aunque KRUZH corra como administrador (protección de Windows 11). {blockedHint}".TrimEnd());
             }
             return (true, $"{title}: aplicado.");
         }

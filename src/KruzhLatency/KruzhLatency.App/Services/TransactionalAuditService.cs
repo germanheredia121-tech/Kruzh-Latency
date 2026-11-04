@@ -231,11 +231,14 @@ public sealed class TransactionalAuditService
             RecordBaselineIfNotExistsLocked(record);
         }
 
-        using (var writeKey = hklm.OpenSubKey(regPath, writable: true))
+        // Por el Administrador de servicios: varias claves de Services solo dan lectura a Administradores (DPS, Wdi*, TrkWks).
+        if (oldStart != targetStartMode)
         {
-            if (writeKey != null)
+            KruzhLatency.Infra.Services.ServiceConfigStore.SetStartType(serviceName, targetStartMode);
+            using var verify = hklm.OpenSubKey(regPath, writable: false);
+            if (verify?.GetValue("Start") is not int now || now != targetStartMode)
             {
-                SetValueTyped(writeKey, "Start", targetStartMode, RegistryValueKind.DWord);
+                throw new InvalidOperationException($"{serviceName}: Windows no tomó el tipo de inicio {targetStartMode}.");
             }
         }
 
@@ -922,10 +925,11 @@ public sealed class TransactionalAuditService
         if (int.TryParse(parts[0], out int prevStart))
         {
             using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-            using var svcKey = hklm.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{rec.TargetPath}", writable: true);
-            if (svcKey != null)
+            using var svcKey = hklm.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{rec.TargetPath}", writable: false);
+            // Si ya está como antes (ej. el cambio nunca se pudo aplicar) no hay nada que restaurar.
+            if (svcKey?.GetValue("Start") is int current && current != prevStart)
             {
-                SetValueTyped(svcKey, "Start", prevStart, RegistryValueKind.DWord);
+                KruzhLatency.Infra.Services.ServiceConfigStore.SetStartType(rec.TargetPath, prevStart);
             }
         }
 

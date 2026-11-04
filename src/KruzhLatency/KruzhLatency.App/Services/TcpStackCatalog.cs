@@ -113,7 +113,7 @@ public sealed partial class DeclarativeTweakEngine
             ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, key, "Start") == 4,
             ApplyAction = _ =>
             {
-                _audit.SetRegistryValue(id, RegistryHive.LocalMachine, key, "Start", 4, RegistryValueKind.DWord);
+                _audit.SetServiceStartup(id, "Ndu", 4, stopIfRunning: false); // por el SCM: la clave de un servicio puede ser solo lectura
                 return (true, "Ndu deshabilitado. Reiniciá para que deje de cargarse.");
             }
         });
