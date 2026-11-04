@@ -89,7 +89,7 @@ public sealed partial class MainWindow : Window
     // ========================================================================================
     private void FitAllViewsToViewport()
     {
-        foreach (var sv in new[] { ViewDashboard, TweaksScrollViewer, ViewIrqMsi, ViewPowerDrivers, GamesScrollViewer, ViewBiosNvram, ViewMonitorAudit, ViewDisplay, ViewConfig })
+        foreach (var sv in new[] { ViewDashboard, TweaksScrollViewer, ViewIrqMsi, ViewInterrupts, ViewPowerDrivers, GamesScrollViewer, ViewBiosNvram, ViewMonitorAudit, ViewDisplay, ViewConfig })
         {
             FitContentToViewport(sv);
         }
@@ -358,6 +358,7 @@ public sealed partial class MainWindow : Window
         ViewDashboard.Visibility = targetTag == "Dashboard" ? Visibility.Visible : Visibility.Collapsed;
         ViewTweaks.Visibility = targetTag == "Tweaks" ? Visibility.Visible : Visibility.Collapsed;
         ViewIrqMsi.Visibility = targetTag == "IrqMsi" ? Visibility.Visible : Visibility.Collapsed;
+        ViewInterrupts.Visibility = targetTag == "Interrupts" ? Visibility.Visible : Visibility.Collapsed;
         ViewPowerDrivers.Visibility = targetTag == "PowerDrivers" ? Visibility.Visible : Visibility.Collapsed;
         ViewGamesNvidia.Visibility = targetTag == "GamesNvidia" ? Visibility.Visible : Visibility.Collapsed;
         ViewBiosNvram.Visibility = targetTag == "BiosNvram" ? Visibility.Visible : Visibility.Collapsed;
@@ -370,6 +371,7 @@ public sealed partial class MainWindow : Window
             "Dashboard" => "Inicio",
             "Tweaks" => "Optimizaciones",
             "IrqMsi" => "GPU",
+            "Interrupts" => "Interrupciones",
             "PowerDrivers" => "Instaladores",
             "GamesNvidia" => "Juegos",
             "BiosNvram" => "BIOS",
@@ -387,9 +389,9 @@ public sealed partial class MainWindow : Window
         {
             RefreshGpuPageUi();
         }
-        else if (targetTag == "Tweaks")
+        else if (targetTag == "Interrupts")
         {
-            RefreshPciAndMsiUi(); // "Interrupciones (avanzado)" vive al final de Optimizaciones
+            RefreshPciAndMsiUi();
         }
         else if (targetTag == "GamesNvidia")
         {
@@ -970,7 +972,6 @@ public sealed partial class MainWindow : Window
             }
 
             TweaksGroupsItemsControl.ItemsSource = groups;
-            InterruptsExpander.Visibility = tabCategory == null ? Visibility.Visible : Visibility.Collapsed;
             UpdateOptTabNote(tabCategory, groups.Sum(g => g.Items.Count));
             UpdateTweaksSummarySubtitle();
             UpdatePendingChangesBar();
@@ -1786,7 +1787,7 @@ public sealed partial class MainWindow : Window
     }
 
     // ========================================================================================
-    // VIEW 3: GPU — ajustes de driver de la GPU detectada + perfil del driver (.nip) + interrupciones (avanzado)
+    // VIEW 3: GPU — ajustes de driver de la GPU detectada + perfil del driver (.nip)
     // ========================================================================================
     /// <summary>Recorre Enum\PCI del registro: en segundo plano para no trabar la navegación.</summary>
     private async void RefreshPciAndMsiUi()
@@ -2078,7 +2079,7 @@ public sealed partial class MainWindow : Window
     private void ScanPciDevicesBtn_Click(object sender, RoutedEventArgs e)
     {
         RefreshPciAndMsiUi();
-        SetStatus("Bus PCI (HKLM\\SYSTEM\\CurrentControlSet\\Enum\\PCI) re-escaneado.");
+        SetStatus("Dispositivos leídos de nuevo.");
     }
 
     private async void ApplySafeMsiAllBtn_Click(object sender, RoutedEventArgs e)
@@ -2356,24 +2357,6 @@ public sealed partial class MainWindow : Window
             {
                 bool ok = App.AuditService.RevertTweakFromJournal("PciIrqSmartBalancer", out string m);
                 return (true, ok ? m : "No había cambios de afinidad para revertir.");
-            }, RequiresReboot: true)
-        });
-        AfterPciChange();
-    }
-
-    private async void EnableSinglePciMsiBtn_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button btn || btn.Tag is not string pnpId) return;
-        string msiPath = $@"SYSTEM\CurrentControlSet\Enum\{pnpId}\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties";
-        string affPath = $@"SYSTEM\CurrentControlSet\Enum\{pnpId}\Device Parameters\Interrupt Management\Affinity Policy";
-
-        await RunStepsWithOverlayAsync("Aplicando cambios", "Modo MSI", new[]
-        {
-            new OverlayStep("MSI + prioridad alta", () =>
-            {
-                App.AuditService.SetRegistryValue("PciMsiModeV3", Microsoft.Win32.RegistryHive.LocalMachine, msiPath, "MSISupported", 1, Microsoft.Win32.RegistryValueKind.DWord);
-                App.AuditService.SetRegistryValue("PciMsiModeV3", Microsoft.Win32.RegistryHive.LocalMachine, affPath, "DevicePriority", 3, Microsoft.Win32.RegistryValueKind.DWord);
-                return (true, "MSI activado y prioridad alta: toma efecto al reiniciar.");
             }, RequiresReboot: true)
         });
         AfterPciChange();

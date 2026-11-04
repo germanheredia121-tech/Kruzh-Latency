@@ -21,15 +21,21 @@ public static class MsiPlanner
         ("010802", "NVMe"),
     };
 
+    /// <summary>Tipo del dispositivo ("USB xHCI", "GPU"…) o null si no es de una clase que importe para la latencia.</summary>
+    public static string? KindOf(DeviceNode n) =>
+        n.IsPci ? Classes.FirstOrDefault(c => DeviceRuleEngine.PciClassStarts(n, c.ClassPrefix)).Kind : null;
+
+    /// <summary>Orden de presentación de los tipos (GPU y USB primero).</summary>
+    public static int Order(string kind) => kind switch { "GPU" => 0, "USB xHCI" => 1, "Red" => 2, "NVMe" => 3, "Audio HD" => 4, _ => 5 };
+
     public static IReadOnlyList<MsiTarget> Targets(DeviceTree tree)
     {
         var list = new List<MsiTarget>();
         foreach (var n in tree.All.Where(n => n.IsPci && n.IsPresent && !n.IsDisabled && n.ProblemCode == 0))
         {
             if (n.Interrupts is not { } caps || !(caps.SupportsMsi || caps.SupportsMsiX)) continue;
-            var match = Classes.FirstOrDefault(c => DeviceRuleEngine.PciClassStarts(n, c.ClassPrefix));
-            if (match.Kind is null) continue;
-            list.Add(new MsiTarget(n, match.Kind, caps.SupportsMsiX));
+            if (KindOf(n) is not { } kind) continue;
+            list.Add(new MsiTarget(n, kind, caps.SupportsMsiX));
         }
         return list.OrderBy(t => Array.FindIndex(Classes, c => c.Kind == t.Kind))
                    .ThenBy(t => t.Device.InstanceId, StringComparer.OrdinalIgnoreCase)

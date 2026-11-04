@@ -20,127 +20,46 @@ public sealed class IrqAndMsiService
         _hwService = hwService;
     }
 
+    /// <summary>
+    /// Estado de MSI y afinidad de los dispositivos que importan para la latencia (GPU, USB, red, NVMe, audio HD), solo los
+    /// presentes y con el nombre que muestra el Administrador de dispositivos (CfgMgr), no el DeviceDesc crudo del registro.
+    /// </summary>
     public List<PciMsiDeviceItem> EnumeratePciDevices()
     {
-        var results = new List<PciMsiDeviceItem>();
+        var tree = new DeviceTree(new CfgMgrDeviceInventory().Snapshot());
         using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-        using var pciRoot = hklm.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\PCI");
-        if (pciRoot == null)
+        var results = new List<PciMsiDeviceItem>();
+        foreach (var n in tree.All.Where(n => n.IsPci && n.IsPresent && !n.IsDisabled))
         {
-            return results;
-        }
+            if (MsiPlanner.KindOf(n) is not { } kind) continue;
+            using var msiKey = hklm.OpenSubKey($@"{InterruptPath(n.InstanceId)}\MessageSignaledInterruptProperties");
+            using var affKey = hklm.OpenSubKey($@"{InterruptPath(n.InstanceId)}\Affinity Policy");
 
-        foreach (string venDevKeyName in pciRoot.GetSubKeyNames())
-        {
-            using var venDevKey = pciRoot.OpenSubKey(venDevKeyName);
-            if (venDevKey == null) continue;
-
-            foreach (string instanceName in venDevKey.GetSubKeyNames())
+            int core = -1;
+            if (affKey?.GetValue("DevicePolicy") is int policy && policy == 4 && affKey.GetValue("AssignmentSetOverride") is byte[] maskBytes)
             {
-                using var instKey = venDevKey.OpenSubKey(instanceName);
-                if (instKey == null) continue;
-
-                string? service = instKey.GetValue("Service")?.ToString() ?? "";
-                string? cls = instKey.GetValue("Class")?.ToString() ?? "";
-                string? desc = instKey.GetValue("DeviceDesc")?.ToString() ?? "";
-                string? friendly = instKey.GetValue("FriendlyName")?.ToString() ?? desc;
-
-                int semiIdx = friendly.LastIndexOf(';');
-                if (semiIdx >= 0 && semiIdx + 1 < friendly.Length)
-                {
-                    friendly = friendly[(semiIdx + 1)..];
-                }
-
-                string category = ClassifyPciDevice(cls, service, friendly);
-                if (string.IsNullOrEmpty(category))
-                {
-                    continue;
-                }
-
-                // Verify the device is currently present/active by checking if it has Device Parameters\Interrupt Management
-                string intMgmtRel = $@"SYSTEM\CurrentControlSet\Enum\PCI\{venDevKeyName}\{instanceName}\Device Parameters\Interrupt Management";
-                using var intMgmtKey = hklm.OpenSubKey(intMgmtRel);
-                using var msiKey = hklm.OpenSubKey($@"{intMgmtRel}\MessageSignaledInterruptProperties");
-                using var affKey = hklm.OpenSubKey($@"{intMgmtRel}\Affinity Policy");
-
-                bool msiSupported = (msiKey?.GetValue("MSISupported") as int?) == 1;
-                int msgLimit = (msiKey?.GetValue("MessageNumberLimit") as int?) ?? 1;
-                int priority = (affKey?.GetValue("DevicePriority") as int?) ?? 2;
-
-                int assignedCore = -1;
-                string assignedLabel = "OS Auto";
-                if ((affKey?.GetValue("DevicePolicy") as int?) == 4 &&
-                    affKey.GetValue("AssignmentSetOverride") is byte[] maskBytes &&
-                    maskBytes.Length > 0)
-                {
-                    ulong mask = 0;
-                    for (int b = 0; b < Math.Min(8, maskBytes.Length); b++)
-                    {
-                        mask |= ((ulong)maskBytes[b]) << (b * 8);
-                    }
-                    for (int bit = 0; bit < 64; bit++)
-                    {
-                        if ((mask & (1UL << bit)) != 0)
-                        {
-                            assignedCore = bit;
-                            assignedLabel = $"Hilo Lógico #{bit} (Máscara 0x{mask:X2})";
-                            break;
-                        }
-                    }
-                }
-
-                bool isRealtekOrHdAudio = category == "Audio Controller" ||
-                                          friendly.Contains("Audio", StringComparison.OrdinalIgnoreCase) ||
-                                          friendly.Contains("Realtek", StringComparison.OrdinalIgnoreCase) && category != "NIC Ethernet";
-
-                results.Add(new PciMsiDeviceItem
-                {
-                    FriendlyName = friendly,
-                    Category = category,
-                    PnpInstanceId = $@"PCI\{venDevKeyName}\{instanceName}",
-                    MsiSupported = msiSupported,
-                    MaxMsiMessages = category == "NVMe Controller" ? 16 : (category == "USB xHCI Controller" ? 8 : 1),
-                    CurrentMessageLimit = msgLimit,
-                    DevicePriority = priority,
-                    AssignedCoreIndex = assignedCore,
-                    AssignedCoreLabel = assignedLabel,
-                    IsSafeForMsi = true,
-                    SafetyNote = isRealtekOrHdAudio
-                        ? "Audio HD: MSI activable si el dispositivo lo declara. Si después escuchás cortes, revertí I01."
-                        : "MSI activable si el dispositivo lo declara."
-                });
+                ulong mask = InterruptAffinityPlanner.FromMaskBytes(maskBytes);
+                if (mask != 0) core = System.Numerics.BitOperations.TrailingZeroCount(mask);
             }
+
+            results.Add(new PciMsiDeviceItem
+            {
+                FriendlyName = n.DisplayName,
+                Category = kind,
+                PnpInstanceId = n.InstanceId,
+                MsiCapable = n.Interrupts is { } caps && (caps.SupportsMsi || caps.SupportsMsiX),
+                MsiSupported = msiKey?.GetValue("MSISupported") is int v ? v == 1 : null,
+                AssignedCoreIndex = core,
+                ChangedByKruzh = _audit.HasBackupForTweak(AutoMsiService.TweakPrefix + n.InstanceId)
+                              || _audit.HasBackupForTweak(AutoAffinityService.TweakPrefix + n.InstanceId)
+                              || (kind == "GPU" && _audit.HasBackupForTweak(AutoGpuAffinityService.TweakId)),
+            });
         }
 
         return results
-            .OrderBy(d => d.Category switch
-            {
-                "GPU Display" => 0,
-                "USB xHCI Controller" => 1,
-                "NIC Ethernet" => 2,
-                "NVMe Controller" => 3,
-                _ => 4
-            })
+            .OrderBy(d => MsiPlanner.Order(d.Category))
+            .ThenBy(d => d.FriendlyName, StringComparer.OrdinalIgnoreCase)
             .ToList();
-    }
-
-    private static string ClassifyPciDevice(string cls, string service, string friendlyName)
-    {
-        if (string.Equals(cls, "Display", StringComparison.OrdinalIgnoreCase))
-            return "GPU Display";
-        if (string.Equals(service, "USBXHCI", StringComparison.OrdinalIgnoreCase) ||
-            friendlyName.Contains("xHCI", StringComparison.OrdinalIgnoreCase) ||
-            friendlyName.Contains("USB 3.", StringComparison.OrdinalIgnoreCase))
-            return "USB xHCI Controller";
-        if (string.Equals(service, "stornvme", StringComparison.OrdinalIgnoreCase) ||
-            friendlyName.Contains("NVMe", StringComparison.OrdinalIgnoreCase))
-            return "NVMe Controller";
-        if (string.Equals(cls, "Net", StringComparison.OrdinalIgnoreCase))
-            return "NIC Ethernet";
-        if (string.Equals(service, "HDAudBus", StringComparison.OrdinalIgnoreCase) &&
-            friendlyName.Contains("Audio", StringComparison.OrdinalIgnoreCase))
-            return "Audio Controller";
-        return string.Empty;
     }
 
 

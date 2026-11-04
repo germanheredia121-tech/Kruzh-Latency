@@ -112,23 +112,28 @@ public sealed class GameTargetItem
         IsOptimized ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 }
 
+/// <summary>Una fila de la página Interrupciones: estado actual de un dispositivo (solo lectura).</summary>
 public sealed class PciMsiDeviceItem
 {
     public string FriendlyName { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty; // GPU, USB xHCI, NVMe, NIC, Audio
+    public string Category { get; set; } = string.Empty; // GPU, USB xHCI, Red, NVMe, Audio HD
     public string PnpInstanceId { get; set; } = string.Empty;
-    public bool MsiSupported { get; set; }
-    public int MaxMsiMessages { get; set; } = 1;
-    public int CurrentMessageLimit { get; set; } = 1;
-    public int DevicePriority { get; set; } = 2; // 1=Low, 2=Normal, 3=High
+    /// <summary>El dispositivo declara MSI/MSI-X (DEVPKEY_PciDevice_InterruptSupport).</summary>
+    public bool MsiCapable { get; set; }
+    /// <summary>MSISupported = 1 en el registro (null = sin valor: decide el driver).</summary>
+    public bool? MsiSupported { get; set; }
+    /// <summary>Núcleo fijado por AssignmentSetOverride (-1 = lo decide Windows).</summary>
     public int AssignedCoreIndex { get; set; } = -1;
-    public string AssignedCoreLabel { get; set; } = "OS Auto";
-    public bool IsSafeForMsi { get; set; } = true;
-    public string SafetyNote { get; set; } = string.Empty;
+    /// <summary>KRUZH cambió algo de este dispositivo (queda en el journal y se puede revertir).</summary>
+    public bool ChangedByKruzh { get; set; }
+
     [JsonIgnore]
-    public string MsiStatusText => MsiSupported ? "MSI: ACTIVO" : "MSI: LÍNEA";
+    public string MsiStatusText => !MsiCapable ? "Solo línea"
+        : MsiSupported switch { true => "MSI", false => "Línea (MSI apagado)", null => "Por defecto del driver" };
     [JsonIgnore]
-    public string PriorityText => DevicePriority == 3 ? "Prioridad: Alta (3)" : (DevicePriority == 2 ? "Prioridad: Normal (2)" : $"Prioridad: {DevicePriority}");
+    public string AffinityText => AssignedCoreIndex < 0 ? "Núcleo: Windows" : $"Núcleo: CPU {AssignedCoreIndex}";
+    [JsonIgnore]
+    public Microsoft.UI.Xaml.Visibility ChangedVisibility => ChangedByKruzh ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 }
 
 public sealed class NvramCheckItem

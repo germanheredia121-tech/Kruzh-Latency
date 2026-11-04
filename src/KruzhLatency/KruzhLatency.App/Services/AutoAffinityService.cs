@@ -37,7 +37,6 @@ public sealed class AutoAffinityService
         _topology = topology;
     }
 
-    private static string ToolsDir => Path.Combine(AppContext.BaseDirectory, "Assets", "Tools");
 
     private static string AffinityPath(string instance) =>
         $@"SYSTEM\CurrentControlSet\Enum\{instance}\Device Parameters\Interrupt Management\Affinity Policy";
@@ -126,7 +125,8 @@ public sealed class AutoAffinityService
         }
 
         var load = Enum.Parse<LoadKind>(session.Data[$"{key}:load"]);
-        var p99 = Measure(session.Data[$"{key}:driver"], load, cancel);
+        string msiKind = load == LoadKind.Storage ? "NVMe" : "USB xHCI";
+        var p99 = InterruptMeasure.Run(msiKind, session.Data[$"{key}:driver"], load, cancel);
         session.Data[$"{stepId}:p99"] = string.Join(";", p99.Select(x => x.ToString("F1", CultureInfo.InvariantCulture)));
         session.Finish(stepId, true, $"p99 {p99.Average():F0} µs");
         AutoTuneSessionService.Checkpoint(session);
@@ -194,21 +194,6 @@ public sealed class AutoAffinityService
         return (true, result, false);
     }
 
-    private static List<double> Measure(string driver, LoadKind load, CancellationToken cancel)
-    {
-        var p99 = new List<double>();
-        for (int i = 0; i < LatencyComparer.MinTrials && !cancel.IsCancellationRequested; i++)
-        {
-            using (InterruptLoad.Start(load, ToolsDir))
-            {
-                Thread.Sleep(AutoMsiService.Settle);
-                var r = DpcLatencyAnalyzer.AnalyzeAsync(AutoMsiService.Window, cancel).GetAwaiter().GetResult();
-                p99.Add(r.Drivers.FirstOrDefault(d => string.Equals(d.FileName, driver, StringComparison.OrdinalIgnoreCase))?.P99Us ?? 0);
-            }
-        }
-        return p99;
-    }
-
     public string Finish(AutoTuneSession session)
     {
         var sb = new StringBuilder();
@@ -217,7 +202,7 @@ public sealed class AutoAffinityService
             sb.Append("• ").Append(session.Data[$"{key}:name"]).Append(": ").AppendLine(session.Data.GetValueOrDefault($"{key}:result") ?? "sin resultado");
         }
         if (session.Data.ContainsKey("pendingReboot")) sb.AppendLine().AppendLine("Reiniciá la PC para que se aplique la afinidad elegida en los dispositivos que no se reinician en caliente.");
-        sb.AppendLine().Append("Revertir: Interrupciones → Revertir.");
+        sb.AppendLine().Append("Para deshacerlo: Interrupciones → Revertir todo.");
         _sessions.End();
         return sb.ToString();
     }

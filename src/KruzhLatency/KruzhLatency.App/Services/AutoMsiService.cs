@@ -26,8 +26,8 @@ public sealed class AutoMsiService
     public const string Kind = "msi";
     public const string TweakPrefix = "AutoMsi:";
     public const int Trials = LatencyComparer.MinTrials;
-    public static readonly TimeSpan Settle = TimeSpan.FromSeconds(2);
-    public static readonly TimeSpan Window = TimeSpan.FromSeconds(12);
+    public static readonly TimeSpan Settle = InterruptMeasure.Settle;
+    public static readonly TimeSpan Window = InterruptMeasure.Window;
 
     private readonly TransactionalAuditService _audit;
     private readonly AutoTuneSessionService _sessions;
@@ -38,7 +38,6 @@ public sealed class AutoMsiService
         _sessions = new AutoTuneSessionService(audit);
     }
 
-    private static string ToolsDir => Path.Combine(AppContext.BaseDirectory, "Assets", "Tools");
 
     private static string MsiPath(string instance) =>
         $@"SYSTEM\CurrentControlSet\Enum\{instance}\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties";
@@ -100,14 +99,16 @@ public sealed class AutoMsiService
         string key = stepId[..stepId.IndexOf(':')];
         string instance = session.Data[$"{key}:instance"];
         string driver = session.Data[$"{key}:driver"];
-        var load = LoadFor(session.Data[$"{key}:kind"]);
+        string kind = session.Data[$"{key}:kind"];
+        var load = LoadFor(kind);
+        List<double> Measure() => InterruptMeasure.Run(kind, driver, load, cancel);
         bool resumed = session.Step(stepId).Status == AutoTuneStepStatus.Running;
         session.Start(stepId);
         AutoTuneSessionService.Checkpoint(session);
 
         if (stepId.EndsWith(":base", StringComparison.Ordinal))
         {
-            var p99 = Measure(driver, load, cancel);
+            var p99 = Measure();
             session.Data[$"{key}:base"] = Join(p99);
             session.Finish(stepId, true, $"p99 {p99.Average():F0} µs");
             AutoTuneSessionService.Checkpoint(session);
@@ -142,7 +143,7 @@ public sealed class AutoMsiService
             return Unfit(session, stepId, tweakId, instance, "no arrancó después del reinicio");
         }
 
-        var alt = Measure(driver, load, cancel);
+        var alt = Measure();
         session.Data[$"{key}:alt"] = Join(alt);
         var baseP99 = Split(session.Data.GetValueOrDefault($"{key}:base"));
         var decision = LatencyComparer.Decide(baseP99, alt);
@@ -170,22 +171,6 @@ public sealed class AutoMsiService
         return (false, session.Data[$"{key}:result"], false);
     }
 
-    /// <summary>3 mediciones del p99 del driver con la carga del dispositivo.</summary>
-    private static List<double> Measure(string driver, LoadKind load, CancellationToken cancel)
-    {
-        var p99 = new List<double>();
-        for (int i = 0; i < Trials && !cancel.IsCancellationRequested; i++)
-        {
-            using (InterruptLoad.Start(load, ToolsDir))
-            {
-                Thread.Sleep(Settle);
-                var r = DpcLatencyAnalyzer.AnalyzeAsync(Window, cancel).GetAwaiter().GetResult();
-                var stat = r.Drivers.FirstOrDefault(d => string.Equals(d.FileName, driver, StringComparison.OrdinalIgnoreCase));
-                p99.Add(stat?.P99Us ?? 0);
-            }
-        }
-        return p99;
-    }
 
     // ---------------------------------------------------------------- fin
 
@@ -198,7 +183,7 @@ public sealed class AutoMsiService
               .AppendLine(session.Data.GetValueOrDefault($"{key}:result") ?? "sin resultado");
         }
         if (session.Data.ContainsKey("pendingReboot")) sb.AppendLine().AppendLine("Reiniciá la PC para que se aplique la vuelta atrás de los dispositivos que no se reinician en caliente.");
-        sb.AppendLine().Append("Cada cambio que quedó se puede revertir desde Interrupciones → Revertir.");
+        sb.AppendLine().Append("Cada cambio que quedó se puede deshacer en Interrupciones → Revertir todo.");
         _sessions.End();
         return sb.ToString();
     }

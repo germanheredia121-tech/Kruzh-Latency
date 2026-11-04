@@ -33,6 +33,23 @@ public sealed record DpcAnalysisResult(
     IReadOnlyList<CpuLatencyStat>? Cpus = null)
 {
     public static DpcAnalysisResult Failed(string error) => new(TimeSpan.Zero, Array.Empty<DriverLatencyStat>(), 0, 0, error);
+
+    /// <summary>Histogramas por archivo de driver (para combinar varios en un p99, spec 003).</summary>
+    public IReadOnlyDictionary<string, KruzhLatency.Core.Latency.LatencyHistogram>? Histograms { get; init; }
+
+    /// <summary>p99 y cantidad de ISR+DPC de un conjunto de drivers juntos (ej. USBXHCI + Wdf01000).</summary>
+    public (double P99Us, long Count) CombinedP99(IEnumerable<string> driverFiles)
+    {
+        var merged = new KruzhLatency.Core.Latency.LatencyHistogram();
+        if (Histograms is not null)
+        {
+            foreach (string f in driverFiles.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (Histograms.TryGetValue(f, out var h)) merged.Merge(h);
+            }
+        }
+        return (merged.Percentile(99), merged.Count);
+    }
 }
 
 /// <summary>Carga de interrupciones de un CPU lógico durante la captura.</summary>
@@ -143,7 +160,8 @@ public sealed class DpcLatencySession : IDisposable
             var cpus = _byCpu.OrderBy(kv => kv.Key)
                 .Select(kv => new CpuLatencyStat(kv.Key, kv.Value.DpcCount, kv.Value.IsrCount, kv.Value.All.TotalUs / 1000.0, kv.Value.All.Percentile(99)))
                 .ToList();
-            return new DpcAnalysisResult(_watch.Elapsed, Aggregate(_byRoutine, _modules), _totalDpc, _totalIsr, null, cpus);
+            var (drivers, histograms) = Aggregate(_byRoutine, _modules);
+            return new DpcAnalysisResult(_watch.Elapsed, drivers, _totalDpc, _totalIsr, null, cpus) { Histograms = histograms };
         }
     }
 
@@ -215,7 +233,8 @@ public sealed class DpcLatencySession : IDisposable
         }
     }
 
-    private static List<DriverLatencyStat> Aggregate(Dictionary<ulong, Accumulator> byRoutine, List<ModuleRange> modules)
+    private static (List<DriverLatencyStat> Drivers, Dictionary<string, KruzhLatency.Core.Latency.LatencyHistogram> Histograms) Aggregate(
+        Dictionary<ulong, Accumulator> byRoutine, List<ModuleRange> modules)
     {
         var sorted = modules.OrderBy(m => m.Start).ToArray();
         var perDriver = new Dictionary<string, Accumulator>(StringComparer.OrdinalIgnoreCase);
@@ -233,7 +252,15 @@ public sealed class DpcLatencySession : IDisposable
             total.All.Merge(acc.All);
         }
 
-        return perDriver
+        var histograms = new Dictionary<string, KruzhLatency.Core.Latency.LatencyHistogram>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (file, acc) in perDriver)
+        {
+            string name = Path.GetFileName(file);
+            if (!histograms.TryGetValue(name, out var h)) histograms[name] = h = new KruzhLatency.Core.Latency.LatencyHistogram();
+            h.Merge(acc.All);
+        }
+
+        var drivers = perDriver
             .Select(kv => new DriverLatencyStat(
                 Path.GetFileName(kv.Key),
                 DriverDescriptions.Describe(kv.Key),
@@ -247,6 +274,7 @@ public sealed class DpcLatencySession : IDisposable
                 kv.Value.All.Percentile(99)))
             .OrderByDescending(d => d.MaxUs)
             .ToList();
+        return (drivers, histograms);
     }
 
     /// <summary>Búsqueda binaria del módulo que contiene la dirección.</summary>

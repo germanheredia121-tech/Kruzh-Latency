@@ -95,6 +95,12 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
+                <NavigationViewItem x:Name="NavInterruptsItem" Tag="Interrupts" Content="Interrupciones" ToolTipService.ToolTip="Interrupciones: MSI y afinidad medidos en tu PC">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE945;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
                 <NavigationViewItem x:Name="NavPowerDriversItem" Tag="PowerDrivers" Content="Instaladores" ToolTipService.ToolTip="Instaladores de Drivers y Energía">
                     <NavigationViewItem.Icon>
                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE896;" />
@@ -663,49 +669,6 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <!-- Interrupciones (avanzado): lista PCI / MSI. Se reemplaza por el auto-tune MSI (T70-T72). -->
-                            <Expander x:Name="InterruptsExpander" Margin="0,10,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                      Background="Transparent" BorderBrush="{StaticResource KruzhHairlineBorderBrush}">
-                                <Expander.Header>
-                                    <StackPanel Spacing="2" Padding="0,8">
-                                        <TextBlock Text="Interrupciones (avanzado)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
-                                        <TextBlock Text="Modo MSI y prioridad por dispositivo, y afinidad de la GPU elegida midiendo en tu PC." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Expander.Header>
-                                <StackPanel Spacing="14">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Click="AutoGpuAffinityBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Medir afinidad de GPU (auto)" />
-                                        <Button Click="AutoMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Medir MSI (auto)" />
-                                        <Button Click="AutoAffinityBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Medir afinidad USB/NVMe (auto)" />
-                                        <Button Click="ApplySafeMsiAllBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Activar MSI seguro" />
-                                        <Button Click="ScanPciDevicesBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Re-escanear" />
-                                        <Button Click="RevertAllPciIrqMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir" />
-                                    </StackPanel>
-                                    <ItemsControl x:Name="PciDevicesItemsControl">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid ColumnSpacing="16" Padding="0,12" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1" ToolTipService.ToolTip="{Binding PnpInstanceId}">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel Spacing="2" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding FriendlyName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Text="{Binding Category}" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                        <TextBlock Text="{Binding MsiStatusText}" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" />
-                                                        <TextBlock Text="{Binding PriorityText}" FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" />
-                                                    </StackPanel>
-                                                    <Button Grid.Column="2" Tag="{Binding PnpInstanceId}" Click="EnableSinglePciMsiBtn_Click" IsEnabled="{Binding IsSafeForMsi}"
-                                                            Style="{StaticResource KruzhGhostButtonStyle}" Content="MSI" VerticalAlignment="Center" />
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Expander>
                             </StackPanel>
                         </ScrollViewer>
 
@@ -1821,6 +1784,143 @@
                             </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
+                    <!-- ======================================================================= -->
+                    <!-- INTERRUPCIONES (spec 003): auto-tune medido + estado por dispositivo     -->
+                    <!-- ======================================================================= -->
+                    <ScrollViewer
+                        x:Name="ViewInterrupts"
+                        Visibility="Collapsed"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Padding="48,18,48,36" Spacing="28" MaxWidth="1000" HorizontalAlignment="Stretch">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Interrupciones" Style="{StaticResource KruzhPageTitleStyle}" />
+                                <TextBlock Text="Cómo atiende tu CPU a la GPU, el USB, la red y el disco. KRUZH prueba cada opción en tu PC y deja solo la que mide menos latencia; si ninguna gana, queda como viene Windows."
+                                           Style="{StaticResource KruzhPageSubtitleStyle}" TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <!-- 1. Ajuste automático -->
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="AJUSTE AUTOMÁTICO" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <Grid ColumnSpacing="20">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="Afinidad de la GPU" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock Text="Prueba en qué núcleo la GPU entrega más FPS con una carga 3D propia medida por PresentMon. La pantalla parpadea en cada prueba."
+                                                       FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Click="AutoGpuAffinityBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Medir" MinWidth="96" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <Grid ColumnSpacing="20">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="Modo MSI" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock Text="Mide cada dispositivo con MSI y sin MSI y deja el que tenga menos latencia de interrupción. Puede pedir reiniciar Windows y sigue solo al volver."
+                                                       FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Click="AutoMsiBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Medir" MinWidth="96" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <Grid ColumnSpacing="20">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="Afinidad del USB del mouse y del NVMe" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock Text="Prueba en qué núcleo atienden sus interrupciones. En los pasos de USB te pide mover el mouse en círculos."
+                                                       FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Click="AutoAffinityBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Medir" MinWidth="96" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                                <TextBlock Text="Antes de empezar, cada medición te dice cuánto tarda y crea un punto de restauración. Cerrá los juegos mientras mide."
+                                           FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <!-- 2. Estado por dispositivo -->
+                            <StackPanel Spacing="10">
+                                <Grid>
+                                    <TextBlock Text="TUS DISPOSITIVOS" Style="{StaticResource KruzhMicroLabelStyle}" VerticalAlignment="Center" />
+                                    <Button HorizontalAlignment="Right" Click="ScanPciDevicesBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Volver a leer" />
+                                </Grid>
+                                <Border Style="{StaticResource KruzhCardStyle}" Padding="20,4">
+                                    <ItemsControl x:Name="PciDevicesItemsControl">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnSpacing="16" Padding="0,12" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1" ToolTipService.ToolTip="{Binding PnpInstanceId}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding FriendlyName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextWrapping="Wrap" />
+                                                        <TextBlock Text="{Binding Category}" FontSize="11.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                        <Border Style="{StaticResource KruzhPositivePillStyle}" Visibility="{Binding ChangedVisibility}" VerticalAlignment="Center">
+                                                            <TextBlock Text="Ajustado por KRUZH" FontSize="11" Foreground="{StaticResource KruzhPositiveBrush}" />
+                                                        </Border>
+                                                        <Border Style="{StaticResource KruzhBadgeOutlineStyle}" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding MsiStatusText}" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </Border>
+                                                        <Border Style="{StaticResource KruzhBadgeOutlineStyle}" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding AffinityText}" FontSize="11.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                                <TextBlock Text="Los cambios de MSI y afinidad se aplican al reiniciar el dispositivo o Windows." FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <!-- 3. Manual y revertir -->
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="SIN MEDIR" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <Grid ColumnSpacing="20">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="Activar MSI en todos los compatibles" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock Text="Pone MSI en los dispositivos que lo declaran, sin medir. Más rápido, pero no sabe si en tu PC conviene: preferí &quot;Modo MSI&quot; de arriba."
+                                                       FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Click="ApplySafeMsiAllBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Activar" MinWidth="96" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <Grid ColumnSpacing="20">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="Revertir todo" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                            <TextBlock Text="Deja MSI y afinidad de todos los dispositivos como estaban antes de KRUZH (mediciones incluidas)."
+                                                       FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Click="RevertAllPciIrqMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir" MinWidth="96" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
                     <!-- ======================================================================= -->
                     <!-- PANTALLA (spec 002 / F16): EDID decodificado, señal actual y Hz exactos  -->
                     <!-- ======================================================================= -->
