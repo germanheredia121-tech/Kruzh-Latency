@@ -139,3 +139,20 @@ Criterio: **¿hay mecanismo documentado + efecto medible en CS2?** CS2 usa UDP, 
 - `.pow` de terceros (calypto, kizzimo, khorvie…): verificar licencia antes de redistribuir; si no, no incluirlos.
 - `src/KruzhLatency/publish/`, `startup_diagnostic.log`, `bin/`, `obj/` → `.gitignore`.
 - Copias duplicadas de `nvidiaProfileInspector.exe` y `Base Profile.nip` (raíz + Assets + publish).
+
+## 6. Mediciones A/B (evidencia para ADR-002)
+
+PC del autor: Ryzen 5 5600X a 4,70 GHz fijos (SMT on), 2×8 GB DDR4-3200 single rank, RTX 2060 SUPER, Windows 11 26H2 con VBS + HVCI.
+Prueba: mapa de benchmark de CS2 (VProf), mismo set de programas abiertos.
+
+| Estado | FPS medio | 1% low |
+|---|---|---|
+| Base reportada por el autor | 610 | 200 |
+| Perfil Profesional (C06 + I02 + F01 + G02/G11/G12 + resto) | 480 | 145 |
+| − C06, − I02, − F01 (revertidos a mano) | 504 | 175 |
+| − claves de GPU (G02, G11, G12 y claves manuales del chat2) | 520 | 181 |
+| Perfil reaplicado (vuelven C06, I02, F01, G02, G11, G12, C17) | 459 | 156 |
+
+PresentMon de la última corrida: en el 1% de frames más lentos (≈9 ms) la CPU ocupa ≈8,1 ms y la GPU ≈2,3 ms; ningún frame limitado por GPU y ninguna compilación de shaders. Los picos coinciden con "Server Simulation" del VProf (el benchmark corre un servidor local con bots).
+
+**Decisión:** C06, I02, F01, G02, G11, G12 y C17 salen de todos los perfiles y quedan como opcionales manuales con aviso de medir.

@@ -63,7 +63,7 @@ public sealed partial class DeclarativeTweakEngine
             SourceAttribution = "Guías comunitarias de latencia (sin documentación oficial) · Fase E (E12)",
             Risk = RiskLevel.Medium,
             RequiresReboot = true,
-            InMinimal = false, InCompetitivo = false, InProfesional = false, InEntusiasta = true,
+            InMinimal = false, InCompetitivo = false, InProfesional = false, InEntusiasta = false, // sin documentación: solo manual
             EvaluateGate = _ => EvaluationResult.Neutral("Experimental: medí antes y después."),
             ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, KernelKey, "SerializeTimerExpiration") == 0,
             ApplyAction = _ =>

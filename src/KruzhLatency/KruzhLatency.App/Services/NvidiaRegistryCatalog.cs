@@ -135,16 +135,16 @@ public sealed partial class DeclarativeTweakEngine
         _allTweaks.Add(NvidiaRegistryItem("NvRuntimePowerOff", "G11", "NVIDIA: sin apagado de la GPU en ejecución (D3Cold)",
             "Con EnableRuntimePowerManagement = 0 el driver no apaga la GPU ni su enlace PCIe en reposo, así que no tiene que despertarla " +
             "cuando arranca un video o un juego. Conviene junto con \"Desactivar PCIe ASPM\" (S02).",
-            community, RiskLevel.Low, inProfesional: true, inEntusiasta: true,
-            EvaluationResult.Recommended("En escritorio: la GPU queda lista sin despertar."),
+            community, RiskLevel.Low, inProfesional: false, inEntusiasta: false, // fuera de perfiles: medición A/B en contra (docs/AUDITORIA.md)
+            EvaluationResult.Neutral("Opcional: en la medición A/B con CS2, junto con G02/G12, bajó FPS. Medí antes y después."),
             new NvValue(NvWhere.AdapterClass, "EnableRuntimePowerManagement", 0)));
 
         // E11: relojes. PowerMizer en la clave del adaptador (donde lo lee el driver; G03 lo escribía en Global y se quitó).
         _allTweaks.Add(NvidiaRegistryItem("NvPowerMizerMax", "G12", "NVIDIA: PowerMizer en máximo rendimiento",
             "Fija el nivel de rendimiento del driver en el más alto (PerfLevelSrc = 0x2222, PowerMizerEnable = 0, PowerMizerLevel y PowerMizerLevelAC = 1) " +
             "y apaga el tiling de memoria del sistema. Complementa \"Force P0\" (G02): la GPU no baja relojes entre escenas.",
-            community, RiskLevel.Medium, inProfesional: true, inEntusiasta: true,
-            EvaluationResult.Recommended("En escritorio: relojes estables, más consumo en reposo."),
+            community, RiskLevel.Medium, inProfesional: false, inEntusiasta: false, // fuera de perfiles: medición A/B en contra (docs/AUDITORIA.md)
+            EvaluationResult.Neutral("Opcional: en la medición A/B con CS2, junto con G02/G11, bajó FPS. Medí antes y después."),
             new NvValue(NvWhere.AdapterClass, "PerfLevelSrc", 0x2222),
             new NvValue(NvWhere.AdapterClass, "PowerMizerEnable", 0),
             new NvValue(NvWhere.AdapterClass, "PowerMizerLevel", 1),

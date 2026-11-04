@@ -1042,28 +1042,28 @@ public sealed partial class DeclarativeTweakEngine
             Title = "Zero Wake-Up Latency (C-States OS Idle OFF + Core Parking 100%)",
             Category = TweakCategory.SystemCpu,
             CategoryDisplay = "Sistema & CPU",
-            TechnicalDescription = "Desactiva la promoción a estados C de reposo en el esquema actual y mantiene el 100% de los núcleos despiertos.",
+            TechnicalDescription = "Desactiva la inactividad del procesador en el plan activo: los núcleos nunca se detienen. " +
+                                   "⚠ Con SMT, el hilo hermano que queda libre gira en vez de detenerse y le roba recursos al hilo del juego en el mismo núcleo, " +
+                                   "y en CPUs con boost además baja el reloj. En la medición A/B de docs/AUDITORIA.md (Ryzen 5600X, CS2) bajó FPS y 1% low. Medí antes y después.",
             WhatItTouches = @"powercfg scheme_current sub_processor: IDLEDISABLE=1, CPMINCORES=100",
-            SourceAttribution = "Calypto Latency Guide",
+            SourceAttribution = "Calypto Latency Guide · medición A/B propia (docs/AUDITORIA.md)",
             Risk = RiskLevel.Medium,
+            // Fuera de perfiles (ADR-002): evidencia A/B en contra.
             InMinimal = false,
             InCompetitivo = false,
-            InProfesional = true,
+            InProfesional = false,
+            InEntusiasta = false,
             EvaluateGate = hw =>
             {
                 if (hw.Chassis == ChassisKind.Laptop)
                 {
-                    return EvaluationResult.NotRecommended("PELIGRO TÉRMICO EN LAPTOP: Apagar C-States (IDLEDISABLE=1) en una portátil dispara la temperatura a >90°C en reposo y provoca Thermal Throttling severo.");
+                    return EvaluationResult.NotRecommended("En laptop dispara la temperatura en reposo y provoca throttling.");
                 }
-                if (hw.ClockingMode == CpuClockingMode.StaticAllCoreOverclock)
+                if (hw.Topology.Any(t => t.IsSmtSecondaryThread))
                 {
-                    return EvaluationResult.Recommended($"IDEAL PARA TU ALL-CORE OVERCLOCK ({hw.ClockingModeDescription}): Elimina por completo la latencia de despertar C1E/C6 sin afectar tu multiplicador fijo.");
+                    return EvaluationResult.NotRecommended("Con SMT activo el hilo hermano gira sin parar y le quita recursos al juego: en las mediciones bajó FPS y 1% low.");
                 }
-                if (hw.IsRyzenZen2OrZen3OrZen4 && hw.ClockingMode == CpuClockingMode.DynamicBoostPbo)
-                {
-                    return EvaluationResult.Neutral("En Ryzen con PBO + Curve Optimizer, mantener IDLEDISABLE=1 todo el tiempo puede reducir el boost pico de 1 solo núcleo en ~50-100MHz.");
-                }
-                return EvaluationResult.Recommended("Recomendado en Desktop con buena refrigeración para eliminar latencia de C-States.");
+                return EvaluationResult.Neutral("Experimental: solo con SMT apagado y reloj fijo. Medí antes y después.");
             },
             ReadLiveState = () => ReadActivePowerSchemeAcSettingDword("54533251-82be-4824-96c1-47b60b740d00", "5d76a2ca-e8c0-402f-a133-2158492d58ad") == 1,
             ApplyAction = _ =>
@@ -1234,9 +1234,11 @@ public sealed partial class DeclarativeTweakEngine
             SourceAttribution = "Calypto / BoringBoredom PC-Tuning §11.26",
             Risk = RiskLevel.Medium,
             RequiresReboot = true,
+            // Fuera de perfiles (ADR-002): clave no documentada y, junto con G11/G12, bajó FPS en la medición A/B (docs/AUDITORIA.md).
             InMinimal = false,
             InCompetitivo = false,
-            InProfesional = true,
+            InProfesional = false,
+            InEntusiasta = false,
             ApplicableGate = hw => hw.GpuVendor == GpuVendorKind.Nvidia
                 ? ApplicabilityResult.Applicable("GPU NVIDIA detectada")
                 : ApplicabilityResult.NotApplicable($"Exclusivo para GPUs NVIDIA (Detectada: {hw.GpuName})"),
@@ -1644,9 +1646,13 @@ public sealed partial class DeclarativeTweakEngine
             SourceAttribution = "Microsoft Learn: Interrupt Affinity and Priority (IRQ_DEVICE_POLICY) · AutoGpuAffinity · BoringBoredom PC-Tuning §11.43",
             Risk = RiskLevel.Medium,
             RequiresReboot = true,
+            // Fuera de perfiles (ADR-002): en la medición A/B (5600X + 2060S, CS2 a ~500 FPS) bajó FPS; a esos FPS la GPU
+            // genera muchas interrupciones y fijarlas a un hilo compite con el juego. Queda como opcional para medir.
             InMinimal = false,
             InCompetitivo = false,
-            InProfesional = true,
+            InProfesional = false,
+            InEntusiasta = false,
+            EvaluateGate = _ => EvaluationResult.Neutral("Opcional: baja la latencia de interrupciones, pero en las mediciones con CS2 a ~500 FPS bajó los FPS. Medí antes y después."),
             SelectedOptionKey = "Gpu2",
             Options = new List<TweakOptionChoice>
             {
@@ -1828,9 +1834,12 @@ public sealed partial class DeclarativeTweakEngine
             WhatItTouches = @"IFEO\<exe>\PerfOptions (CpuPriorityClass=3, IoPriority=3)",
             SourceAttribution = "BoringBoredom PC-Tuning §11.42",
             Risk = RiskLevel.Low,
-            InMinimal = true,
-            InCompetitivo = true,
-            InProfesional = true,
+            // Fuera de perfiles (ADR-002): en la medición A/B de docs/AUDITORIA.md (5600X + 2060S, CS2) junto con C06/I02/G02 bajó FPS y 1% low.
+            InMinimal = false,
+            InCompetitivo = false,
+            InProfesional = false,
+            InEntusiasta = false,
+            EvaluateGate = _ => EvaluationResult.Neutral("Opcional: la prioridad Alta puede postergar audio, entrada y presentación. Medí el 1% low antes y después."),
             ReadLiveState = () => ReadRegDword(RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\cs2.exe\PerfOptions", "CpuPriorityClass") == 3,
             ApplyAction = _ =>
             {
