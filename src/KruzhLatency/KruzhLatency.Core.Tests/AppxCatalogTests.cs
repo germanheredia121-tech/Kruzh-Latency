@@ -10,6 +10,20 @@ public class AppxCatalogTests
         new(name, name + "_8wekyb3d8bbwe", name + "_1.0.0.0_x64__8wekyb3d8bbwe", framework, system);
 
     [Fact]
+    public void Widgets_Windows11Actual_IncluyeFeedYPlataforma()
+    {
+        var plan = AppxCatalog.Plan(new[]
+        {
+            Pkg("Microsoft.StartExperiencesApp"), Pkg("Microsoft.WidgetsPlatformRuntime"),
+            Pkg("MicrosoftCorporationII.MicrosoftFamily"), Pkg("Microsoft.WindowsStore")
+        }).ToDictionary(r => r.Rule.Id);
+
+        Assert.Equal(2, plan["Widgets"].Packages.Count);
+        Assert.Single(plan["Family"].Packages);
+        Assert.DoesNotContain(plan.Values.SelectMany(r => r.Packages), p => p.Name == "Microsoft.WindowsStore");
+    }
+
+    [Fact]
     public void Plan_SoloLoInstalado_YAgrupadoPorRegla()
     {
         var plan = AppxCatalog.Plan(new[]

@@ -63,6 +63,34 @@ public static class OneDriveStore
         return found;
     }
 
+    /// <summary>
+    /// Descarga los archivos solo-nube leyéndolos completos (OneDrive los baja al abrirlos; tiene que estar corriendo).
+    /// Devuelve los que siguen solo en la nube.
+    /// </summary>
+    public static IReadOnlyList<string> Hydrate(IReadOnlyList<string> files, TimeSpan budget)
+    {
+        if (Find() is { } install && Process.GetProcessesByName("OneDrive").Length == 0)
+        {
+            Process.Start(new ProcessStartInfo(install.Exe, "/background") { UseShellExecute = false, CreateNoWindow = true })?.Dispose();
+            Thread.Sleep(TimeSpan.FromSeconds(8)); // que el cliente de sincronización arranque antes de pedirle archivos
+        }
+
+        var deadline = DateTime.UtcNow + budget;
+        var buffer = new byte[1 << 20];
+        foreach (string f in files)
+        {
+            if (DateTime.UtcNow > deadline) break;
+            try
+            {
+                using var fs = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                while (fs.Read(buffer, 0, buffer.Length) > 0 && DateTime.UtcNow <= deadline) { }
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+        return files.Where(f => File.Exists(f) && CloudFiles.IsCloudOnly(File.GetAttributes(f))).ToList();
+    }
+
     /// <summary>Cierra OneDrive y ejecuta su desinstalador. Devuelve si después ya no queda el ejecutable.</summary>
     public static (bool Ok, string Detail) Uninstall()
     {

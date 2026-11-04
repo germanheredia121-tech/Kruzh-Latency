@@ -219,7 +219,7 @@ public sealed partial class DeclarativeTweakEngine
             TechnicalDescription = "Desinstala OneDrive con su propio desinstalador: deja de sincronizar en segundo plano (disco, red y CPU). " +
                                    "Tus archivos quedan en la carpeta OneDrive de tu usuario, sin sincronizar; el Escritorio y Documentos siguen donde están. " +
                                    "Además activa la política que impide que OneDrive vuelva a usarse solo después de una actualización de Windows.\n" +
-                                   "⚠ Si tenés archivos que están solo en la nube, KRUZH no desinstala: bajalos primero (clic derecho → \"Mantener siempre en este dispositivo\"). " +
+                                   "Si hay hasta 50 archivos que están solo en la nube, KRUZH los descarga primero para que no pierdas acceso desde la PC; si hay más, te pide que los bajes vos. " +
                                    "Revertir quita la política; para volver a instalar OneDrive: winget install Microsoft.OneDrive.",
             WhatItTouches = $@"OneDriveSetup.exe /uninstall · HKLM\{policyKey} -> DisableFileSyncNGSC = 1",
             SourceAttribution = "Microsoft Learn: Uninstall OneDrive · OneDrive policy DisableFileSyncNGSC",
@@ -233,11 +233,22 @@ public sealed partial class DeclarativeTweakEngine
                                   ReadRegDword(RegistryHive.LocalMachine, policyKey, "DisableFileSyncNGSC") == 1,
             ApplyAction = _ =>
             {
-                var cloudOnly = OneDriveStore.CloudOnlyFiles(max: 10);
+                const int autoDownloadLimit = 50;
+                var cloudOnly = OneDriveStore.CloudOnlyFiles(max: autoDownloadLimit + 1);
+                if (cloudOnly.Count > autoDownloadLimit)
+                {
+                    return (false, $"Hay más de {autoDownloadLimit} archivos que están solo en la nube: KRUZH no los baja solo para no descargarte gigas sin avisar. " +
+                                   "Clic derecho en la carpeta OneDrive → \"Mantener siempre en este dispositivo\", esperá que terminen y volvé a aplicar.");
+                }
                 if (cloudOnly.Count > 0)
                 {
-                    return (false, $"Hay {(cloudOnly.Count >= 10 ? "10 o más" : cloudOnly.Count.ToString())} archivos que están solo en la nube " +
-                                   $"(por ejemplo {Path.GetFileName(cloudOnly[0])}). Bajalos (clic derecho → \"Mantener siempre en este dispositivo\") o borralos y volvé a aplicar.");
+                    // Pocos archivos: se descargan solos antes de desinstalar, así no se pierde el acceso desde la PC.
+                    var pending = OneDriveStore.Hydrate(cloudOnly, TimeSpan.FromMinutes(3));
+                    if (pending.Count > 0)
+                    {
+                        return (false, $"No se pudieron bajar {pending.Count} archivos que están solo en la nube (por ejemplo {Path.GetFileName(pending[0])}). " +
+                                       "Revisá tu conexión o abrilos a mano, y volvé a aplicar.");
+                    }
                 }
 
                 var (ok, detail) = OneDriveStore.Uninstall();
