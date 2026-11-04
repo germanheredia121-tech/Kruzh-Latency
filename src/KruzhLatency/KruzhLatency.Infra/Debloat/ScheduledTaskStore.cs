@@ -117,6 +117,53 @@ public static class ScheduledTaskStore
         }
     }
 
+    /// <summary>Rutas completas de las tareas de una carpeta (incluidas las ocultas); vacío si la carpeta no existe.</summary>
+    public static IReadOnlyList<string> List(string folderPath, bool recursive)
+    {
+        var result = new List<string>();
+        dynamic? service = null;
+        try
+        {
+            service = Connect();
+            Collect(service.GetFolder(folderPath), recursive, result);
+        }
+        catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException)
+        {
+            // carpeta inexistente o sin permiso
+        }
+        finally
+        {
+            Release(service);
+        }
+        return result;
+    }
+
+    private static void Collect(dynamic folder, bool recursive, List<string> result)
+    {
+        dynamic? tasks = null, folders = null;
+        try
+        {
+            const int TASK_ENUM_HIDDEN = 1;
+            tasks = folder.GetTasks(TASK_ENUM_HIDDEN);
+            foreach (dynamic t in tasks)
+            {
+                try { result.Add((string)t.Path); }
+                finally { Release(t); }
+            }
+            if (!recursive) return;
+            folders = folder.GetFolders(0);
+            foreach (dynamic sub in folders)
+            {
+                try { Collect(sub, true, result); }
+                finally { Release(sub); }
+            }
+        }
+        finally
+        {
+            Release(tasks); Release(folders); Release(folder);
+        }
+    }
+
     private static dynamic Connect()
     {
         var type = Type.GetTypeFromProgID("Schedule.Service") ?? throw new InvalidOperationException("Programador de tareas no disponible.");

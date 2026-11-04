@@ -60,6 +60,8 @@ public sealed partial class DeclarativeTweakEngine
             _allTweaks.Add(BuildDeprovisionItem(plan));
         }
 
+        BuildBackgroundItems(); // Edge, Optimización de distribución, OneDrive, avisos de Windows
+
         _allTweaks.Add(RegistryPolicyItem("WidgetsPolicyOff", "Widgets y noticias de la barra de tareas", AppxCatalog.Assistant,
             "Apaga el panel de widgets por política: deja de cargar noticias y clima en segundo plano.",
             "Microsoft Learn: Policy CSP NewsAndInterests/AllowNewsAndInterests", Profile.Competitivo,

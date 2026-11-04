@@ -78,6 +78,9 @@ public sealed partial class DeclarativeTweakEngine
             "Recolecta y envía informes cuando algo falla; genera picos de disco al ocurrir.", MinProfile.Competitivo, 4);
         yield return new("PcaSvc", "Asistente de compatibilidad de programas", telemetry,
             "Monitorea los programas que abrís para sugerir modos de compatibilidad.", MinProfile.Competitivo, 4);
+        yield return new("InventorySvc", "Inventario y evaluación de compatibilidad", telemetry,
+            "Releva programas y hardware instalados para la evaluación de compatibilidad de Windows (alimenta la telemetría). Queda en manual.",
+            MinProfile.Competitivo, 3);
         yield return new("DPS", "Directivas de diagnóstico", telemetry,
             "Detección automática de problemas. Sin él, el solucionador de problemas de Windows hace menos.", MinProfile.Profesional, 4);
         yield return new("WdiServiceHost", "Host del servicio de diagnóstico", telemetry,
@@ -98,6 +101,17 @@ public sealed partial class DeclarativeTweakEngine
         yield return new("PhoneSvc", "Servicio telefónico", unused, "Llamadas desde la PC vinculada al teléfono.", MinProfile.Competitivo, 4);
         yield return new("wisvc", "Programa Windows Insider", unused, "Solo hace falta si usás builds Insider.", MinProfile.Competitivo, 4);
         yield return new("SEMgrSvc", "Pagos y NFC", unused, "Pagos con NFC. No aplica en una PC de escritorio.", MinProfile.Competitivo, 4);
+        yield return new("SSDPSRV", "Detección SSDP", unused,
+            "Busca dispositivos UPnP en la red local (televisores, DLNA). CS2 y VALORANT usan servidores dedicados y no lo necesitan.",
+            MinProfile.Competitivo, 4);
+        yield return new("upnphost", "Host de dispositivo UPnP", unused,
+            "Publica esta PC como dispositivo UPnP en la red local. Depende de SSDP.", MinProfile.Competitivo, 4);
+        yield return new("CDPSvc", "Plataforma de dispositivos conectados", unused,
+            "Compartir con dispositivos cercanos, historial del portapapeles en la nube y vínculo con el teléfono. Queda en manual: arranca si lo usás.",
+            MinProfile.Profesional, 3);
+        yield return new("iphlpsvc", "Aplicación auxiliar IP", unused,
+            "Túneles de transición a IPv6 (Teredo, 6to4, IP-HTTPS). El chat de grupo de Xbox usa Teredo; CS2 y VALORANT no.",
+            MinProfile.Profesional, 4);
         yield return new("TrkWks", "Seguimiento de vínculos distribuidos", unused,
             "Mantiene accesos directos a archivos movidos entre PCs de una red.", MinProfile.Profesional, 4);
         yield return new("SharedAccess", "Conexión compartida a Internet", unused,
@@ -105,10 +119,15 @@ public sealed partial class DeclarativeTweakEngine
 
         var hw = _hwService.CurrentProfile;
         yield return new("SysMain", "SysMain (Superfetch)", background,
-            "Precarga apps en RAM y lee el disco en segundo plano. Con SSD y 16 GB o más no aporta y genera actividad de disco.",
+            "Precarga apps en RAM y lee el disco en segundo plano. Con SSD y 32 GB o más no aporta y genera actividad de disco. " +
+            "Ojo: también maneja la compresión de memoria; con menos RAM, apagarlo hace que Windows vaya al disco en vez de comprimir (tirones).",
             MinProfile.Competitivo, 4,
-            () => hw.Storage == StorageKind.NvmeOrSsd && hw.RamTotalGb >= 16,
-            "Con disco mecánico o menos de 16 GB de RAM conviene dejarlo activo.");
+            () => hw.Storage == StorageKind.NvmeOrSsd && hw.RamTotalGb >= 32,
+            "Con menos de 32 GB de RAM (o disco mecánico) se mantiene: sin SysMain no hay compresión de memoria y el juego termina leyendo del disco.");
+        yield return new("DoSvc", "Optimización de distribución", background,
+            "Descarga actualizaciones en segundo plano y las comparte con otras PCs. Queda en manual: Windows Update lo arranca cuando lo necesita. " +
+            "Para que no suba actualizaciones a otras PCs mientras jugás, ver \"Optimización de distribución sin P2P\" en Apps.",
+            MinProfile.Competitivo, 3);
         yield return new("WSearch", "Indexación de Windows Search", background,
             "Indexa archivos en segundo plano (picos de disco y CPU). La búsqueda sigue funcionando, solo más lenta.",
             MinProfile.Profesional, 4);
