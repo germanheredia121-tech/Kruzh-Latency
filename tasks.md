@@ -182,3 +182,16 @@ Origen: prueba de 1 hora con LatencyMon en la PC del autor (picos de 4439 µs en
 3. C1 → C2 → C3 → C4 → C5 → C6
 4. D1 · D2
 5. E1 · E3 · E4 · E5 · E6 → E2 + E7 + E8 + E9 (afinidad, RSS y MSI van juntos) → E10 · E11 · E12 → E13 · E14 · E18 → E15 · E16 · E17
+
+## Spec 003 — Auto-tune medido (ADR-012)
+
+| # | Tarea | Depende | Aceptación |
+|---|---|---|---|
+| G1 | Core: estadísticas de frames (FPS, 1 % y 0,1 % low), parser de CSV de PresentMon por nombre de columna, comparador con margen de ruido (default siempre candidato) | – | tests con el CSV real del autor y corridas simuladas |
+| G2 | Infra: PresentMon y lava-triangle en Assets (MIT, THIRD-PARTY-NOTICES), lanzador de carga con límite de tiempo, captura PresentMon por proceso | G1 | corrida de 60 s produce CSV parseable |
+| G3 | Infra: ETW ISR/DPC por CPU (extiende DpcLatencySession) | – | totales por CPU coinciden con LatencyMon ±10 % |
+| G4 | F2 auto afinidad de GPU: candidatos, reinicio del devnode, medición, tabla, aplicar ganador o nada | G1–G3 | en la PC del autor: elige o descarta con números; revert exacto |
+| G5 | Sesión con reinicios y retomado (estado en ProgramData protegido + tarea de un uso) | – | reinicio a mitad de sesión y retoma sola |
+| G6 | F3 auto MSI por dispositivo (hot-restart o reinicio guiado), "no apto" si falla | G1–G5 | ningún dispositivo queda con error; journal completo |
+| G7 | F4 auto afinidad de xHCI / red / NVMe | G6 | idem |
+| G8 | F5 KRUZH Agent con CPU Sets por juego (adaptado de CPUSetSetter, MIT) + elección medida | G1, G2 | CS2 arranca con la máscara elegida; sin handles con acceso a memoria |
