@@ -27,6 +27,7 @@ public static class CpuTopologyParser
     private const int CacheLevelOffset = 8;
     private const int CacheGroupCountOffset = 38;
     private const int CacheMaskOffset = 40;
+    private const int CacheSizeOffset = 12;
 
     public static IReadOnlyList<LogicalProcessor> Parse(ReadOnlySpan<byte> coreBuffer, ReadOnlySpan<byte> cacheBuffer)
     {
@@ -40,6 +41,7 @@ public static class CpuTopologyParser
 
         // Grupos de L3: cada caché de nivel 3 distinta = un CCD (Ryzen multi-CCD) o el L3 compartido único.
         var l3Groups = new List<HashSet<int>>();
+        var l3Sizes = new List<int>();
         foreach (var rec in Records(cacheBuffer, RelationCache))
         {
             if (rec[CacheLevelOffset] != 3) continue;
@@ -48,6 +50,7 @@ public static class CpuTopologyParser
             if (threads.Count > 0 && !l3Groups.Any(g => g.SetEquals(threads)))
             {
                 l3Groups.Add(threads);
+                l3Sizes.Add((int)(BinaryPrimitives.ReadUInt32LittleEndian(rec.AsSpan(CacheSizeOffset, 4)) / 1024));
             }
         }
 
@@ -72,7 +75,8 @@ public static class CpuTopologyParser
                     PhysicalCoreIndex: coreIndex,
                     IsEfficiencyCore: isECore,
                     IsSmtSibling: i > 0,
-                    L3GroupIndex: Math.Max(0, l3)));
+                    L3GroupIndex: Math.Max(0, l3),
+                    L3SizeKb: l3 >= 0 ? l3Sizes[l3] : 0));
             }
         }
         return result.OrderBy(p => p.Index).ToList();

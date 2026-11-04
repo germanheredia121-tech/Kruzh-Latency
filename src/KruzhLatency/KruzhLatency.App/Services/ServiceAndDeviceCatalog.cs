@@ -215,6 +215,7 @@ public sealed partial class DeclarativeTweakEngine
         BuildGhostItems(tree);                      // B2
         BuildIssueItems(tree, context.Safety);      // B3
         BuildInputPortAdvice(tree);                 // B6
+        BuildInputSeparationAdvice(tree);           // E9
     }
 
     private DeclarativeTweakItem BuildDeviceItem(DeviceRecommendation rec)

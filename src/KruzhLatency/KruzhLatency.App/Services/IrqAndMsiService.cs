@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KruzhLatency.Models;
+using KruzhLatency.Core.Devices;
+using KruzhLatency.Core.Latency;
+using KruzhLatency.Infra.Devices;
 using Microsoft.Win32;
 
 namespace KruzhLatency.Services;
@@ -101,10 +104,10 @@ public sealed class IrqAndMsiService
                     DevicePriority = priority,
                     AssignedCoreIndex = assignedCore,
                     AssignedCoreLabel = assignedLabel,
-                    IsSafeForMsi = !isRealtekOrHdAudio,
+                    IsSafeForMsi = true,
                     SafetyNote = isRealtekOrHdAudio
-                        ? "Controladora HD Audio: mantener en modo Línea por defecto para evitar artefactos/cortes de sonido."
-                        : "100% seguro para MSI Mode + Prioridad Alta."
+                        ? "Audio HD: MSI activable si el dispositivo lo declara. Si después escuchás cortes, revertí I01."
+                        : "MSI activable si el dispositivo lo declara."
                 });
             }
         }
@@ -140,121 +143,118 @@ public sealed class IrqAndMsiService
         return string.Empty;
     }
 
+
+    /// <summary>Foto del árbol de dispositivos (si el llamador no tiene una).</summary>
+    private static DeviceTree Tree(DeviceTree? tree) => tree ?? new DeviceTree(new CfgMgrDeviceInventory().Snapshot());
+
+    private static string InterruptPath(string instanceId) =>
+        $@"SYSTEM\CurrentControlSet\Enum\{instanceId}\Device Parameters\Interrupt Management";
+
+    // ------------------------------------------------------------------ E8: MSI
+
     /// <summary>
-    /// Native MSI Utility v3 implementation: Enables MSI Mode and sets DevicePriority on safe PCI instances
-    /// (GPU, USB xHCI, NVMe, NIC), skipping HD Audio controllers unless explicitly requested.
+    /// E8: MSISupported = 1 en xHCI, audio HD, GPU, red y NVMe que declaran soporte de MSI/MSI-X; en MSI-X además se borra
+    /// MessageNumberLimit. La prioridad de interrupción ya no se toca acá: la decide el reparto por núcleo (E7).
     /// </summary>
-    public (bool Success, string Summary) ApplySafePciMsiMode(string tweakId = "PciMsiModeV3")
+    public (bool Success, string Summary) ApplySafePciMsiMode(string tweakId = "PciMsiModeV3", DeviceTree? tree = null)
     {
-        var devices = EnumeratePciDevices().Where(d => d.IsSafeForMsi).ToList();
-        int count = 0;
+        var targets = MsiPlanner.Targets(Tree(tree));
+        if (targets.Count == 0) return (false, "Ningún dispositivo declara soporte de MSI.");
 
-        foreach (var dev in devices)
+        foreach (var t in targets)
         {
-            string baseReg = $@"SYSTEM\CurrentControlSet\Enum\{dev.PnpInstanceId}\Device Parameters\Interrupt Management";
-            string msiPath = $@"{baseReg}\MessageSignaledInterruptProperties";
-            string affPath = $@"{baseReg}\Affinity Policy";
-
+            string msiPath = $@"{InterruptPath(t.Device.InstanceId)}\MessageSignaledInterruptProperties";
             _audit.SetRegistryValue(tweakId, RegistryHive.LocalMachine, msiPath, "MSISupported", 1, RegistryValueKind.DWord);
-
-            // High priority (3) for GPU & USB xHCI; Normal (2) for NIC & NVMe so they don't preempt mouse/frame presentation
-            int targetPriority = dev.Category is "GPU Display" or "USB xHCI Controller" ? 3 : 2;
-            _audit.SetRegistryValue(tweakId, RegistryHive.LocalMachine, affPath, "DevicePriority", targetPriority, RegistryValueKind.DWord);
-            count++;
+            if (t.RemoveMessageLimit)
+            {
+                _audit.DeleteRegistryValue(tweakId, RegistryHive.LocalMachine, msiPath, "MessageNumberLimit");
+            }
         }
-
-        return (count > 0, $"MSI Mode v3 + DevicePriority aplicado en {count} dispositivos PCI reales (GPU, xHCI, NVMe, NIC).");
+        return (true, $"MSI activado en {targets.Count} dispositivos ({string.Join(", ", targets.GroupBy(t => t.Kind).Select(g => $"{g.Key} ×{g.Count()}"))}). Reiniciá y mirá el Monitor: si algo empeora, revertí.");
     }
 
-    /// <summary>
-    /// Native AutoGpuAffinity implementation: Assigns GPU, USB xHCI, and NIC interrupts to distinct physical P-cores,
-    /// NEVER Core 0, NEVER SMT secondary threads, and NEVER E-cores.
-    /// </summary>
-    public (bool Success, string Summary) ApplyOptimalPciIrqAffinity(string tweakId = "PciIrqSmartBalancer")
+    public bool IsPciMsiModeAllEnabled(DeviceTree? tree = null)
     {
-        var hw = _hwService.CurrentProfile;
-
-        // Filter candidate cores: primary physical threads (no SMT secondary), no E-cores, and strictly LogicalIndex > 0 (never Core 0!)
-        var candidatePhysicalThreads = hw.Topology
-            .Where(t => t.LogicalIndex > 0 && !t.IsSmtSecondaryThread && !t.IsEfficiencyCore)
-            .Select(t => t.LogicalIndex)
-            .ToList();
-
-        if (candidatePhysicalThreads.Count < 2)
+        var targets = MsiPlanner.Targets(Tree(tree));
+        using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+        return targets.Count > 0 && targets.All(t =>
         {
-            // Fallback if topology has few cores: pick any non-zero logical processors
-            for (int i = 1; i < hw.CpuLogicalThreads; i++)
+            using var k = hklm.OpenSubKey($@"{InterruptPath(t.Device.InstanceId)}\MessageSignaledInterruptProperties");
+            return k?.GetValue("MSISupported") is int v && v == 1 &&
+                   (!t.RemoveMessageLimit || k.GetValue("MessageNumberLimit") is null);
+        });
+    }
+
+    // ------------------------------------------------------------------ E7: afinidad por núcleo físico
+
+    public AffinityPlan? PlanAffinity(DeviceTree? tree = null, bool gpuTwoCores = true) =>
+        InterruptAffinityPlanner.Plan(_hwService.CurrentProfile.CoreTopology, InterruptAffinityPlanner.Collect(Tree(tree)), gpuTwoCores);
+
+    /// <summary>
+    /// E7: DevicePolicy = 4 + AssignmentSetOverride según el planificador (núcleo 0 libre, un núcleo por controladora USB,
+    /// GPU en uno o dos núcleos, NVMe aparte). La red no lleva override: sus colas RSS las fija el ítem de la placa (E2).
+    /// </summary>
+    public (bool Success, string Summary) ApplyOptimalPciIrqAffinity(string tweakId = "PciIrqSmartBalancer", DeviceTree? tree = null, bool gpuTwoCores = true)
+    {
+        if (PlanAffinity(tree, gpuTwoCores) is not { } plan)
+        {
+            return (false, "Hacen falta al menos 4 núcleos físicos para separar las interrupciones.");
+        }
+
+        foreach (var a in plan.Assignments)
+        {
+            string affPath = $@"{InterruptPath(a.Device.InstanceId)}\Affinity Policy";
+            if (a.MaskBytes is { } bytes)
             {
-                if (!candidatePhysicalThreads.Contains(i))
-                {
-                    candidatePhysicalThreads.Add(i);
-                }
+                _audit.SetRegistryValue(tweakId, RegistryHive.LocalMachine, affPath, "DevicePolicy", 4, RegistryValueKind.DWord);
+                _audit.SetRegistryValue(tweakId, RegistryHive.LocalMachine, affPath, "AssignmentSetOverride", bytes, RegistryValueKind.Binary);
+            }
+            else
+            {
+                // Red: sin override (una afinidad vieja pisaría a RSS).
+                _audit.DeleteRegistryValue(tweakId, RegistryHive.LocalMachine, affPath, "DevicePolicy");
+                _audit.DeleteRegistryValue(tweakId, RegistryHive.LocalMachine, affPath, "AssignmentSetOverride");
+            }
+
+            if (a.DevicePriority is { } prio)
+            {
+                _audit.SetRegistryValue(tweakId, RegistryHive.LocalMachine, affPath, "DevicePriority", prio, RegistryValueKind.DWord);
+            }
+            else
+            {
+                _audit.DeleteRegistryValue(tweakId, RegistryHive.LocalMachine, affPath, "DevicePriority");
             }
         }
 
-        if (candidatePhysicalThreads.Count == 0)
-        {
-            return (false, "No hay suficientes núcleos fuera de Core 0 para aislar IRQs.");
-        }
-
-        // Assign distinct physical cores:
-        // Last high physical P-core -> GPU
-        // Second-to-last physical P-core -> USB xHCI (Mouse)
-        // Third physical P-core -> NIC Ethernet
-        int gpuThread = candidatePhysicalThreads[^1];
-        int usbThread = candidatePhysicalThreads.Count >= 2 ? candidatePhysicalThreads[^2] : gpuThread;
-        int nicThread = candidatePhysicalThreads.Count >= 3 ? candidatePhysicalThreads[^3] : usbThread;
-
-        var devices = EnumeratePciDevices();
-        int appliedCount = 0;
-
-        foreach (var dev in devices)
-        {
-            int targetThread = dev.Category switch
-            {
-                "GPU Display" => gpuThread,
-                "USB xHCI Controller" => usbThread,
-                "NIC Ethernet" => nicThread,
-                _ => -1
-            };
-
-            if (targetThread < 0) continue;
-
-            ulong mask = 1UL << targetThread;
-            byte[] maskBytes = GetMinimalAffinityBytes(mask);
-            string affPath = $@"SYSTEM\CurrentControlSet\Enum\{dev.PnpInstanceId}\Device Parameters\Interrupt Management\Affinity Policy";
-
-            _audit.SetRegistryValue(tweakId, RegistryHive.LocalMachine, affPath, "DevicePolicy", 4, RegistryValueKind.DWord);
-            _audit.SetRegistryValue(tweakId, RegistryHive.LocalMachine, affPath, "AssignmentSetOverride", maskBytes, RegistryValueKind.Binary);
-            appliedCount++;
-        }
-
-        return (appliedCount > 0,
-            $"IRQ Affinity en Enum\\PCI aplicado ({appliedCount} buses): GPU -> Hilo #{gpuThread}, USB xHCI -> Hilo #{usbThread}, NIC -> Hilo #{nicThread} (Core 0 libre).");
+        return (true, Describe(plan) + " Reiniciá para que se aplique.");
     }
 
-    public bool IsPciIrqAffinityActive()
+    /// <summary>Aplicado = cada dispositivo del plan tiene exactamente la máscara y la prioridad planeadas.</summary>
+    public bool IsPciIrqAffinityActive(DeviceTree? tree = null, bool gpuTwoCores = true)
     {
-        return EnumeratePciDevices().Any(d => d.AssignedCoreIndex > 0);
-    }
-
-    public bool IsPciMsiModeAllEnabled()
-    {
-        var safeDevs = EnumeratePciDevices().Where(d => d.IsSafeForMsi).ToList();
-        return safeDevs.Count > 0 && safeDevs.All(d => d.MsiSupported);
-    }
-
-    private static byte[] GetMinimalAffinityBytes(ulong mask)
-    {
-        byte[] full = BitConverter.GetBytes(mask);
-        int lastNonZero = full.Length - 1;
-        while (lastNonZero > 0 && full[lastNonZero] == 0)
+        if (PlanAffinity(tree, gpuTwoCores) is not { } plan || plan.Assignments.Count == 0) return false;
+        using var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+        return plan.Assignments.All(a =>
         {
-            lastNonZero--;
+            using var k = hklm.OpenSubKey($@"{InterruptPath(a.Device.InstanceId)}\Affinity Policy");
+            bool maskOk = a.Mask is { } m
+                ? k?.GetValue("DevicePolicy") is int p && p == 4 &&
+                  k.GetValue("AssignmentSetOverride") is byte[] b && InterruptAffinityPlanner.FromMaskBytes(b) == m
+                : k?.GetValue("AssignmentSetOverride") is null;
+            bool prioOk = a.DevicePriority is { } prio ? k?.GetValue("DevicePriority") is int dp && dp == prio : k?.GetValue("DevicePriority") is null;
+            return maskOk && prioOk;
+        });
+    }
+
+    public static string Describe(AffinityPlan plan)
+    {
+        static string Cpus(IReadOnlyList<int> t) => t.Count == 1 ? $"CPU {t[0]}" : "CPU " + string.Join(" + ", t);
+        var parts = new List<string>();
+        if (plan.Rss is { } r) parts.Add($"Red: RSS en CPU {r.BaseProcessor}{(r.MaxProcessor != r.BaseProcessor ? $"–{r.MaxProcessor}" : "")}");
+        foreach (var a in plan.Assignments.Where(a => a.Mask is not null))
+        {
+            parts.Add($"{a.Device.Name}: {Cpus(a.Threads)}{(a.DevicePriority == InterruptAffinityPlanner.UsbPriorityHigh ? " (prioridad alta)" : "")}{(a.SharesCore ? " (compartido)" : "")}");
         }
-        byte[] trimmed = new byte[lastNonZero + 1];
-        Array.Copy(full, trimmed, trimmed.Length);
-        return trimmed;
+        return "CPU 0 libre. " + string.Join(" · ", parts) + "." + (plan.Notes.Count > 0 ? " " + string.Join(" ", plan.Notes) : "");
     }
 }
-

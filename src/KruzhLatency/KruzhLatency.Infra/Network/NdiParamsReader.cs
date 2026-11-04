@@ -30,6 +30,13 @@ public static class NdiParamsReader
                 values, S(root, keyword)));
         }
 
+        // Keywords de RSS que procesa NDIS: si el driver no los declara se agregan con tipo "ndis" para conocer su valor actual.
+        foreach (var keyword in NicTuningPlanner.NdisRssKeywords)
+        {
+            if (list.Any(p => string.Equals(p.Keyword, keyword, StringComparison.OrdinalIgnoreCase))) continue;
+            list.Add(new NdiParam(keyword, null, "ndis", null, null, null, null, null, S(root, keyword)));
+        }
+
         return new NicAdvancedProperties(S(root, "DriverDesc") ?? "", S(root, "DriverVersion"), S(root, "ComponentId") ?? "", list);
     }
 

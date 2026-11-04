@@ -63,6 +63,8 @@ public sealed class HardwareProfile
     public string ClockingModeDescription { get; set; } = string.Empty;
     public List<LogicalProcessorNode> Topology { get; set; } = new();
     public ulong ReservedBackgroundCpuMask { get; set; }
+    /// <summary>La topología tal como la entrega Core (con tamaño de L3), para los planificadores puros.</summary>
+    public IReadOnlyList<KruzhLatency.Core.Hardware.LogicalProcessor> CoreTopology { get; set; } = Array.Empty<KruzhLatency.Core.Hardware.LogicalProcessor>();
 
     // Chassis
     public ChassisKind Chassis { get; set; } = ChassisKind.Desktop;

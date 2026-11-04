@@ -1606,41 +1606,55 @@ public sealed partial class DeclarativeTweakEngine
         {
             Id = "PciMsiModeV3",
             CodeNumber = "I01",
-            Title = "MSI Mode v3 Nativo + DevicePriority en Instancias PCI (GPU, xHCI, NVMe, NIC)",
+            Title = "MSI en USB, audio HD, GPU, red y NVMe",
             Category = TweakCategory.IrqMsiAudio,
             CategoryDisplay = "IRQ, MSI & Audio",
-            TechnicalDescription = "Activa Message Signaled Interrupts (MSISupported=1) y prioridad de interrupción directamente en las instancias PCI reales (Enum\\PCI), excluyendo nodos hijos HID y protegiendo el audio Realtek contra artefactos.",
-            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Enum\PCI\<Device>\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties",
-            SourceAttribution = "MSI Utility v3 / BoringBoredom PC-Tuning §11.38",
+            TechnicalDescription = "Activa Message Signaled Interrupts (MSISupported = 1) solo en los dispositivos que declaran soporte de MSI/MSI-X: " +
+                                   "controladoras USB xHCI, audio HD, GPU, placa de red y NVMe. En los MSI-X se borra MessageNumberLimit para que no queden limitados. " +
+                                   "El audio HD es el que más baja en ISR al pasar a MSI. Después de reiniciar, medí en el Monitor: si algo empeora (cortes de audio, más DPC), revertí." +
+                                   MsiTargetsText(),
+            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Enum\PCI\<dispositivo>\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties -> MSISupported = 1 · MessageNumberLimit borrado (MSI-X)",
+            SourceAttribution = "Microsoft Learn: Enabling Message-Signaled Interrupts in the Registry · MSI Utility v3 · BoringBoredom PC-Tuning §11.38",
             Risk = RiskLevel.Medium,
             RequiresReboot = true,
             InMinimal = false,
             InCompetitivo = true,
             InProfesional = true,
-            ReadLiveState = () => _irqMsi.IsPciMsiModeAllEnabled(),
-            ApplyAction = _ => _irqMsi.ApplySafePciMsiMode("PciMsiModeV3")
+            ReadLiveState = () => _irqMsi.IsPciMsiModeAllEnabled(CachedDeviceTree()),
+            ApplyAction = _ => _irqMsi.ApplySafePciMsiMode("PciMsiModeV3", CachedDeviceTree())
         });
 
         _allTweaks.Add(new DeclarativeTweakItem
         {
             Id = "PciIrqSmartBalancer",
             CodeNumber = "I02",
-            Title = "IRQ Affinity en Instancias PCI Reales (AutoGpuAffinity — Nunca Core 0)",
+            Title = "Interrupciones por núcleo físico (CPU 0 libre)",
             Category = TweakCategory.IrqMsiAudio,
             CategoryDisplay = "IRQ, MSI & Audio",
-            TechnicalDescription = "Escribe DevicePolicy=4 y AssignmentSetOverride directamente en HKLM\\SYSTEM\\CurrentControlSet\\Enum\\PCI (donde el kernel realmente lo lee), asignando GPU, USB xHCI y NIC a núcleos físicos distintos fuera del Core 0.",
-            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Enum\PCI\<Device>\Device Parameters\Interrupt Management\Affinity Policy",
-            SourceAttribution = "AutoGpuAffinity / BoringBoredom PC-Tuning §11.43",
+            TechnicalDescription = "Reparte las interrupciones en núcleos físicos distintos, nunca en el CPU 0 (queda para el kernel) ni en E-cores: " +
+                                   "la red en el 2.º núcleo (por RSS, ítem \"Placa de red\"), cada controladora USB en su propio núcleo con prioridad alta " +
+                                   "(primero la del mouse), la GPU en un núcleo o en dos (para el pico de video + juego) y el NVMe aparte. En X3D usa el CCD con V-Cache. " +
+                                   "Si hay más dispositivos que núcleos, comparten con el menos importante.\n" + AffinityPlanText(),
+            WhatItTouches = @"HKLM\SYSTEM\CurrentControlSet\Enum\PCI\<dispositivo>\Device Parameters\Interrupt Management\Affinity Policy -> DevicePolicy = 4, AssignmentSetOverride (máscara), DevicePriority = 3 solo en USB (en el resto se borra); en la placa de red se borra el override",
+            SourceAttribution = "Microsoft Learn: Interrupt Affinity and Priority (IRQ_DEVICE_POLICY) · AutoGpuAffinity · BoringBoredom PC-Tuning §11.43",
             Risk = RiskLevel.Medium,
             RequiresReboot = true,
             InMinimal = false,
             InCompetitivo = false,
             InProfesional = true,
-            ApplicableGate = hw => hw.CpuPhysicalCores >= 4
-                ? ApplicabilityResult.Applicable($"Topología de {hw.CpuPhysicalCores} núcleos físicos detectada")
-                : ApplicabilityResult.NotApplicable("Requiere al menos 4 núcleos físicos para aislar IRQs sin saturar hilos."),
-            ReadLiveState = () => _irqMsi.IsPciIrqAffinityActive(),
-            ApplyAction = _ => _irqMsi.ApplyOptimalPciIrqAffinity("PciIrqSmartBalancer")
+            SelectedOptionKey = "Gpu2",
+            Options = new List<TweakOptionChoice>
+            {
+                new() { Key = "Gpu2", ShortLabel = "GPU 2 núcleos", DisplayName = "GPU en dos núcleos [RECOMENDADO]", Description = "Reparte el pico de la GPU cuando hay video y juego a la vez." },
+                new() { Key = "Gpu1", ShortLabel = "GPU 1 núcleo", DisplayName = "GPU en un núcleo", Description = "Deja un núcleo más libre (útil con 6 núcleos o menos y NVMe)." }
+            },
+            ApplicableGate = _ => _irqMsi.PlanAffinity(CachedDeviceTree()) is null
+                ? ApplicabilityResult.NotApplicable("Hacen falta al menos 4 núcleos físicos para separar las interrupciones.")
+                : ApplicabilityResult.Applicable(),
+            ReadLiveState = () => _irqMsi.IsPciIrqAffinityActive(CachedDeviceTree(), gpuTwoCores: true) ||
+                                  _irqMsi.IsPciIrqAffinityActive(CachedDeviceTree(), gpuTwoCores: false),
+            ReadLiveOptionKey = () => _irqMsi.IsPciIrqAffinityActive(CachedDeviceTree(), gpuTwoCores: false) ? "Gpu1" : "Gpu2",
+            ApplyAction = opt => _irqMsi.ApplyOptimalPciIrqAffinity("PciIrqSmartBalancer", CachedDeviceTree(), gpuTwoCores: opt != "Gpu1")
         });
 
         // ==================== CATEGORÍA 6: USB, ALMACENAMIENTO Y MEMORIA ====================

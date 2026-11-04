@@ -100,7 +100,15 @@ public static class NicTuningPlanner
     }
 
     /// <summary>null si el chip no está en la tabla.</summary>
-    public static NicTuningPlan? Plan(NicAdvancedProperties nic, int physicalCores)
+    /// <summary>
+    /// Keywords de RSS que procesa NDIS (no el driver): valen aunque el INF no los declare en Ndi\Params.
+    /// Microsoft Learn: "Standardized INF Keywords for RSS". *RSSProfile 2 = ClosestStatic.
+    /// </summary>
+    public static readonly IReadOnlyList<string> NdisRssKeywords = new[] { "*RssBaseProcNumber", "*RssMaxProcNumber", "*MaxRssProcessors", "*RSSProfile" };
+    public const string RssProfileClosestStatic = "2";
+
+    /// <param name="rss">E2: dónde van las colas RSS (sale de InterruptAffinityPlanner). null = no se fijan procesadores.</param>
+    public static NicTuningPlan? Plan(NicAdvancedProperties nic, int physicalCores, Latency.RssPlacement? rss = null)
     {
         if (Identify(nic.ComponentId) is not { } chip) return null;
         var changes = new List<NicSettingChange>();
@@ -123,6 +131,26 @@ public static class NicTuningPlanner
         if (QueuesFor(nic.Get("*NumRssQueues"), physicalCores) is { } queues)
         {
             Want("*NumRssQueues", queues, "2 colas RSS (decisión E2): la red en dos hilos y el resto de los núcleos libres para USB y GPU.");
+        }
+
+        // E2: colas RSS fijas en el núcleo de la red (nunca CPU 0 ni los núcleos de USB/GPU). NDIS lee estos keywords
+        // aunque el driver no los declare; si los declara, el valor se valida contra su definición.
+        void WantNdis(string keyword, string target, string why)
+        {
+            var p = nic.Get(keyword);
+            string? valid = p is { Type: not null } && !string.Equals(p.Type, "ndis", StringComparison.OrdinalIgnoreCase)
+                ? Validate(p, target)
+                : target;
+            if (valid is null) return;
+            changes.Add(new NicSettingChange(p?.Keyword ?? keyword, p?.ParamDesc ?? keyword, p?.Current, valid, why));
+        }
+        if (rss is not null && nic.Get("*RSS") is not null)
+        {
+            string inv(int v) => v.ToString(CultureInfo.InvariantCulture);
+            WantNdis("*RssBaseProcNumber", inv(rss.BaseProcessor), $"RSS arranca en el CPU {rss.BaseProcessor} (núcleo de la red; el CPU 0 queda para el kernel).");
+            WantNdis("*RssMaxProcNumber", inv(rss.MaxProcessor), $"RSS no pasa del CPU {rss.MaxProcessor}: no pisa los núcleos de USB y GPU.");
+            WantNdis("*MaxRssProcessors", inv(rss.MaxProcessors), $"{rss.MaxProcessors} procesador(es) para RSS.");
+            WantNdis("*RSSProfile", RssProfileClosestStatic, "ClosestStatic: los procesadores de RSS quedan fijos (no se mueven con la carga).");
         }
 
         // E1: energía y descubrimiento en segundo plano (keywords estándar NDIS de power management).

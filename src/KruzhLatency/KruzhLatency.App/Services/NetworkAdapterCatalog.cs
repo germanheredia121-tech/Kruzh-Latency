@@ -32,17 +32,18 @@ public sealed partial class DeclarativeTweakEngine
         }
 
         int cores = Math.Max(1, _hwService.CurrentProfile.CpuPhysicalCores);
+        var rss = RssForThisPc(); // E2: colas RSS en el núcleo de la red (plan de E7)
         foreach (var nic in adapters.Where(a => a.InstanceId.StartsWith(@"PCI\", StringComparison.OrdinalIgnoreCase) ||
                                                 a.InstanceId.StartsWith(@"USB\", StringComparison.OrdinalIgnoreCase)))
         {
             if (TransactionalAuditService.IsDeviceDisabled(nic.InstanceId)) continue; // deshabilitada: no se toca ni se reinicia
             var props = NdiParamsReader.Read(nic.ClassKeyPath);
-            if (props is null || NicTuningPlanner.Plan(props, cores) is not { } plan || plan.Changes.Count == 0) continue;
-            _allTweaks.Add(BuildNicItem(nic, props, plan, cores));
+            if (props is null || NicTuningPlanner.Plan(props, cores, rss) is not { } plan || plan.Changes.Count == 0) continue;
+            _allTweaks.Add(BuildNicItem(nic, props, plan, cores, rss));
         }
     }
 
-    private DeclarativeTweakItem BuildNicItem(NetworkAdapterFact nic, NicAdvancedProperties props, NicTuningPlan plan, int cores)
+    private DeclarativeTweakItem BuildNicItem(NetworkAdapterFact nic, NicAdvancedProperties props, NicTuningPlan plan, int cores, KruzhLatency.Core.Latency.RssPlacement? rss)
     {
         string id = $"Nic:{nic.InstanceId}";
         string changes = string.Join("\n", plan.Changes.Select(c => $"• {c.Label}: {Describe(props, c.Keyword, c.Current)} → {Describe(props, c.Keyword, c.Target)}. {c.Why}"));
@@ -54,7 +55,7 @@ public sealed partial class DeclarativeTweakEngine
             Title = $"Placa de red: {props.DriverDesc}{(nic.HasLink ? "" : " (sin cable)")}",
             Category = TweakCategory.NetworkDesync,
             CategoryDisplay = "Red & Desync",
-            TechnicalDescription = $"{plan.Chip.Name}. Solo se cambian opciones que tu driver tiene y con valores que acepta:\n{changes}\n" +
+            TechnicalDescription = $"{plan.Chip.Name}. Solo se cambian opciones que tu driver tiene y con valores que acepta (más los procesadores de RSS, que lee NDIS):\n{changes}\n" +
                                    "• Administración de energía: no permitir que Windows apague la placa.\n" +
                                    "Al aplicar, la placa se reinicia en el momento (la red se corta unos segundos).",
             WhatItTouches = $@"HKLM\{nic.ClassKeyPath} -> " +
@@ -72,14 +73,14 @@ public sealed partial class DeclarativeTweakEngine
             ReadLiveState = () =>
             {
                 var now = NdiParamsReader.Read(nic.ClassKeyPath);
-                return now is not null && NicTuningPlanner.Plan(now, cores) is { IsFullyApplied: true } &&
+                return now is not null && NicTuningPlanner.Plan(now, cores, rss) is { IsFullyApplied: true } &&
                        ReadRegDword(RegistryHive.LocalMachine, nic.ClassKeyPath, "PnPCapabilities") == PnPCapabilitiesNoPowerOff;
             },
             ApplyAction = _ =>
             {
                 // Se recalcula al aplicar: el driver pudo cambiar desde que se armó el catálogo.
                 var now = NdiParamsReader.Read(nic.ClassKeyPath);
-                if (now is null || NicTuningPlanner.Plan(now, cores) is not { } current)
+                if (now is null || NicTuningPlanner.Plan(now, cores, rss) is not { } current)
                 {
                     return (false, "No se pudieron leer las opciones de la placa (¿se desinstaló el driver?).");
                 }

@@ -19,6 +19,7 @@ public class CpuTopologyParserTests
         Assert.Equal(6, topo.Select(t => t.PhysicalCoreIndex).Distinct().Count());
         Assert.All(topo, t => Assert.False(t.IsEfficiencyCore));
         Assert.Single(topo.Select(t => t.L3GroupIndex).Distinct());
+        Assert.All(topo, t => Assert.Equal(32 * 1024, t.L3SizeKb)); // 32 MB de L3 (E7: así se reconoce el CCD con V-Cache)
         Assert.Equal(6, topo.Count(t => t.IsSmtSibling));
         // B3: con el offset viejo (+40) la topología salía vacía; con +32 el hilo 0 y 1 son el núcleo 0.
         Assert.Equal(topo.Single(t => t.Index == 0).PhysicalCoreIndex, topo.Single(t => t.Index == 1).PhysicalCoreIndex);

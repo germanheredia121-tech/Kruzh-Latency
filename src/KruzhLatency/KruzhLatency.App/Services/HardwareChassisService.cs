@@ -283,6 +283,7 @@ public sealed partial class HardwareChassisService
             }
 
             hw.ReservedBackgroundCpuMask = KruzhLatency.Core.Hardware.CpuTopologyParser.BackgroundReserveMask(topology);
+            hw.CoreTopology = topology;
         }
         else
         {

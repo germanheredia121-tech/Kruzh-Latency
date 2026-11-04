@@ -11,7 +11,9 @@ public sealed record LogicalProcessor(
     int PhysicalCoreIndex,
     bool IsEfficiencyCore,
     bool IsSmtSibling,
-    int L3GroupIndex);
+    int L3GroupIndex,
+    /// <summary>Tamaño del L3 de su grupo en KB (0 = desconocido). En X3D distingue el CCD con V-Cache.</summary>
+    int L3SizeKb = 0);
 
 /// <summary>
 /// Perfil de hardware detectado (lo llena Infra en T24). Inmutable: los gates de los tweaks son funciones puras de este objeto.
