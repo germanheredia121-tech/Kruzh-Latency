@@ -63,6 +63,9 @@ public sealed partial class MainWindow : Window
         // La sesión ETW del kernel sobrevive al proceso si no se detiene: se libera al cerrar.
         this.Closed += (_, _) => { try { _dpcSession?.Dispose(); } catch { } };
         RootGrid.Loaded += RootGrid_Loaded;
+
+        // Spec 003 / G5: quién retoma cada tipo de medición después de un reinicio.
+        AutoTuneSessionService.Runners[AutoMsiService.Kind] = RunAutoMsiAsync;
     }
 
     private IntPtr GetWindowHandle() => WindowNative.GetWindowHandle(this);
@@ -2113,6 +2116,67 @@ public sealed partial class MainWindow : Window
         SetStatus($"Medición cancelada. {result}");
     }
 
+    /// <summary>Spec 003 / G6: prepara y arranca una sesión de auto MSI.</summary>
+    private async void AutoMsiBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (AutoTuneSessionService.Pending() is not null)
+        {
+            await ShowSimpleInfoModalAsync("Medir MSI", "Ya hay una medición en curso. Reiniciá KRUZH para retomarla o cancelarla.");
+            return;
+        }
+        var svc = new AutoMsiService(App.AuditService);
+        var session = await Task.Run(svc.BuildSession);
+        if (session.Steps.Count == 0)
+        {
+            await ShowSimpleInfoModalAsync("Medir MSI", "Ningún dispositivo de tu PC declara soporte de MSI.");
+            return;
+        }
+
+        int devices = session.Steps.Count / 2;
+        int minutes = (int)Math.Ceiling(session.Steps.Count * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + devices;
+        bool go = await ShowConfirmModalAsync("Medir MSI (auto)",
+            $"KRUZH va a medir {devices} dispositivos con MSI y sin MSI, con una carga que los hace trabajar. Tarda unos {minutes} minutos.\n\n" +
+            "• Antes se crea un punto de restauración.\n" +
+            "• Cada dispositivo se reinicia (la pantalla parpadea con la GPU; el mouse o la red se cortan 1-2 s).\n" +
+            "• Los que no se reinician en caliente (el disco de arranque, a veces la GPU) piden reiniciar Windows: KRUZH se abre solo al volver y sigue.\n" +
+            "• En los pasos de USB, mové el mouse en círculos mientras mide.\n" +
+            "• Solo queda lo que baja la latencia por encima del ruido; si un dispositivo falla con el cambio, vuelve atrás.",
+            "Empezar");
+        if (!go) return;
+
+        await App.AuditService.CreateSystemRestorePointAsync("KRUZH LATENCY — antes de medir MSI");
+        await Task.Run(() => svc.Begin(session));
+        await RunAutoMsiAsync(session);
+    }
+
+    /// <summary>Ejecuta (o retoma tras un reinicio) los pasos pendientes de una sesión de auto MSI.</summary>
+    private async Task RunAutoMsiAsync(KruzhLatency.Core.Benchmark.AutoTuneSession session)
+    {
+        var svc = new AutoMsiService(App.AuditService);
+        using var cts = new CancellationTokenSource();
+        bool stop = false;
+        bool rebooting = false;
+        var pending = session.Steps.Where(s => s.Status is KruzhLatency.Core.Benchmark.AutoTuneStepStatus.Pending
+                                                         or KruzhLatency.Core.Benchmark.AutoTuneStepStatus.Running).ToList();
+        var steps = pending.Select(s => new OverlayStep(s.Title, () =>
+        {
+            if (stop) return (true, rebooting ? "Sigue después del reinicio." : "Saltado.");
+            var (ok, detail, reboot) = svc.RunStep(session, s.Id, cts.Token);
+            if (reboot) { stop = true; rebooting = true; }
+            return (ok, detail); // un "no apto" se muestra como falla pero no corta la sesión: el overlay sigue con el resto
+        })).ToList();
+
+        await RunStepsWithOverlayAsync("Midiendo MSI", "No uses la PC (salvo mover el mouse en los pasos de USB)", steps);
+        if (rebooting)
+        {
+            SetStatus("Reiniciando para seguir midiendo…");
+            return;
+        }
+        string report = await Task.Run(() => svc.Finish(session));
+        await ShowSimpleInfoModalAsync("Resultado: MSI", report);
+        AfterPciChange();
+    }
+
     /// <summary>Spec 003 / G4: mide cada núcleo para la GPU con carga sintética y aplica el ganador o nada.</summary>
     private async void AutoGpuAffinityBtn_Click(object sender, RoutedEventArgs e)
     {
@@ -2173,6 +2237,12 @@ public sealed partial class MainWindow : Window
             {
                 bool ok = App.AuditService.RevertTweakFromJournal(AutoGpuAffinityService.TweakId, out string m);
                 return (true, ok ? m : "No había afinidad de GPU medida para revertir.");
+            }, RequiresReboot: true),
+            new OverlayStep("MSI medido", () =>
+            {
+                var ids = App.AuditService.TweakIdsStartingWith(AutoMsiService.TweakPrefix);
+                int n = ids.Count(id => App.AuditService.RevertTweakFromJournal(id, out _));
+                return (true, n == 0 ? "No había MSI medido para revertir." : $"{n} dispositivos vuelven a su MSI original.");
             }, RequiresReboot: true),
             new OverlayStep("Modo MSI", () =>
             {

@@ -192,6 +192,6 @@ Origen: prueba de 1 hora con LatencyMon en la PC del autor (picos de 4439 µs en
 | G3 ✅ | Infra: ETW ISR/DPC por CPU (extiende DpcLatencySession) | – | totales por CPU coinciden con LatencyMon ±10 % |
 | G4 🟡 | F2 auto afinidad de GPU: candidatos, reinicio del devnode, medición, tabla, aplicar ganador o nada | G1–G3 | en la PC del autor: elige o descarta con números; revert exacto |
 | G5 ✅ | Sesión con reinicios y retomado (estado en ProgramData protegido + tarea de un uso) | – | reinicio a mitad de sesión y retoma sola |
-| G6 | F3 auto MSI por dispositivo (hot-restart o reinicio guiado), "no apto" si falla | G1–G5 | ningún dispositivo queda con error; journal completo |
+| G6 🟡 | F3 auto MSI por dispositivo (hot-restart o reinicio guiado), "no apto" si falla | G1–G5 | ningún dispositivo queda con error; journal completo |
 | G7 | F4 auto afinidad de xHCI / red / NVMe | G6 | idem |
 | G8 | F5 KRUZH Agent con CPU Sets por juego (adaptado de CPUSetSetter, MIT) + elección medida | G1, G2 | CS2 arranca con la máscara elegida; sin handles con acceso a memoria |

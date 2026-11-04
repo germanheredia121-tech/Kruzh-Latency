@@ -107,6 +107,10 @@ public sealed class TransactionalAuditService
 
     public bool HasBackupForTweak(string tweakId) => _store.HasBaseline(tweakId);
 
+    /// <summary>Ids del journal con un prefijo (ej. "AutoMsi:" → uno por dispositivo).</summary>
+    public IReadOnlyList<string> TweakIdsStartingWith(string prefix) =>
+        _store.AllBaselines().Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).ToList();
+
     /// <summary>Guarda el original una sola vez por (tweak, operación) — atómico, antes de tocar el sistema.</summary>
     private void RecordBaselineIfNotExistsLocked(AtomicBackupRecord record) => _store.RecordBaseline(ToEntry(record, record.TweakId));
 

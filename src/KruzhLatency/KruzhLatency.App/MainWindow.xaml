@@ -675,6 +675,7 @@
                                 <StackPanel Spacing="14">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Button Click="AutoGpuAffinityBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Medir afinidad de GPU (auto)" />
+                                        <Button Click="AutoMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Medir MSI (auto)" />
                                         <Button Click="ApplySafeMsiAllBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Activar MSI seguro" />
                                         <Button Click="ScanPciDevicesBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Re-escanear" />
                                         <Button Click="RevertAllPciIrqMsiBtn_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Revertir" />
