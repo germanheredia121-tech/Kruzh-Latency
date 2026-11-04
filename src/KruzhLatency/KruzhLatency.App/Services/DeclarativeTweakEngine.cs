@@ -1414,6 +1414,7 @@ public sealed partial class DeclarativeTweakEngine
         BuildNicItems();
         BuildNetworkAdviceItems(); // filtros NDIS, optimizadores y driver NetAdapterCx (B5)
         BuildTcpStackItems();      // auto-tuning, Ndu y protocolos ligados (E3, E5, E6)
+        BuildChat5Items();         // chat5: útiles + Laboratorio (ADR-011)
 
         _allTweaks.Add(new DeclarativeTweakItem
         {

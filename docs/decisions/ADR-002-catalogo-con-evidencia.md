@@ -1,6 +1,6 @@
 # ADR-002 — Solo entran al catálogo tweaks con mecanismo documentado y efecto medible
 
-Fecha: 2026-11-02 · Estado: PROPUESTA
+Fecha: 2026-11-02 · Estado: PROPUESTA · Enmendada por ADR-011 (sección "Laboratorio" para ítems sin evidencia, nunca en perfiles)
 
 ## Contexto
 El catálogo v3 mezcla tweaks reales con placebo (Nagle para un juego UDP, MarkC con EPP apagado, claves NVIDIA no documentadas). Para un producto pago eso es un riesgo reputacional y, a veces, de estabilidad.
