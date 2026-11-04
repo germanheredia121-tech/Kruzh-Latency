@@ -189,7 +189,7 @@ Origen: prueba de 1 hora con LatencyMon en la PC del autor (picos de 4439 µs en
 |---|---|---|---|
 | G1 ✅ | Core: estadísticas de frames (FPS, 1 % y 0,1 % low), parser de CSV de PresentMon por nombre de columna, comparador con margen de ruido (default siempre candidato) | – | tests con el CSV real del autor y corridas simuladas |
 | G2 🟡 | Infra: PresentMon y lava-triangle en Assets (MIT, THIRD-PARTY-NOTICES), lanzador de carga con límite de tiempo, captura PresentMon por proceso | G1 | corrida de 60 s produce CSV parseable |
-| G3 | Infra: ETW ISR/DPC por CPU (extiende DpcLatencySession) | – | totales por CPU coinciden con LatencyMon ±10 % |
+| G3 ✅ | Infra: ETW ISR/DPC por CPU (extiende DpcLatencySession) | – | totales por CPU coinciden con LatencyMon ±10 % |
 | G4 🟡 | F2 auto afinidad de GPU: candidatos, reinicio del devnode, medición, tabla, aplicar ganador o nada | G1–G3 | en la PC del autor: elige o descarta con números; revert exacto |
 | G5 | Sesión con reinicios y retomado (estado en ProgramData protegido + tarea de un uso) | – | reinicio a mitad de sesión y retoma sola |
 | G6 | F3 auto MSI por dispositivo (hot-restart o reinicio guiado), "no apto" si falla | G1–G5 | ningún dispositivo queda con error; journal completo |

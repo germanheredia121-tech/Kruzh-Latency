@@ -15,7 +15,9 @@ public sealed record DriverLatencyStat(
     long IsrCount,
     double IsrAvgUs,
     double IsrMaxUs,
-    double TotalMs)
+    double TotalMs,
+    /// <summary>Percentil 99 de ISR + DPC del driver (µs, resolución 1 µs). Criterio del auto-tune (spec 003).</summary>
+    double P99Us = 0)
 {
     public double MaxUs => Math.Max(DpcMaxUs, IsrMaxUs);
     public long Count => DpcCount + IsrCount;
@@ -26,9 +28,17 @@ public sealed record DpcAnalysisResult(
     IReadOnlyList<DriverLatencyStat> Drivers,
     long TotalDpc,
     long TotalIsr,
-    string? Error)
+    string? Error,
+    /// <summary>Totales por CPU lógico (spec 003 / G3). Vacío si la medición falló.</summary>
+    IReadOnlyList<CpuLatencyStat>? Cpus = null)
 {
     public static DpcAnalysisResult Failed(string error) => new(TimeSpan.Zero, Array.Empty<DriverLatencyStat>(), 0, 0, error);
+}
+
+/// <summary>Carga de interrupciones de un CPU lógico durante la captura.</summary>
+public sealed record CpuLatencyStat(int Cpu, long DpcCount, long IsrCount, double TotalMs, double P99Us)
+{
+    public long Count => DpcCount + IsrCount;
 }
 
 /// <summary>
@@ -49,6 +59,22 @@ public sealed class DpcLatencySession : IDisposable
         public long IsrCount;
         public double IsrTotalUs;
         public double IsrMaxUs;
+        public readonly KruzhLatency.Core.Latency.LatencyHistogram All = new();
+    }
+
+    private sealed class CpuAccumulator
+    {
+        public long DpcCount;
+        public long IsrCount;
+        public readonly KruzhLatency.Core.Latency.LatencyHistogram All = new();
+    }
+
+    private readonly Dictionary<int, CpuAccumulator> _byCpu = new();
+
+    private CpuAccumulator Cpu(int cpu)
+    {
+        if (!_byCpu.TryGetValue(cpu, out var c)) _byCpu[cpu] = c = new CpuAccumulator();
+        return c;
     }
 
     private readonly record struct ModuleRange(ulong Start, ulong End, string FileName);
@@ -114,7 +140,10 @@ public sealed class DpcLatencySession : IDisposable
     {
         lock (_gate)
         {
-            return new DpcAnalysisResult(_watch.Elapsed, Aggregate(_byRoutine, _modules), _totalDpc, _totalIsr, null);
+            var cpus = _byCpu.OrderBy(kv => kv.Key)
+                .Select(kv => new CpuLatencyStat(kv.Key, kv.Value.DpcCount, kv.Value.IsrCount, kv.Value.All.TotalUs / 1000.0, kv.Value.All.Percentile(99)))
+                .ToList();
+            return new DpcAnalysisResult(_watch.Elapsed, Aggregate(_byRoutine, _modules), _totalDpc, _totalIsr, null, cpus);
         }
     }
 
@@ -161,6 +190,10 @@ public sealed class DpcLatencySession : IDisposable
             acc.DpcCount++;
             acc.DpcTotalUs += us;
             if (us > acc.DpcMaxUs) acc.DpcMaxUs = us;
+            acc.All.Add(us);
+            var cpu = Cpu(d.ProcessorNumber);
+            cpu.DpcCount++;
+            cpu.All.Add(us);
         }
     }
 
@@ -175,6 +208,10 @@ public sealed class DpcLatencySession : IDisposable
             acc.IsrCount++;
             acc.IsrTotalUs += us;
             if (us > acc.IsrMaxUs) acc.IsrMaxUs = us;
+            acc.All.Add(us);
+            var cpu = Cpu(d.ProcessorNumber);
+            cpu.IsrCount++;
+            cpu.All.Add(us);
         }
     }
 
@@ -193,6 +230,7 @@ public sealed class DpcLatencySession : IDisposable
             total.IsrCount += acc.IsrCount;
             total.IsrTotalUs += acc.IsrTotalUs;
             total.IsrMaxUs = Math.Max(total.IsrMaxUs, acc.IsrMaxUs);
+            total.All.Merge(acc.All);
         }
 
         return perDriver
@@ -205,7 +243,8 @@ public sealed class DpcLatencySession : IDisposable
                 kv.Value.IsrCount,
                 kv.Value.IsrCount > 0 ? kv.Value.IsrTotalUs / kv.Value.IsrCount : 0,
                 kv.Value.IsrMaxUs,
-                (kv.Value.DpcTotalUs + kv.Value.IsrTotalUs) / 1000.0))
+                (kv.Value.DpcTotalUs + kv.Value.IsrTotalUs) / 1000.0,
+                kv.Value.All.Percentile(99)))
             .OrderByDescending(d => d.MaxUs)
             .ToList();
     }
