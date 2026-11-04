@@ -290,6 +290,9 @@ public sealed partial class MainWindow : Window
             // ADR-009: si hay un EDID esperando confirmación (se aplicó y se reinició), preguntar ya.
             _ = ConfirmPendingEdidAsync();
 
+            // Spec 003 / G5: si una medición quedó a mitad (reinicio), ofrecer retomarla o cancelarla.
+            _ = ResumePendingAutoTuneAsync();
+
             // T11: si el journal estaba dañado, avisar (nunca en silencio).
             switch (App.AuditService.JournalLoadOutcome)
             {
@@ -2080,6 +2083,34 @@ public sealed partial class MainWindow : Window
         await RunStepsWithOverlayAsync("Aplicando cambios", "Afinidad de interrupciones",
             new[] { new OverlayStep("Balancear interrupciones fuera del Core 0", () => App.IrqMsiService.ApplyOptimalPciIrqAffinity(), RequiresReboot: true) });
         AfterPciChange();
+    }
+
+    /// <summary>Spec 003 / G5: retoma (o cancela y revierte) una sesión de auto-tune que quedó a mitad por un reinicio.</summary>
+    private async Task ResumePendingAutoTuneAsync()
+    {
+        var session = await Task.Run(AutoTuneSessionService.Pending);
+        if (session is null) return;
+
+        var svc = new AutoTuneSessionService(App.AuditService);
+        string what = session.Current?.Title ?? "medición";
+        if (AutoTuneSessionService.Runners.TryGetValue(session.Kind, out var runner))
+        {
+            bool resume = await ShowConfirmModalAsync("Medición en curso",
+                $"Hay una medición de KRUZH a mitad (reinicio {session.Reboots}). Sigue con: {what}.\n\n" +
+                "Si la cancelás, se revierte todo lo que cambió.", "Continuar", "Cancelar y revertir");
+            if (resume)
+            {
+                await runner(session);
+                return;
+            }
+        }
+        else
+        {
+            await ShowSimpleInfoModalAsync("Medición incompleta",
+                $"Quedó una medición a mitad ({what}) que esta versión de KRUZH no puede retomar. Se van a revertir sus cambios.");
+        }
+        string result = await Task.Run(() => svc.Cancel(session));
+        SetStatus($"Medición cancelada. {result}");
     }
 
     /// <summary>Spec 003 / G4: mide cada núcleo para la GPU con carga sintética y aplica el ganador o nada.</summary>
