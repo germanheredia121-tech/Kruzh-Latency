@@ -101,6 +101,12 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
+                <NavigationViewItem x:Name="NavNetDiagItem" Tag="NetDiag" Content="Red" ToolTipService.ToolTip="Diagnóstico de red: ruta hasta el servidor y flujo de la partida">
+                    <NavigationViewItem.Icon>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE968;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
                 <NavigationViewItem x:Name="NavPowerDriversItem" Tag="PowerDrivers" Content="Instaladores" ToolTipService.ToolTip="Instaladores de Drivers y Energía">
                     <NavigationViewItem.Icon>
                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE896;" />
@@ -1800,6 +1806,89 @@
                             </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
+                    <!-- ======================================================================= -->
+                    <!-- RED: ruta hasta el servidor (pérdida real por salto) + flujo de la partida -->
+                    <!-- ======================================================================= -->
+                    <ScrollViewer
+                        x:Name="ViewNetDiag"
+                        Visibility="Collapsed"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Padding="48,18,48,36" Spacing="28" MaxWidth="1000" HorizontalAlignment="Stretch">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Red" Style="{StaticResource KruzhPageTitleStyle}" />
+                                <TextBlock Text="Tu placa de red solo ve los paquetes que llegan: si se pierden en tu proveedor o en el camino al servidor, Windows marca 0 % igual. Acá se mide la ruta completa y cómo llega el tráfico de la partida."
+                                           Style="{StaticResource KruzhPageSubtitleStyle}" TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <!-- 1. Prueba de ruta -->
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="RUTA HASTA EL SERVIDOR" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="Pings con TTL limitado a cada router del camino, una vez por segundo durante 2 minutos (como WinMTR). Solo cuenta como pérdida real la que llega hasta el destino; la de un router del medio que no sigue es de routers que no priorizan responder pings."
+                                                   FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox x:Name="NetDiagTargetBox" PlaceholderText="IP o dominio del servidor (con CS2 abierto se detecta solo)" />
+                                            <Button Grid.Column="1" x:Name="NetDiagDetectBtn" Click="NetDiagDetect_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Detectar servidor de CS2" />
+                                            <Button Grid.Column="2" x:Name="NetDiagPathBtn" Click="NetDiagPath_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Probar ruta" MinWidth="110" />
+                                        </Grid>
+                                        <ProgressBar x:Name="NetDiagPathProgress" Visibility="Collapsed" Minimum="0" Maximum="100" Height="4" Foreground="{StaticResource KruzhPositiveBrush}" Background="#1E1E1E" />
+                                        <TextBlock x:Name="NetDiagPathSummary" Visibility="Collapsed" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextWrapping="Wrap" />
+                                        <ItemsControl x:Name="NetDiagHopsList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid ColumnSpacing="12" Padding="0,8" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="28" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="70" />
+                                                            <ColumnDefinition Width="80" />
+                                                            <ColumnDefinition Width="80" />
+                                                            <ColumnDefinition Width="2*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding Ttl}" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding Address}" FontSize="12.5" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Grid.Column="2" Text="{Binding Loss}" FontSize="12.5" Foreground="{Binding LossBrush}" HorizontalAlignment="Right" />
+                                                        <TextBlock Grid.Column="3" Text="{Binding Avg}" FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" />
+                                                        <TextBlock Grid.Column="4" Text="{Binding Jitter}" FontSize="12.5" Foreground="{StaticResource KruzhTextSecondaryBrush}" HorizontalAlignment="Right" />
+                                                        <TextBlock Grid.Column="5" Text="{Binding Verdict}" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- 2. Flujo de la partida -->
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="FLUJO DE LA PARTIDA" Style="{StaticResource KruzhMicroLabelStyle}" />
+                                <Border Style="{StaticResource KruzhCardStyle}">
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnSpacing="20">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Graba 3 minutos de partida y muestra cómo llegan los paquetes del servidor: ritmo, variación y cada hueco sin datos, con su hora. No toca el juego: lee los eventos de red de Windows (el contenido va cifrado y no se ve)."
+                                                       FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                            <Button Grid.Column="1" x:Name="NetDiagFlowBtn" Click="NetDiagFlow_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Grabar 3 minutos" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <ProgressBar x:Name="NetDiagFlowProgress" Visibility="Collapsed" Minimum="0" Maximum="100" Height="4" Foreground="{StaticResource KruzhPositiveBrush}" Background="#1E1E1E" />
+                                        <TextBlock x:Name="NetDiagFlowSummary" Visibility="Collapsed" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextWrapping="Wrap" />
+                                        <TextBlock x:Name="NetDiagFlowDetail" Visibility="Collapsed" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
                     <!-- ======================================================================= -->
                     <!-- INTERRUPCIONES (spec 003): auto-tune medido + estado por dispositivo     -->
                     <!-- ======================================================================= -->

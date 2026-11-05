@@ -93,7 +93,7 @@ public sealed partial class MainWindow : Window
     // ========================================================================================
     private void FitAllViewsToViewport()
     {
-        foreach (var sv in new[] { ViewDashboard, TweaksScrollViewer, ViewIrqMsi, ViewInterrupts, ViewPowerDrivers, GamesScrollViewer, ViewBiosNvram, ViewMonitorAudit, ViewDisplay, ViewConfig })
+        foreach (var sv in new[] { ViewDashboard, TweaksScrollViewer, ViewIrqMsi, ViewInterrupts, ViewNetDiag, ViewPowerDrivers, GamesScrollViewer, ViewBiosNvram, ViewMonitorAudit, ViewDisplay, ViewConfig })
         {
             FitContentToViewport(sv);
         }
@@ -357,6 +357,7 @@ public sealed partial class MainWindow : Window
         ViewTweaks.Visibility = targetTag == "Tweaks" ? Visibility.Visible : Visibility.Collapsed;
         ViewIrqMsi.Visibility = targetTag == "IrqMsi" ? Visibility.Visible : Visibility.Collapsed;
         ViewInterrupts.Visibility = targetTag == "Interrupts" ? Visibility.Visible : Visibility.Collapsed;
+        ViewNetDiag.Visibility = targetTag == "NetDiag" ? Visibility.Visible : Visibility.Collapsed;
         ViewPowerDrivers.Visibility = targetTag == "PowerDrivers" ? Visibility.Visible : Visibility.Collapsed;
         ViewGamesNvidia.Visibility = targetTag == "GamesNvidia" ? Visibility.Visible : Visibility.Collapsed;
         ViewBiosNvram.Visibility = targetTag == "BiosNvram" ? Visibility.Visible : Visibility.Collapsed;
@@ -370,6 +371,7 @@ public sealed partial class MainWindow : Window
             "Tweaks" => "Optimizaciones",
             "IrqMsi" => "GPU",
             "Interrupts" => "Interrupciones",
+            "NetDiag" => "Red",
             "PowerDrivers" => "Instaladores",
             "GamesNvidia" => "Juegos",
             "BiosNvram" => "BIOS",
