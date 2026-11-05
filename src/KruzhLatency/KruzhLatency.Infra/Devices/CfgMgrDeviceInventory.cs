@@ -170,6 +170,18 @@ public sealed partial class CfgMgrDeviceInventory : IDeviceInventory, IDeviceMan
             MaxMessages: max);
     }
 
+    /// <summary>
+    /// ¿Se puede apagar y prender en caliente? (DN_DISABLEABLE). Windows marca como no deshabilitables, entre otras, las
+    /// controladoras USB de las que cuelgan el teclado y el mouse: un cambio de MSI o afinidad ahí solo se aplica
+    /// reiniciando Windows. Se consulta antes de medir para no intentar el reinicio y para avisar cuántos reinicios cuesta.
+    /// </summary>
+    public bool CanRestartLive(string instanceId) =>
+        CM_Locate_DevNodeW(out uint devInst, instanceId, CM_LOCATE_DEVNODE_NORMAL) == CR_SUCCESS &&
+        CM_Get_DevNode_Status(out uint status, out _, devInst, 0) == CR_SUCCESS &&
+        (status & DN_DISABLEABLE) != 0;
+
+    private const uint DN_DISABLEABLE = 0x00002000;
+
     private static uint ProblemOf(uint devInst) =>
         CM_Get_DevNode_Status(out uint status, out uint problem, devInst, 0) == CR_SUCCESS && (status & DN_HAS_PROBLEM) != 0
             ? problem

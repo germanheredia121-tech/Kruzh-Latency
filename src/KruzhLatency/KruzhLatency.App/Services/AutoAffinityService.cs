@@ -55,7 +55,13 @@ public sealed class AutoAffinityService
         var mouseController = UsbPowerPlanner.PrimaryMice(tree).FirstOrDefault()?.Controller;
         if (mouseController is not null)
         {
-            AddDevice(session, "d0", mouseController, "USB del mouse", LoadKind.UsbGuided, firstThreads.Select(c => (int?)c).Prepend(null), " · mové el mouse en círculos");
+            // Si Windows no deja reiniciarla en caliente (lo normal en la controladora del mouse), cada núcleo probado es un
+            // reinicio de Windows: se prueban 2 núcleos y no todos.
+            bool live = new CfgMgrDeviceInventory().CanRestartLive(mouseController.InstanceId);
+            var cores = live ? firstThreads : firstThreads.Take(2).ToList();
+            AddDevice(session, "d0", mouseController, "USB del mouse", LoadKind.UsbGuided, cores.Select(c => (int?)c).Prepend(null),
+                      live ? " · mové el mouse en círculos" : " · reinicia Windows · mové el mouse en círculos");
+            if (!live) session.Data["d0:cold"] = "1";
         }
 
         // NVMe: "como viene" vs la propuesta del planificador (cada cambio requiere reiniciar Windows).
@@ -86,6 +92,15 @@ public sealed class AutoAffinityService
     }
 
     public void Begin(AutoTuneSession session) => _sessions.Begin(session);
+
+    /// <summary>
+    /// Reinicios de Windows que puede pedir la sesión: por cada dispositivo que no se reinicia en caliente (o el NVMe),
+    /// uno por candidato distinto de "como viene" más uno para aplicar lo elegido.
+    /// </summary>
+    public static int MaxReboots(AutoTuneSession session) =>
+        session.Data.Keys.Where(k => k.EndsWith(":instance", StringComparison.Ordinal)).Select(k => k[..k.IndexOf(':')])
+            .Where(key => session.Data.ContainsKey($"{key}:cold") || key.StartsWith('n'))
+            .Sum(key => session.Steps.Count(s => s.Id.StartsWith($"{key}:c:", StringComparison.Ordinal) && !s.Id.EndsWith(":" + Default, StringComparison.Ordinal)) + 1);
 
     /// <summary>El paso mide el USB del mouse (el usuario tiene que moverlo): la UI muestra el panel con los reportes en vivo.</summary>
     public static bool NeedsMouse(AutoTuneSession session, string stepId)

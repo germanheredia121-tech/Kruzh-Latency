@@ -2216,7 +2216,7 @@ public sealed partial class MainWindow : Window
                 "• Los que no se reinician en caliente (a veces la GPU) piden reiniciar Windows, también para volver atrás: KRUZH se abre solo al volver y sigue.\n" +
                 "• El disco NVMe no se prueba: sin MSI puede colgar Windows.\n" +
                 "• En los pasos de USB, mové el mouse en círculos mientras mide (vas a ver un panel con los reportes en vivo).\n" +
-                PeripheralNotice() +
+                PeripheralNotice() + RebootLine(AutoMsiService.MaxReboots(session)) +
                 "• Solo queda lo que baja la latencia por encima del ruido; si un dispositivo falla con el cambio, vuelve atrás.",
                 "Empezar");
             if (!go) return;
@@ -2292,7 +2292,7 @@ public sealed partial class MainWindow : Window
             bool go = await ShowConfirmModalAsync("Medir afinidad USB/NVMe (auto)",
                 $"KRUZH va a probar {runs} configuraciones (como viene Windows + núcleos) para el USB del mouse y el disco NVMe. Tarda unos {minutes} minutos.\n\n" +
                 "• En los pasos de USB, mové el mouse en círculos todo el tiempo que mide (vas a ver un panel con los reportes en vivo).\n" +
-                PeripheralNotice() +
+                PeripheralNotice() + RebootLine(AutoAffinityService.MaxReboots(session)) +
                 "• El NVMe de arranque necesita reiniciar Windows entre pruebas: KRUZH se abre solo al volver y sigue.\n" +
                 "• Solo queda lo que baja la latencia por encima del ruido; si nada gana, todo queda como estaba.",
                 "Empezar");

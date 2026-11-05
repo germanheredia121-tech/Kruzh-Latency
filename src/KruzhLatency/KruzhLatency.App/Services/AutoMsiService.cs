@@ -79,7 +79,8 @@ public sealed class AutoMsiService
 
     public AutoTuneSession BuildSession()
     {
-        var tree = new DeviceTree(new CfgMgrDeviceInventory().Snapshot());
+        var inventory = new CfgMgrDeviceInventory();
+        var tree = new DeviceTree(inventory.Snapshot());
         var session = new AutoTuneSession { Kind = Kind };
         int i = 0;
         foreach (var t in MsiPlanner.Targets(tree))
@@ -106,8 +107,16 @@ public sealed class AutoMsiService
             session.TweakIds.Add(PriorityTweakPrefix + inst);
             session.TweakIds.Add(LimitTweakPrefix + inst);
 
+            // Windows no deja apagar y prender en caliente algunas controladoras (las USB de teclado y mouse): ahí cada cambio
+            // es un reinicio de Windows. Se mide solo el modo (hasta 2 reinicios: probar y, si no gana, volver) y no la
+            // prioridad ni el límite, que serían 4-5 reinicios más por controladora.
+            bool live = inventory.CanRestartLive(inst);
+            string coldNote = live ? "" : " (reinicia Windows)";
+            if (!live) session.Data[$"{key}:cold"] = "1";
+
             session.Steps.Add(new AutoTuneStep { Id = $"{key}:base", Title = $"{t.Kind}: {(on ? "con" : "sin")} MSI (actual){hint}" });
-            session.Steps.Add(new AutoTuneStep { Id = $"{key}:alt", Title = $"{t.Kind}: {(on ? "sin" : "con")} MSI{hint}" });
+            session.Steps.Add(new AutoTuneStep { Id = $"{key}:alt", Title = $"{t.Kind}: {(on ? "sin" : "con")} MSI{coldNote}{hint}" });
+            if (!live) continue;
             session.Steps.Add(new AutoTuneStep { Id = $"{key}:prio", Title = $"{t.Kind}: prioridad alta{hint}" });
 
             var limits = MsiTuningPlan.LimitCandidates(t.RemoveMessageLimit, maxMessages);
@@ -129,6 +138,9 @@ public sealed class AutoMsiService
         if (at < 0 || stepId.EndsWith(":limdecide", StringComparison.Ordinal)) return false;
         return LoadFor(session.Data.GetValueOrDefault($"{stepId[..at]}:kind") ?? "") == LoadKind.UsbGuided;
     }
+
+    /// <summary>Reinicios de Windows que puede pedir la sesión: hasta 2 por dispositivo que no se reinicia en caliente.</summary>
+    public static int MaxReboots(AutoTuneSession session) => 2 * session.Data.Keys.Count(k => k.EndsWith(":cold", StringComparison.Ordinal));
 
     /// <summary>Dispositivos de la sesión (para avisar cuánto tarda).</summary>
     public static int DeviceCount(AutoTuneSession session) => session.Data.Keys.Count(k => k.EndsWith(":name", StringComparison.Ordinal));

@@ -2411,11 +2411,12 @@
                     <Grid Height="140" Margin="0,6,0,0">
                         <Border CornerRadius="10" Background="#0C0C0C" BorderBrush="#1C1C1C" BorderThickness="1" />
                         <!-- Relleno verde según el progreso del lote (crece de izquierda a derecha) -->
-                        <Border x:Name="CarouselProgressFill" CornerRadius="10" Background="#2463C088" IsHitTestVisible="False" RenderTransformOrigin="0,0.5">
-                            <Border.RenderTransform>
-                                <ScaleTransform x:Name="CarouselProgressScale" ScaleX="0" />
-                            </Border.RenderTransform>
-                        </Border>
+                        <Grid x:Name="CarouselProgressHost" IsHitTestVisible="False" SizeChanged="CarouselProgressHost_SizeChanged">
+                            <Grid.Clip>
+                                <RectangleGeometry x:Name="CarouselProgressClip" Rect="0,0,0,0" />
+                            </Grid.Clip>
+                            <Border x:Name="CarouselProgressFill" HorizontalAlignment="Left" Width="0" CornerRadius="10" Background="#2463C088" />
+                        </Grid>
 
                         <!-- Banda fija del tweak en foco -->
                         <Border Height="44" Margin="6,0" VerticalAlignment="Center" CornerRadius="8"

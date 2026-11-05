@@ -9,27 +9,27 @@ namespace KruzhLatency;
 /// <summary>Overlay de pasos: relleno verde de progreso en el carrusel y panel "mové el mouse" de las mediciones del USB.</summary>
 public sealed partial class MainWindow
 {
-    private Storyboard? _progressStoryboard;
+    private double _overlayProgress;
 
-    /// <summary>Barra fina + relleno verde del contenedor del carrusel (animado).</summary>
+    /// <summary>
+    /// Barra fina + relleno verde del contenedor del carrusel. El relleno es un ancho fijo dentro de un contenedor recortado
+    /// al tamaño del carrusel (antes era una escala animada que se deformaba con las esquinas y al deslizar las filas).
+    /// </summary>
     private void SetOverlayProgress(double percent)
     {
-        double p = Math.Clamp(percent, 0, 100);
-        OverlayProgressBar.Value = p;
+        _overlayProgress = Math.Clamp(percent, 0, 100);
+        OverlayProgressBar.Value = _overlayProgress;
+        LayoutCarouselProgress();
+    }
 
-        _progressStoryboard?.Stop();
-        var anim = new DoubleAnimation
-        {
-            From = CarouselProgressScale.ScaleX,
-            To = p / 100.0,
-            Duration = new Duration(TimeSpan.FromMilliseconds(p == 0 ? 1 : 350)),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-        };
-        Storyboard.SetTarget(anim, CarouselProgressScale);
-        Storyboard.SetTargetProperty(anim, "ScaleX");
-        _progressStoryboard = new Storyboard();
-        _progressStoryboard.Children.Add(anim);
-        _progressStoryboard.Begin();
+    private void CarouselProgressHost_SizeChanged(object sender, SizeChangedEventArgs e) => LayoutCarouselProgress();
+
+    private void LayoutCarouselProgress()
+    {
+        double w = CarouselProgressHost.ActualWidth, h = CarouselProgressHost.ActualHeight;
+        if (w <= 0 || h <= 0) return;
+        CarouselProgressClip.Rect = new Windows.Foundation.Rect(0, 0, w, h);
+        CarouselProgressFill.Width = w * _overlayProgress / 100.0;
     }
 
     /// <summary>
@@ -43,6 +43,11 @@ public sealed partial class MainWindow
             ? string.Empty
             : $"• Cerrá {string.Join(", ", apps)} antes de empezar (también desde la bandeja del sistema): no deja reiniciar el USB y esos dispositivos quedarían sin medir.\n";
     }
+
+    /// <summary>Línea para los diálogos de medición con los reinicios de Windows que puede pedir.</summary>
+    private static string RebootLine(int reboots) => reboots == 0
+        ? "• No hace falta reiniciar Windows: todos los dispositivos se reinician en caliente.\n"
+        : $"• Va a reiniciar Windows hasta {reboots} veces: Windows no deja reiniciar en caliente algunas controladoras (las USB del teclado y el mouse). KRUZH se abre solo al volver y sigue. Para reducirlo, en esas solo se prueba lo esencial.\n";
 
     private DispatcherTimer? _mouseGuideTimer;
     private DateTime _mouseGuideStart;
