@@ -2209,8 +2209,7 @@ public sealed partial class MainWindow : Window
             int devices = AutoMsiService.DeviceCount(session);
             int minutes = (int)Math.Ceiling(AutoMsiService.MeasuringSteps(session) * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + devices;
             bool go = await ShowConfirmModalAsync("Medir MSI (auto)",
-                $"KRUZH va a medir {devices} dispositivos con una carga que los hace trabajar: MSI sí o no, prioridad alta, y en los que " +
-                $"aceptan varios mensajes (MSI-X), el límite de mensajes. Tarda unos {minutes} minutos.\n\n" +
+                $"KRUZH va a medir {devices} dispositivos con MSI y sin MSI, con una carga que los hace trabajar. Tarda unos {minutes} minutos.\n\n" +
                 "• Antes se crea un punto de restauración.\n" +
                 "• Cada dispositivo se reinicia (la pantalla parpadea con la GPU; el mouse o la red se cortan 1-2 s).\n" +
                 "• Los que no se reinician en caliente (a veces la GPU) piden reiniciar Windows, también para volver atrás: KRUZH se abre solo al volver y sigue.\n" +

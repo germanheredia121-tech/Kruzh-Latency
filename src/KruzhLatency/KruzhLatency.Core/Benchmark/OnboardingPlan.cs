@@ -47,7 +47,7 @@ public static class OnboardingPlan
     public static int EstimatedMinutes(bool msi, bool gpuAffinity, bool deviceAffinity, int msiDevices, int cores)
     {
         double m = 0;
-        if (msi) m += msiDevices * 4 * 0.8;           // modo (2) + prioridad + ~1 límite de media; 3 ventanas de ~14 s cada uno
+        if (msi) m += msiDevices * 2 * 0.8;           // actual + invertido, 3 ventanas de ~14 s cada uno
         if (gpuAffinity) m += (cores + 1) * 1.2;      // "como viene" + un núcleo por vez
         if (deviceAffinity) m += (cores + 2) * 0.8;   // USB: default + núcleos; NVMe: default + propuesta
         return (int)Math.Ceiling(m);

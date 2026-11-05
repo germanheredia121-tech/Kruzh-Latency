@@ -19,14 +19,12 @@ atender USB/red/NVMe y qué CPU Sets darle al juego. Sin elegir nada "a ojo" y s
 - Resultado: tabla por CPU (FPS, 1%, 0,1%, DPC de nvlddmkm/dxgkrnl) y se aplica el ganador (o nada).
 
 ### F3. Auto MSI
-- Dispositivos: los que declaran MSI/MSI-X (MsiPlanner). Por dispositivo, en este orden (`MsiTuningPlan`):
-  1. Modo: línea (INTx) / MSI (actual contra invertido).
-  2. Prioridad (`Affinity Policy\DevicePriority`): el modo elegido contra Alta (3). Es una sugerencia para Windows sin
-     evidencia de mejora: se mide, nunca se aplica a ciegas. Si ya estaba en Alta, no se mide.
-  3. Límite (`MessageNumberLimit`), solo MSI-X con más de un mensaje y con MSI encendido: "sin límite" contra 1, 2, 4
-     (máx. 3 candidatos, menores que el máximo del dispositivo); gana el de menor p99 que supere el ruido.
-  Cada cosa tiene su propio registro en el journal (`AutoMsi:`, `AutoMsiPrio:`, `AutoMsiLimit:`); "Revertir todo" los
-  deshace en orden inverso (límite → prioridad → modo) para que el modo restaure el límite original.
+- Dispositivos: los que declaran MSI/MSI-X (MsiPlanner). Candidatos por dispositivo: línea (INTx) / MSI (actual contra invertido).
+- Prioridad (`DevicePriority`) y límite de mensajes (`MessageNumberLimit`): se probó medirlos (nov-2026) y en la PC del autor
+  ninguno ganó al ruido en ningún dispositivo; además costaban reinicios. Se sacaron. "Revertir todo" sigue deshaciendo
+  `AutoMsiPrio:` y `AutoMsiLimit:` por si quedó algo de esa versión.
+- Controladoras que Windows no deja reiniciar en caliente (sin DN_DISABLEABLE: las xHCI de teclado y mouse): se detecta antes
+  de medir y el diálogo dice cuántos reinicios de Windows va a pedir (hasta 2 por controladora).
 - Dispositivos reiniciables en caliente: reinicio del devnode. No reiniciables (a veces la GPU): reinicio de Windows con retomado, también para la vuelta atrás (se reinicia en el momento, nunca "reiniciá más tarde": el dispositivo no puede quedar funcionando con el valor de prueba).
 - MSI del NVMe: no se mide. Sin MSI el disco del sistema puede trabarse y colgar Windows sin volcado (visto en la PC del autor dos veces, nov-2026).
 - Criterio: menor p99 de ISR+DPC del driver bajo su carga, sin empeorar FPS; si el dispositivo falla con MSI, queda en línea y "no apto".

@@ -133,7 +133,7 @@ public sealed partial class MainWindow
                        "Mientras mide no uses la PC: puede reiniciarse sola y sigue al volver.",
         };
         measure.Rows.Add(MeasurementRow(OnboardingPlan.Msi, "Modo MSI",
-            "Mide en la GPU, el USB, la red y el audio: MSI sí o no, prioridad alta, y el límite de mensajes donde aplica. Deja lo de menor latencia de interrupción. El disco no se prueba. En las controladoras USB del teclado y el mouse solo se prueba el modo y reinicia Windows (hasta 2 veces por controladora).", measureByDefault));
+            "Mide la GPU, el USB, la red y el audio con MSI y sin MSI y deja el de menor latencia de interrupción. El disco no se prueba. En las controladoras USB del teclado y el mouse solo se prueba el modo y reinicia Windows (hasta 2 veces por controladora).", measureByDefault));
         measure.Rows.Add(MeasurementRow(OnboardingPlan.GpuAffinity, "Afinidad de la GPU",
             "Prueba en qué núcleo la GPU entrega más FPS con una carga 3D propia medida por PresentMon. La pantalla parpadea en cada prueba.", measureByDefault));
         measure.Rows.Add(MeasurementRow(OnboardingPlan.DeviceAffinity, "Afinidad del USB del mouse y del NVMe",
