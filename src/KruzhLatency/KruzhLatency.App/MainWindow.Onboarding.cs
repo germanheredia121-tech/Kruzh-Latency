@@ -223,7 +223,7 @@ public sealed partial class MainWindow
             OnboardingRowsScroll.ChangeView(null, 0, null, disableAnimation: true);
             UpdateOnboardingCount();
         }
-        if (page.Kind == OnboardingPageKind.Summary) OnboardingSummaryText.Text = BuildOnboardingSummary();
+        if (page.Kind == OnboardingPageKind.Summary) _ = ShowOnboardingSummaryAsync();
 
         OnboardingBackBtn.IsEnabled = _onboardingIndex > 0;
         OnboardingNextBtn.Content = page.Kind == OnboardingPageKind.Summary ? "Optimizar" : "Siguiente";
@@ -380,6 +380,50 @@ public sealed partial class MainWindow
         return sb.ToString();
     }
 
+    /// <summary>Resumen + avisos de conexión (puerto del mouse, EDID) que se leen en segundo plano.</summary>
+    private async Task ShowOnboardingSummaryAsync()
+    {
+        string summary = BuildOnboardingSummary();
+        OnboardingSummaryText.Text = summary + "\n\nRevisando cómo están conectados el mouse, el teclado y el monitor…";
+        string warnings = FormatSetupWarnings(await CollectSetupWarningsAsync());
+        if (CurrentOnboardingPage.Kind == OnboardingPageKind.Summary)
+        {
+            OnboardingSummaryText.Text = summary + (warnings.Length > 0 ? "\n\n" + warnings.TrimEnd() : "\n\nConexiones: mouse, teclado y monitor bien conectados.");
+        }
+    }
+
+    /// <summary>Lo que KRUZH no puede arreglar solo: puerto del mouse/teclado y EDID del monitor.</summary>
+    private static async Task<IReadOnlyList<KruzhLatency.Core.Devices.SetupWarning>> CollectSetupWarningsAsync()
+    {
+        try
+        {
+            return await Task.Run(() =>
+            {
+                var tree = new KruzhLatency.Core.Devices.DeviceTree(new KruzhLatency.Infra.Devices.CfgMgrDeviceInventory().Snapshot());
+                var monitors = KruzhLatency.Infra.Display.MonitorProbe.Detect(tree).Select(KruzhLatency.Core.Display.MonitorAnalyzer.Analyze).ToList();
+                return (IReadOnlyList<KruzhLatency.Core.Devices.SetupWarning>)KruzhLatency.Core.Devices.SetupAdvisor.Inputs(tree)
+                    .Concat(KruzhLatency.Core.Devices.SetupAdvisor.Displays(monitors)).ToList();
+            });
+        }
+        catch (Exception ex)
+        {
+            App.LogError("Setup warnings", ex);
+            return Array.Empty<KruzhLatency.Core.Devices.SetupWarning>();
+        }
+    }
+
+    private static string FormatSetupWarnings(IReadOnlyList<KruzhLatency.Core.Devices.SetupWarning> warnings)
+    {
+        if (warnings.Count == 0) return string.Empty;
+        var sb = new StringBuilder("⚠ Para revisar (KRUZH no lo puede cambiar solo):\n");
+        foreach (var w in warnings)
+        {
+            sb.AppendLine($"   • {w.Title}: {w.Detail}");
+            sb.AppendLine($"     → {w.Action}");
+        }
+        return sb.AppendLine().ToString();
+    }
+
     private static string PresetName(PresetProfileKind p) => p switch
     {
         PresetProfileKind.Minimal => "Normal",
@@ -499,7 +543,8 @@ public sealed partial class MainWindow
         RefreshLiveTweaksStateInPlace();
         AfterPciChange();
 
-        string text = (report.Length > 0 ? report + "\n\n" : string.Empty) +
+        string warnings = FormatSetupWarnings(await CollectSetupWarningsAsync());
+        string text = (report.Length > 0 ? report + "\n\n" : string.Empty) + warnings +
                       "Todo lo que cambió se puede revertir desde Monitor → Cambios aplicados (y lo medido, desde Interrupciones → Revertir todo).";
         if (!rebootRecommended)
         {
