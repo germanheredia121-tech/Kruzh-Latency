@@ -2160,9 +2160,9 @@
         <!-- → mediciones → resumen → Optimizar. Debajo de modales y overlay de pasos. -->
         <!-- ======================================================================= -->
         <Grid x:Name="OnboardingOverlay" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed" Background="#0B0B0B">
-            <Grid MaxWidth="1120" Margin="48,58,48,28" ColumnSpacing="44">
+            <Grid MaxWidth="1180" Margin="48,58,48,28" ColumnSpacing="40">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="210" />
+                    <ColumnDefinition Width="250" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
@@ -2170,10 +2170,12 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Pasos -->
+                <!-- Pasos (clickeables) -->
                 <StackPanel Grid.RowSpan="2" Spacing="14">
                     <TextBlock Text="OPTIMIZACIÓN COMPLETA" Style="{StaticResource KruzhMicroLabelStyle}" />
-                    <StackPanel x:Name="OnboardingStepsPanel" Spacing="10" Margin="0,6,0,0" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="760">
+                        <StackPanel x:Name="OnboardingStepsPanel" Spacing="4" Margin="0,4,0,0" />
+                    </ScrollViewer>
                 </StackPanel>
 
                 <!-- Contenido -->
@@ -2183,6 +2185,16 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Spacing="6">
+                        <!-- Progreso del asistente -->
+                        <Grid Margin="0,0,0,10" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ProgressBar x:Name="OnboardingProgressBar" Minimum="0" Maximum="100" Value="0" Height="4" VerticalAlignment="Center"
+                                         Foreground="{StaticResource KruzhPositiveBrush}" Background="#1E1E1E" CornerRadius="2" />
+                            <TextBlock x:Name="OnboardingProgressText" Grid.Column="1" Text="Paso 1 de 1" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" />
+                        </Grid>
                         <TextBlock x:Name="OnboardingTitleText" Text="-" Style="{StaticResource KruzhPageTitleStyle}" TextWrapping="Wrap" />
                         <TextBlock x:Name="OnboardingSubtitleText" Text="-" Style="{StaticResource KruzhPageSubtitleStyle}" TextWrapping="Wrap" />
                     </StackPanel>
@@ -2197,25 +2209,25 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <Border x:Name="OnbProfileMinimal" Tag="Minimal" Tapped="OnboardingProfile_Tapped" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
+                        <Border x:Name="OnbProfileMinimal" Tag="Minimal" Tapped="OnboardingProfile_Tapped" PointerEntered="OnboardingProfile_PointerEntered" PointerExited="OnboardingProfile_PointerExited" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Normal" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
                                 <TextBlock Text="Lo mínimo: pocos cambios, nada que baje la seguridad ni moleste al anticheat. Para una PC de uso diario que también juega." FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
-                        <Border x:Name="OnbProfileCompetitivo" Grid.Column="1" Tag="Competitivo" Tapped="OnboardingProfile_Tapped" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
+                        <Border x:Name="OnbProfileCompetitivo" Grid.Column="1" Tag="Competitivo" Tapped="OnboardingProfile_Tapped" PointerEntered="OnboardingProfile_PointerEntered" PointerExited="OnboardingProfile_PointerExited" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Competitivo" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
                                 <TextBlock Text="Recomendado para jugar CS2 y VALORANT. Sin nada que baje la seguridad ni moleste al anticheat." FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
-                        <Border x:Name="OnbProfileProfesional" Grid.Row="1" Tag="Profesional" Tapped="OnboardingProfile_Tapped" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
+                        <Border x:Name="OnbProfileProfesional" Grid.Row="1" Tag="Profesional" Tapped="OnboardingProfile_Tapped" PointerEntered="OnboardingProfile_PointerEntered" PointerExited="OnboardingProfile_PointerExited" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Profesional" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
                                 <TextBlock Text="Más ajustes que Competitivo, para una PC dedicada a jugar. Tampoco incluye nada que baje la seguridad ni moleste al anticheat." FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
-                        <Border x:Name="OnbProfileEntusiasta" Grid.Row="1" Grid.Column="1" Tag="Entusiasta" Tapped="OnboardingProfile_Tapped" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
+                        <Border x:Name="OnbProfileEntusiasta" Grid.Row="1" Grid.Column="1" Tag="Entusiasta" Tapped="OnboardingProfile_Tapped" PointerEntered="OnboardingProfile_PointerEntered" PointerExited="OnboardingProfile_PointerExited" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Entusiasta" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
                                 <TextBlock Text="Todo lo que aplica a tu PC, incluidos los que bajan la seguridad o piden cuidado. Antes de aplicar esos te pide confirmación." FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
@@ -2376,8 +2388,34 @@
                       que se desliza hacia arriba una posición cada vez que termina un tweak. Arriba = ya aplicado, abajo = en espera.
                       Paso de la pista = 44 (alto de fila) + 4 (separación) = 48.
                     -->
+                    <!-- Mové el mouse: aparece solo en los pasos que miden el USB del mouse (reportes por segundo en vivo + cuenta regresiva) -->
+                    <Border x:Name="MouseGuidePanel" Visibility="Collapsed" CornerRadius="12" Padding="18,14" Background="#0E1410" BorderBrush="#2A4A36" BorderThickness="1">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="MouseGuideDot" Width="12" Height="12" CornerRadius="6" Background="{StaticResource KruzhPositiveBrush}" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock x:Name="MouseGuideTitleText" Text="Mové el mouse en círculos, sin parar" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                <TextBlock x:Name="MouseGuideDetailText" Text="-" FontSize="12" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <TextBlock x:Name="MouseGuideRateText" Text="0" FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" HorizontalAlignment="Right" />
+                                <TextBlock Text="reportes/s" FontSize="11" Foreground="{StaticResource KruzhTextTertiaryBrush}" HorizontalAlignment="Right" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
                     <Grid Height="140" Margin="0,6,0,0">
                         <Border CornerRadius="10" Background="#0C0C0C" BorderBrush="#1C1C1C" BorderThickness="1" />
+                        <!-- Relleno verde según el progreso del lote (crece de izquierda a derecha) -->
+                        <Border x:Name="CarouselProgressFill" CornerRadius="10" Background="#2463C088" IsHitTestVisible="False" RenderTransformOrigin="0,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="CarouselProgressScale" ScaleX="0" />
+                            </Border.RenderTransform>
+                        </Border>
 
                         <!-- Banda fija del tweak en foco -->
                         <Border Height="44" Margin="6,0" VerticalAlignment="Center" CornerRadius="8"

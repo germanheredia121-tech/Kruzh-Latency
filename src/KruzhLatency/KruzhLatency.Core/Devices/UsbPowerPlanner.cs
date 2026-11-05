@@ -43,6 +43,43 @@ public static class UsbPowerPlanner
     }
 
     /// <summary>
+    /// Los mouse de verdad: muchos teclados se presentan además como "mouse" en otra interfaz (Razer: teclado en MI_00, mouse en
+    /// MI_02) y los receptores de mouse como "teclado" (Logitech: mouse en MI_00, teclado en MI_01). La función principal de un
+    /// aparato es la de su interfaz más baja: se descartan los mouse de un aparato que tiene un teclado en una interfaz anterior.
+    /// </summary>
+    public static IReadOnlyList<InputPortPlacement> PrimaryMice(DeviceTree tree)
+    {
+        var all = InputPlacement(tree);
+        var result = new List<InputPortPlacement>();
+        foreach (var m in all.Where(p => Is(p.Input, "Mouse")))
+        {
+            var (root, mi) = UsbInterface(tree, m.Input);
+            bool keyboardFirst = root is not null && all.Any(p =>
+                Is(p.Input, "Keyboard") && UsbInterface(tree, p.Input) is var (r, kmi) && r?.InstanceId == root.InstanceId && kmi < mi);
+            if (!keyboardFirst) result.Add(m);
+        }
+        return result;
+    }
+
+    /// <summary>El aparato USB del que cuelga una entrada y el número de interfaz (&amp;MI_xx; int.MaxValue si no tiene).</summary>
+    private static (DeviceNode? Root, int Interface) UsbInterface(DeviceTree tree, DeviceNode input)
+    {
+        int mi = int.MaxValue;
+        foreach (var a in tree.Ancestors(input).Where(a => a.Enumerator.Equals("USB", StringComparison.OrdinalIgnoreCase)))
+        {
+            string id = a.InstanceId.Split('\\') is { Length: > 1 } parts ? parts[1] : string.Empty;
+            int at = id.IndexOf("&MI_", StringComparison.OrdinalIgnoreCase);
+            if (at >= 0)
+            {
+                if (mi == int.MaxValue && int.TryParse(id.AsSpan(at + 4, 2), System.Globalization.NumberStyles.HexNumber, null, out int n)) mi = n;
+                continue;
+            }
+            if (!id.StartsWith("ROOT_HUB", StringComparison.OrdinalIgnoreCase)) return (a, mi);
+        }
+        return (null, mi);
+    }
+
+    /// <summary>
     /// Solo AMD (en Intel casi todos los puertos son del PCH). Chipset si la xHCI está detrás de 2+ bridges PCI
     /// (X570/X670: detrás del switch del chipset) o comparte dispositivo PCI con un bridge (B550/B650: el chipset
     /// expone xHCI, SATA y su switch como funciones del mismo dispositivo). CPU en otro caso.

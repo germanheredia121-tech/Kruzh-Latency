@@ -58,7 +58,7 @@ public sealed partial class MainWindow
             return;
         }
         _onboardingPreset = _activePreset;
-        BuildOnboardingPages();
+        BuildOnboardingPages(refreshLive: true);
         _onboardingIndex = 0;
         ShowOnboardingPage();
         OnboardingOverlay.Visibility = Visibility.Visible;
@@ -82,9 +82,13 @@ public sealed partial class MainWindow
 
     // ---------------------------------------------------------------- armado de pantallas
 
-    private void BuildOnboardingPages()
+    /// <param name="refreshLive">
+    /// Leer el estado real del sistema (registro, WMI) de cada tweak: solo al abrir el asistente. Al cambiar de perfil se
+    /// reasigna lo marcado sin volver a leer (antes cada clic en un perfil tardaba un par de segundos).
+    /// </param>
+    private void BuildOnboardingPages(bool refreshLive)
     {
-        WithToggleGuard(() => App.TweakEngine.SelectPresetProfile(_onboardingPreset));
+        WithToggleGuard(() => App.TweakEngine.SelectPresetProfile(_onboardingPreset, refreshLive));
         _onboardingPages.Clear();
 
         _onboardingPages.Add(new OnboardingPage
@@ -227,23 +231,62 @@ public sealed partial class MainWindow
 
         OnboardingBackBtn.IsEnabled = _onboardingIndex > 0;
         OnboardingNextBtn.Content = page.Kind == OnboardingPageKind.Summary ? "Optimizar" : "Siguiente";
+        OnboardingProgressBar.Value = (_onboardingIndex + 1) * 100.0 / _onboardingPages.Count;
+        OnboardingProgressText.Text = $"Paso {_onboardingIndex + 1} de {_onboardingPages.Count}";
         RenderOnboardingSteps();
     }
 
+    /// <summary>Menú de pasos: cada uno es un botón para saltar a esa pantalla. El actual lleva una barra verde a la izquierda.</summary>
     private void RenderOnboardingSteps()
     {
+        var res = Application.Current.Resources;
         OnboardingStepsPanel.Children.Clear();
         for (int i = 0; i < _onboardingPages.Count; i++)
         {
             bool current = i == _onboardingIndex;
             bool done = i < _onboardingIndex;
-            OnboardingStepsPanel.Children.Add(new TextBlock
+            int target = i;
+            var label = new Grid { ColumnSpacing = 10 };
+            label.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(22) });
+            label.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            label.Children.Add(new TextBlock
             {
-                Text = (done ? "✓  " : current ? "›  " : "    ") + _onboardingPages[i].StepName,
+                Text = done ? "✓" : (i + 1).ToString(),
                 FontSize = 13,
-                FontWeight = current ? FontWeights.SemiBold : FontWeights.Normal,
-                Foreground = (Brush)Application.Current.Resources[current ? "KruzhTextPrimaryBrush" : done ? "KruzhTextSecondaryBrush" : "KruzhTextTertiaryBrush"],
+                Foreground = (Brush)res[done ? "KruzhPositiveBrush" : current ? "KruzhTextPrimaryBrush" : "KruzhTextTertiaryBrush"],
+                VerticalAlignment = VerticalAlignment.Center,
             });
+            var name = new TextBlock
+            {
+                Text = _onboardingPages[i].StepName,
+                FontSize = 14.5,
+                FontWeight = current ? FontWeights.SemiBold : FontWeights.Normal,
+                Foreground = (Brush)res[current ? "KruzhTextPrimaryBrush" : done ? "KruzhTextSecondaryBrush" : "KruzhTextTertiaryBrush"],
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(name, 1);
+            label.Children.Add(name);
+
+            var btn = new Button
+            {
+                Content = label,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Padding = new Thickness(12, 9, 12, 9),
+                CornerRadius = new CornerRadius(6),
+                BorderThickness = new Thickness(3, 0, 0, 0),
+                BorderBrush = current ? (Brush)res["KruzhPositiveBrush"] : new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                Background = current ? (Brush)res["KruzhCardHoverBrush"] : new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+            };
+            ToolTipService.SetToolTip(btn, $"Ir a: {_onboardingPages[i].Title}");
+            btn.Click += (_, _) =>
+            {
+                if (target == _onboardingIndex) return;
+                _onboardingIndex = target;
+                ShowOnboardingPage();
+            };
+            OnboardingStepsPanel.Children.Add(btn);
         }
     }
 
@@ -295,23 +338,50 @@ public sealed partial class MainWindow
             "Entusiasta" => PresetProfileKind.Entusiasta,
             _ => PresetProfileKind.Competitivo,
         };
-        BuildOnboardingPages(); // el perfil rearma lo marcado en todas las secciones
+        BuildOnboardingPages(refreshLive: false); // el perfil rearma lo marcado en todas las secciones (sin releer el sistema)
         _onboardingIndex = 0;
         ShowOnboardingPage();
     }
 
+    private (Border Card, PresetProfileKind Kind, string Name)[] OnboardingProfileCards => new[]
+    {
+        (OnbProfileMinimal, PresetProfileKind.Minimal, "Normal"), (OnbProfileCompetitivo, PresetProfileKind.Competitivo, "Competitivo"),
+        (OnbProfileProfesional, PresetProfileKind.Profesional, "Profesional"), (OnbProfileEntusiasta, PresetProfileKind.Entusiasta, "Entusiasta"),
+    };
+
+    private void OnboardingProfile_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (sender is not Border card) return;
+        if (OnboardingProfileCards.First(c => c.Card == card).Kind == _onboardingPreset) return;
+        card.Background = (Brush)Application.Current.Resources["KruzhCardHoverBrush"];
+        card.BorderBrush = (Brush)Application.Current.Resources["KruzhActiveStrokeBrush"];
+    }
+
+    private void OnboardingProfile_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) => HighlightOnboardingProfileCardsOnly();
+
+    /// <summary>Repinta las tarjetas sin recalcular el subtítulo (para el hover).</summary>
+    private void HighlightOnboardingProfileCardsOnly()
+    {
+        string subtitle = OnboardingSubtitleText.Text;
+        HighlightOnboardingProfile();
+        OnboardingSubtitleText.Text = subtitle;
+    }
+
+    /// <summary>El perfil elegido: borde verde de 2 px, fondo verde suave y "✓ Elegido" en el título.</summary>
     private void HighlightOnboardingProfile()
     {
         var res = Application.Current.Resources;
-        foreach (var (card, kind) in new[]
-                 {
-                     (OnbProfileMinimal, PresetProfileKind.Minimal), (OnbProfileCompetitivo, PresetProfileKind.Competitivo),
-                     (OnbProfileProfesional, PresetProfileKind.Profesional), (OnbProfileEntusiasta, PresetProfileKind.Entusiasta),
-                 })
+        foreach (var (card, kind, name) in OnboardingProfileCards)
         {
             bool active = kind == _onboardingPreset;
-            card.BorderBrush = (Brush)res[active ? "KruzhActiveStrokeBrush" : "KruzhHairlineBorderBrush"];
-            card.Background = (Brush)res[active ? "KruzhCardHoverBrush" : "KruzhCardSurfaceBrush"];
+            card.BorderThickness = new Thickness(active ? 2 : 1);
+            card.BorderBrush = (Brush)res[active ? "KruzhPositiveBrush" : "KruzhHairlineBorderBrush"];
+            card.Background = (Brush)res[active ? "KruzhPositiveBgBrush" : "KruzhCardSurfaceBrush"];
+            if (card.Child is StackPanel { Children.Count: > 0 } sp && sp.Children[0] is TextBlock title)
+            {
+                title.Text = active ? $"{name}   ✓ Elegido" : name;
+                title.Foreground = (Brush)res[active ? "KruzhPositiveBrush" : "KruzhTextPrimaryBrush"];
+            }
         }
         int pending = App.TweakEngine.AllTweaks.Count(t => t.IsPending);
         OnboardingSubtitleText.Text = $"Con este perfil quedan marcados {pending} cambios para tu PC. En las pantallas siguientes podés sumar o sacar cualquier cosa.";

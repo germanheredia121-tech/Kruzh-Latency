@@ -41,6 +41,13 @@ public sealed partial class CfgMgrDeviceInventory : IDeviceInventory, IDeviceMan
 
         // CM_DISABLE_UI_NOT_OK: si el driver no admite apagarse en caliente, falla en vez de pedir reinicio.
         uint cr = CM_Disable_DevNode(devInst, CM_DISABLE_UI_NOT_OK);
+        if (cr == CR_REMOVE_VETOED)
+        {
+            // Un programa tiene el dispositivo abierto y no deja apagarlo (ej. el software del teclado). Reiniciar Windows
+            // aplicaría el cambio, pero en una medición eso significa un reinicio por prueba: lo decide quien llama.
+            string who = PeripheralSoftware.Running() is { Count: > 0 } apps ? $" Probablemente: {string.Join(", ", apps)}." : string.Empty;
+            return new DeviceRestartResult(false, ProblemOf(devInst), "Un programa con el dispositivo abierto no dejó reiniciarlo." + who, Vetoed: true);
+        }
         if (cr != CR_SUCCESS)
         {
             return new DeviceRestartResult(false, ProblemOf(devInst), $"No se puede reiniciar en caliente (CR 0x{cr:X}); requiere reiniciar la PC.");
@@ -274,6 +281,7 @@ public sealed partial class CfgMgrDeviceInventory : IDeviceInventory, IDeviceMan
     }
 
     private const uint CR_SUCCESS = 0x00;
+    private const uint CR_REMOVE_VETOED = 0x17;
     private const uint CR_BUFFER_SMALL = 0x1A;
     private const uint CM_GETIDLIST_FILTER_NONE = 0;
     private const uint CM_LOCATE_DEVNODE_NORMAL = 0;

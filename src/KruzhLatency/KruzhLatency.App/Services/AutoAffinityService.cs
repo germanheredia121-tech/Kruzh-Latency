@@ -50,9 +50,9 @@ public sealed class AutoAffinityService
         var firstThreads = topology.Where(t => !t.IsSmtSibling && t.PhysicalCoreIndex != kernelCore && t.Index < 64)
                                    .OrderBy(t => t.Index).Select(t => t.Index).ToList();
 
-        // xHCI del mouse (el usuario genera la carga moviéndolo).
-        var mouseController = UsbPowerPlanner.InputPlacement(tree)
-            .FirstOrDefault(p => string.Equals(p.Input.ClassName, "Mouse", StringComparison.OrdinalIgnoreCase))?.Controller;
+        // xHCI del mouse (el usuario genera la carga moviéndolo). Solo mouse de verdad: los teclados que se presentan además
+        // como "mouse" (Razer) hacían que se midiera la controladora del teclado.
+        var mouseController = UsbPowerPlanner.PrimaryMice(tree).FirstOrDefault()?.Controller;
         if (mouseController is not null)
         {
             AddDevice(session, "d0", mouseController, "USB del mouse", LoadKind.UsbGuided, firstThreads.Select(c => (int?)c).Prepend(null), " · mové el mouse en círculos");
@@ -87,6 +87,14 @@ public sealed class AutoAffinityService
 
     public void Begin(AutoTuneSession session) => _sessions.Begin(session);
 
+    /// <summary>El paso mide el USB del mouse (el usuario tiene que moverlo): la UI muestra el panel con los reportes en vivo.</summary>
+    public static bool NeedsMouse(AutoTuneSession session, string stepId)
+    {
+        int at = stepId.IndexOf(':');
+        if (at < 0 || stepId.EndsWith(":decide", StringComparison.Ordinal)) return false;
+        return session.Data.GetValueOrDefault($"{stepId[..at]}:load") == nameof(LoadKind.UsbGuided);
+    }
+
     /// <summary>Ejecuta un paso. Reboot = true si quedó programado un reinicio para seguir.</summary>
     public (bool Ok, string Detail, bool Reboot) RunStep(AutoTuneSession session, string stepId, CancellationToken cancel)
     {
@@ -96,6 +104,14 @@ public sealed class AutoAffinityService
         bool resumed = session.Step(stepId).Status == AutoTuneStepStatus.Running;
         session.Start(stepId);
         AutoTuneSessionService.Checkpoint(session);
+
+        // Un programa no dejó reiniciar este dispositivo: el resto de sus pruebas no se hacen (cada una pediría reiniciar Windows).
+        if (session.Data.GetValueOrDefault($"{key}:blocked") is { } blocked)
+        {
+            session.Finish(stepId, false, blocked);
+            AutoTuneSessionService.Checkpoint(session);
+            return (false, blocked, false);
+        }
 
         if (stepId.EndsWith(":decide", StringComparison.Ordinal)) return Decide(session, key, stepId, instance, tweakId);
 
@@ -109,6 +125,17 @@ public sealed class AutoAffinityService
             var restart = changed
                 ? new CfgMgrDeviceInventory().Restart(instance, TimeSpan.FromSeconds(30))
                 : new KruzhLatency.Core.Abstractions.DeviceRestartResult(true, 0, "Sin cambios.");
+            if (restart.Vetoed)
+            {
+                // El cambio no llegó a aplicarse (el dispositivo sigue como estaba): se deshace en el registro, sin reiniciar.
+                _audit.RevertTweakFromJournal(tweakId, out _);
+                string why = $"No se midió: {restart.Detail} Cerralo y volvé a medir.";
+                session.Data[$"{key}:blocked"] = why;
+                session.Data[$"{key}:result"] = why;
+                session.Finish(stepId, false, why);
+                AutoTuneSessionService.Checkpoint(session);
+                return (false, why, false);
+            }
             if (!restart.Restarted && restart.ProblemCodeAfter == 0)
             {
                 var (ok, detail) = _sessions.RebootToContinue(session);

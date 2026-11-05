@@ -151,7 +151,8 @@ public interface IDeviceManager
     DeviceRestartResult Restart(string instanceId, TimeSpan timeout);
 }
 
-public sealed record DeviceRestartResult(bool Restarted, uint ProblemCodeAfter, string Detail)
+/// <param name="Vetoed">Un programa con el dispositivo abierto no dejó reiniciarlo (CR_REMOVE_VETOED): no es que el driver no lo soporte.</param>
+public sealed record DeviceRestartResult(bool Restarted, uint ProblemCodeAfter, string Detail, bool Vetoed = false)
 {
     public bool IsHealthy => Restarted && ProblemCodeAfter == 0;
 }

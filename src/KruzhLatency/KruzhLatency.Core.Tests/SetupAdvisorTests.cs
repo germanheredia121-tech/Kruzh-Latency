@@ -106,6 +106,30 @@ public class SetupAdvisorTests
         Assert.Contains(w, x => x.Title.Contains("USB 2.0"));
     }
 
+    /// <summary>Teclado Razer: teclado en MI_00 y una interfaz "mouse" en MI_02 (como el Huntsman V3 Pro del autor).</summary>
+    private static IEnumerable<DeviceNode> RazerKeyboardWithMouseInterface(string hubParent) => new[]
+    {
+        N(@"USB\VID_1532&PID_02B0\R", hubParent, "USB", "USB", "usbccgp"),
+        N(@"USB\VID_1532&PID_02B0&MI_00\R", @"USB\VID_1532&PID_02B0\R", "HIDClass", "USB", "HidUsb"),
+        N(@"HID\VID_1532&PID_02B0&MI_00\R", @"USB\VID_1532&PID_02B0&MI_00\R", "Keyboard", "HID", "kbdhid"),
+        N(@"USB\VID_1532&PID_02B0&MI_02\R", @"USB\VID_1532&PID_02B0\R", "HIDClass", "USB", "HidUsb"),
+        N(@"HID\VID_1532&PID_02B0&MI_02\R", @"USB\VID_1532&PID_02B0&MI_02\R", "Mouse", "HID", "mouhid"),
+    };
+
+    [Fact]
+    public void ElMouseDeVerdad_NoLaInterfazMouseDelTeclado()
+    {
+        var tree = Tree(RazerKeyboardWithMouseInterface(@"USB\ROOT_HUB30\CHIP"), Mouse(@"USB\ROOT_HUB30\CPU"));
+        var mice = UsbPowerPlanner.PrimaryMice(tree);
+        var m = Assert.Single(mice);
+        Assert.StartsWith(@"HID\VID_046D", m.Input.InstanceId);
+        Assert.Equal(@"PCI\XHCI_CPU", m.Controller.InstanceId);
+    }
+
+    [Fact]
+    public void TecladoConInterfazMouseEnElChipset_NoAvisaMouseEnElChipset() =>
+        Assert.Empty(SetupAdvisor.Inputs(Tree(RazerKeyboardWithMouseInterface(@"USB\ROOT_HUB30\CHIP"), Mouse(@"USB\ROOT_HUB30\CPU"))));
+
     // ---------------------------------------------------------------- EDID
 
     private static MonitorAnalysis Mon(string id, bool present, byte[]? edid = null, byte[]? over = null, string? error = null) =>

@@ -22,7 +22,7 @@ public static class SetupAdvisor
     {
         var list = new List<SetupWarning>();
         var placement = UsbPowerPlanner.InputPlacement(tree);
-        var mice = placement.Where(p => IsClass(p.Input, "Mouse")).ToList();
+        var mice = UsbPowerPlanner.PrimaryMice(tree).ToList(); // sin la interfaz "mouse" de los teclados
         if (mice.Count == 0) return list;
 
         bool hasCpuController = tree.All.Any(n => n.IsPresent && n.IsPci && DeviceRuleEngine.PciClassStarts(n, "0C0330") &&

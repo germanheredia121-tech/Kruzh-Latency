@@ -68,6 +68,9 @@ public sealed partial class MainWindow : Window
         AutoTuneSessionService.Runners[AutoMsiService.Kind] = RunAutoMsiAsync;
         AutoTuneSessionService.Runners[AutoAffinityService.Kind] = RunAutoAffinityAsync;
         AutoTuneSessionService.Runners[OnboardingRebootKind] = ResumeOnboardingAfterRebootAsync;
+
+        // Reportes del mouse en vivo para las mediciones del USB (panel "mové el mouse" y chequeo de movimiento).
+        MouseActivity.Attach(GetWindowHandle());
     }
 
     private IntPtr GetWindowHandle() => WindowNative.GetWindowHandle(this);
@@ -1096,7 +1099,7 @@ public sealed partial class MainWindow : Window
 
             OverlayRestorePointText.Text = "Creando punto de restauración del sistema...";
             OverlayStepDescText.Text = "Preparando cambios...";
-            OverlayProgressBar.Value = 0;
+            SetOverlayProgress(0);
             OverlayCountText.Text = $"0 / {total} aplicados";
             SetCarouselRows(prevTitle: "(Inicio del lote)", prevStatus: string.Empty, prevFailed: false,
                 activeTitle: "Creando punto de restauración…", nextTitle: CarouselTitleAt(pending, 0), next2Title: CarouselTitleAt(pending, 1));
@@ -1129,7 +1132,7 @@ public sealed partial class MainWindow : Window
                         CarouselTitleAt(pending, step), CarouselTitleAt(pending, step + 1), CarouselTitleAt(pending, step + 2)));
 
                 OverlayStepDescText.Text = item.IsPendingRevert ? "Revirtiendo al valor original..." : "Aplicando optimización...";
-                OverlayProgressBar.Value = (double)completed / total * 100.0;
+                SetOverlayProgress((double)completed / total * 100.0);
                 OverlayCountText.Text = $"{completed} / {total} aplicados";
 
                 TweakExecutionReport report;
@@ -1183,7 +1186,7 @@ public sealed partial class MainWindow : Window
                 }
 
                 completed++;
-                OverlayProgressBar.Value = (double)completed / total * 100.0;
+                SetOverlayProgress((double)completed / total * 100.0);
                 OverlayCountText.Text = $"{completed} / {total} aplicados";
                 lastTitle = CarouselTitleAt(pending, i);
                 lastStatus = report.Success ? (isRevert ? "revertido ✓" : "listo ✓") : "falló ✗";
@@ -1211,7 +1214,7 @@ public sealed partial class MainWindow : Window
                     CarouselNextStatusText.Text = string.Empty;
                 });
 
-            OverlayProgressBar.Value = 100;
+            SetOverlayProgress(100);
             OverlayCountText.Text = $"{total} / {total} procesados";
             OverlayStepDescText.Text = "Verificando estado real en el registro...";
             await Task.Delay(500);
@@ -1267,7 +1270,10 @@ public sealed partial class MainWindow : Window
     // ========================================================================================
 
     /// <summary>Un paso visible en el carrusel. <see cref="Run"/> se ejecuta en background y nunca debe tocar la UI.</summary>
-    private sealed record OverlayStep(string Title, Func<(bool Success, string Detail)> Run, bool RequiresReboot = false);
+    /// <param name="NeedsMouse">El paso mide el USB del mouse: se muestra el panel "mové el mouse" con los reportes por segundo en vivo.</param>
+    /// <param name="Expected">Duración estimada del paso (para la cuenta regresiva del panel del mouse).</param>
+    private sealed record OverlayStep(string Title, Func<(bool Success, string Detail)> Run, bool RequiresReboot = false,
+                                      bool NeedsMouse = false, TimeSpan? Expected = null);
 
     private sealed record OverlayStepResult(OverlayStep Step, bool Success, string Detail);
 
@@ -1275,7 +1281,12 @@ public sealed partial class MainWindow : Window
     /// Ejecuta los pasos uno por uno mostrando el overlay (cajas + carrusel + barra). Cada paso corre en background,
     /// un fallo no corta el resto, y al terminar el carrusel muestra el resultado. Devuelve el resultado de cada paso.
     /// </summary>
-    private async Task<IReadOnlyList<OverlayStepResult>> RunStepsWithOverlayAsync(string heading, string subtitle, IReadOnlyList<OverlayStep> steps, bool showFailures = true)
+    /// <param name="stopRequested">
+    /// Se consulta antes de cada paso: si devuelve true (por ejemplo, porque un paso programó un reinicio), el carrusel se
+    /// detiene ahí y muestra <paramref name="stopMessage"/>, en vez de pasar el resto de los pasos como "listo".
+    /// </param>
+    private async Task<IReadOnlyList<OverlayStepResult>> RunStepsWithOverlayAsync(string heading, string subtitle, IReadOnlyList<OverlayStep> steps,
+        bool showFailures = true, Func<bool>? stopRequested = null, string? stopMessage = null)
     {
         var results = new List<OverlayStepResult>();
         if (steps.Count == 0 || _isApplyingBatch) return results;
@@ -1288,7 +1299,7 @@ public sealed partial class MainWindow : Window
             StartOverlaySpinnerAnimation();
             OverlayTitleText.Text = heading;
             OverlayRestorePointText.Text = subtitle;
-            OverlayProgressBar.Value = 0;
+            SetOverlayProgress(0);
             OverlayCountText.Text = $"0 / {steps.Count}";
             OverlayStepDescText.Text = heading + "…";
 
@@ -1298,9 +1309,15 @@ public sealed partial class MainWindow : Window
             string lastTitle = "(Inicio)";
             string lastStatus = string.Empty;
             bool lastFailed = false;
+            bool stoppedEarly = false;
 
             for (int i = 0; i < steps.Count; i++)
             {
+                if (stopRequested?.Invoke() == true)
+                {
+                    stoppedEarly = true;
+                    break;
+                }
                 var step = steps[i];
                 var watch = Stopwatch.StartNew();
                 if (i > 0)
@@ -1312,6 +1329,7 @@ public sealed partial class MainWindow : Window
                 }
 
                 (bool ok, string detail) outcome;
+                if (step.NeedsMouse) StartMouseGuide(step.Expected ?? TimeSpan.FromSeconds(45));
                 try
                 {
                     outcome = await Task.Run(step.Run);
@@ -1321,12 +1339,16 @@ public sealed partial class MainWindow : Window
                     App.LogError($"Overlay step {step.Title}", ex);
                     outcome = (false, $"Error inesperado: {ex.Message}");
                 }
+                finally
+                {
+                    if (step.NeedsMouse) StopMouseGuide();
+                }
 
                 results.Add(new OverlayStepResult(step, outcome.ok, outcome.detail));
                 lastTitle = step.Title;
                 lastStatus = outcome.ok ? "listo ✓" : "falló ✗";
                 lastFailed = !outcome.ok;
-                OverlayProgressBar.Value = (double)(i + 1) / steps.Count * 100.0;
+                SetOverlayProgress((double)(i + 1) / steps.Count * 100.0);
                 OverlayCountText.Text = $"{i + 1} / {steps.Count}";
 
                 int remaining = MinCarouselStepMs - (int)watch.ElapsedMilliseconds;
@@ -1335,9 +1357,11 @@ public sealed partial class MainWindow : Window
 
             int failed = results.Count(r => !r.Success);
             bool needsReboot = results.Any(r => r.Success && r.Step.RequiresReboot);
-            string final = failed == 0
-                ? (needsReboot ? "Listo · reiniciá la PC para que tome efecto" : "¡Listo!")
-                : $"Terminado con {failed} error(es)";
+            string final = stoppedEarly
+                ? (stopMessage ?? "Reiniciando para seguir…")
+                : failed == 0
+                    ? (needsReboot ? "Listo · reiniciá la PC para que tome efecto" : "¡Listo!")
+                    : $"Terminado con {failed} error(es)";
             string ft = lastTitle, fs = lastStatus;
             bool ff = lastFailed;
             await SlideCarouselUpAsync(string.Empty, () =>
@@ -2191,7 +2215,8 @@ public sealed partial class MainWindow : Window
                 "• Cada dispositivo se reinicia (la pantalla parpadea con la GPU; el mouse o la red se cortan 1-2 s).\n" +
                 "• Los que no se reinician en caliente (a veces la GPU) piden reiniciar Windows, también para volver atrás: KRUZH se abre solo al volver y sigue.\n" +
                 "• El disco NVMe no se prueba: sin MSI puede colgar Windows.\n" +
-                "• En los pasos de USB, mové el mouse en círculos mientras mide.\n" +
+                "• En los pasos de USB, mové el mouse en círculos mientras mide (vas a ver un panel con los reportes en vivo).\n" +
+                PeripheralNotice() +
                 "• Solo queda lo que baja la latencia por encima del ruido; si un dispositivo falla con el cambio, vuelve atrás.",
                 "Empezar");
             if (!go) return;
@@ -2213,13 +2238,14 @@ public sealed partial class MainWindow : Window
                                                          or KruzhLatency.Core.Benchmark.AutoTuneStepStatus.Running).ToList();
         var steps = pending.Select(s => new OverlayStep(s.Title, () =>
         {
-            if (stop) return (true, rebooting ? "Sigue después del reinicio." : "Saltado.");
             var (ok, detail, reboot) = svc.RunStep(session, s.Id, cts.Token);
             if (reboot) { stop = true; rebooting = true; }
             return (ok, detail); // un "no apto" se muestra como falla pero no corta la sesión: el overlay sigue con el resto
-        })).ToList();
+        }, NeedsMouse: AutoMsiService.NeedsMouse(session, s.Id), Expected: InterruptMeasure.Expected)).ToList();
 
-        await RunStepsWithOverlayAsync("Midiendo MSI", "No uses la PC (salvo mover el mouse en los pasos de USB)", steps);
+        // Si un paso programa un reinicio, el carrusel se corta ahí (antes pasaba el resto en verde sin medir).
+        await RunStepsWithOverlayAsync("Midiendo MSI", "No uses la PC (salvo mover el mouse en los pasos de USB)", steps,
+            stopRequested: () => stop, stopMessage: "Reiniciando Windows para seguir midiendo…");
         if (rebooting)
         {
             SetStatus("Reiniciando para seguir midiendo…");
@@ -2265,7 +2291,8 @@ public sealed partial class MainWindow : Window
             int minutes = (int)Math.Ceiling(runs * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + 1;
             bool go = await ShowConfirmModalAsync("Medir afinidad USB/NVMe (auto)",
                 $"KRUZH va a probar {runs} configuraciones (como viene Windows + núcleos) para el USB del mouse y el disco NVMe. Tarda unos {minutes} minutos.\n\n" +
-                "• En los pasos de USB, mové el mouse en círculos todo el tiempo que mide.\n" +
+                "• En los pasos de USB, mové el mouse en círculos todo el tiempo que mide (vas a ver un panel con los reportes en vivo).\n" +
+                PeripheralNotice() +
                 "• El NVMe de arranque necesita reiniciar Windows entre pruebas: KRUZH se abre solo al volver y sigue.\n" +
                 "• Solo queda lo que baja la latencia por encima del ruido; si nada gana, todo queda como estaba.",
                 "Empezar");
@@ -2286,13 +2313,13 @@ public sealed partial class MainWindow : Window
                                                          or KruzhLatency.Core.Benchmark.AutoTuneStepStatus.Running).ToList();
         var steps = pending.Select(s => new OverlayStep(s.Title, () =>
         {
-            if (stop) return (true, "Sigue después del reinicio.");
             var (ok, detail, reboot) = svc.RunStep(session, s.Id, cts.Token);
             stop |= reboot;
             return (ok, detail);
-        })).ToList();
+        }, NeedsMouse: AutoAffinityService.NeedsMouse(session, s.Id), Expected: InterruptMeasure.Expected)).ToList();
 
-        await RunStepsWithOverlayAsync("Midiendo afinidad", "No uses la PC (salvo mover el mouse en los pasos de USB)", steps);
+        await RunStepsWithOverlayAsync("Midiendo afinidad", "No uses la PC (salvo mover el mouse en los pasos de USB)", steps,
+            stopRequested: () => stop, stopMessage: "Reiniciando Windows para seguir midiendo…");
         if (stop)
         {
             SetStatus("Reiniciando para seguir midiendo…");

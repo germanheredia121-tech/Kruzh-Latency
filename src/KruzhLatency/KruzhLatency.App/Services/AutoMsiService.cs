@@ -122,6 +122,14 @@ public sealed class AutoMsiService
 
     public void Begin(AutoTuneSession session) => _sessions.Begin(session);
 
+    /// <summary>El paso mide el USB del mouse (el usuario tiene que moverlo): la UI muestra el panel con los reportes en vivo.</summary>
+    public static bool NeedsMouse(AutoTuneSession session, string stepId)
+    {
+        int at = stepId.IndexOf(':');
+        if (at < 0 || stepId.EndsWith(":limdecide", StringComparison.Ordinal)) return false;
+        return LoadFor(session.Data.GetValueOrDefault($"{stepId[..at]}:kind") ?? "") == LoadKind.UsbGuided;
+    }
+
     /// <summary>Dispositivos de la sesión (para avisar cuánto tarda).</summary>
     public static int DeviceCount(AutoTuneSession session) => session.Data.Keys.Count(k => k.EndsWith(":name", StringComparison.Ordinal));
 
@@ -143,6 +151,17 @@ public sealed class AutoMsiService
         AutoTuneSessionService.Checkpoint(session);
 
         string part = stepId[(key.Length + 1)..];
+
+        // Un programa no dejó reiniciar el dispositivo: el resto de sus pruebas se saltean (cada una pediría reiniciar Windows).
+        if (session.Data.GetValueOrDefault($"{key}:blocked") is { } blocked) return Skip(session, stepId, blocked);
+
+        // Dispositivo que solo cambia reiniciando Windows: el límite de mensajes no se mide (serían 3-4 reinicios más).
+        if (session.Data.GetValueOrDefault($"{key}:cold") == "1" && (part.StartsWith("lim:", StringComparison.Ordinal) || part == "limdecide"))
+        {
+            if (part == "limdecide") session.Data[$"{key}:limResult"] = "Límite de mensajes: no se midió (este dispositivo pide reiniciar Windows en cada prueba).";
+            return Skip(session, stepId, "No se mide: pediría reiniciar Windows en cada prueba.");
+        }
+
         if (part == "base") return RunBase(session, stepId, key, Measure);
         if (part == "alt") return RunMode(session, stepId, key, instance, resumed, Measure);
         if (part == "prio") return RunPriority(session, stepId, key, instance, resumed, Measure);
@@ -275,8 +294,22 @@ public sealed class AutoMsiService
         AutoTuneSessionService.Checkpoint(s);
 
         var restart = new CfgMgrDeviceInventory().Restart(instance, TimeSpan.FromSeconds(30));
+        if (restart.Vetoed)
+        {
+            // El cambio no llegó a aplicarse (el dispositivo siguió andando): se deshace en el registro, sin reiniciar nada,
+            // y el resto de las pruebas de este dispositivo se saltean.
+            _audit.RevertTweakFromJournal(tweakId, out _);
+            string key = KeyOf(stepId);
+            string why = $"No se midió: {restart.Detail} Cerralo y volvé a medir.";
+            s.Data[$"{key}:blocked"] = why;
+            s.Data[resultKey] = why;
+            s.Finish(stepId, false, why);
+            AutoTuneSessionService.Checkpoint(s);
+            return (false, why, false);
+        }
         if (!restart.Restarted && restart.ProblemCodeAfter == 0)
         {
+            s.Data[$"{KeyOf(stepId)}:cold"] = "1";
             var (ok, detail) = _sessions.RebootToContinue(s);
             return ok ? (true, "Requiere reiniciar Windows: " + detail, true) : (false, detail, false);
         }

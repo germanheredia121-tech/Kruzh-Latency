@@ -568,12 +568,13 @@ public sealed partial class DeclarativeTweakEngine
         _ => t.Options.LastOrDefault()?.Key ?? string.Empty
     };
 
-    public void SelectPresetProfile(PresetProfileKind preset)
+    /// <param name="refreshLive">Releer gates y estado real de cada tweak (registro, WMI). El asistente lo hace una vez al abrir y al cambiar de perfil solo reasigna.</param>
+    public void SelectPresetProfile(PresetProfileKind preset, bool refreshLive = true)
     {
         var hw = _hwService.CurrentProfile;
         foreach (var t in _allTweaks)
         {
-            t.RefreshGatesAndLiveState(hw);
+            if (refreshLive) t.RefreshGatesAndLiveState(hw);
             if (!t.Applicability.IsApplicable)
             {
                 t.IsSelectedForBatch = false;
