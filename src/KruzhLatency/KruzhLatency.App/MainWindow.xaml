@@ -1876,7 +1876,7 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="Graba 3 minutos de partida y muestra cómo llegan los paquetes del servidor: ritmo, variación y cada hueco sin datos, con su hora. No toca el juego: lee los eventos de red de Windows (el contenido va cifrado y no se ve)."
+                                            <TextBlock Text="Graba 3 minutos de partida en las dos direcciones: cómo llegan los paquetes del servidor y cómo los manda CS2 desde tu PC (ritmo, variación y cada hueco, con su hora). Comparando las dos dice si un problema nace en tu PC o en la red. No toca el juego: lee los eventos de red de Windows (el contenido va cifrado y no se ve)."
                                                        FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
                                             <Button Grid.Column="1" x:Name="NetDiagFlowBtn" Click="NetDiagFlow_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Grabar 3 minutos" VerticalAlignment="Center" />
                                         </Grid>

@@ -9,6 +9,7 @@ using KruzhLatency.Infra.Etw;
 using KruzhLatency.Infra.Network;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using FlowDirection = KruzhLatency.Core.Network.FlowDirection;
 
 namespace KruzhLatency;
 
@@ -49,14 +50,14 @@ public sealed partial class MainWindow
         {
             var (flows, error) = await Task.Run(() => UdpFlowCapture.Capture(pids, TimeSpan.FromSeconds(8), CancellationToken.None));
             if (error is not null) { await ShowSimpleInfoModalAsync("Detectar servidor", error); return; }
-            var best = flows!.OrderByDescending(kv => kv.Value.Count).FirstOrDefault();
-            if (best.Value is not { Count: > 20 })
+            var best = flows!.OrderByDescending(kv => kv.Value.Received.Count).FirstOrDefault();
+            if (best.Value is not { Received.Count: > 20 })
             {
                 await ShowSimpleInfoModalAsync("Detectar servidor", "CS2 casi no recibió paquetes: ¿estabas en el menú? Entrá a una partida y probá de nuevo.");
                 return;
             }
             NetDiagTargetBox.Text = HostOf(best.Key);
-            SetStatus($"Servidor de la partida: {best.Key} ({best.Value.Count / 8} paquetes/s).");
+            SetStatus($"Servidor de la partida: {best.Key} ({best.Value.Received.Count / 8} paquetes/s).");
         }
         finally
         {
@@ -185,19 +186,30 @@ public sealed partial class MainWindow
         {
             var (flows, error) = await Task.Run(() => UdpFlowCapture.Capture(pids, FlowDuration, CancellationToken.None));
             if (error is not null) { NetDiagFlowSummary.Text = error; return; }
-            var best = flows!.OrderByDescending(kv => kv.Value.Count).FirstOrDefault();
-            var report = FlowAnalysis.Analyze(best.Key ?? "-", best.Value ?? new List<double>());
-            NetDiagFlowSummary.Text = report.Summary;
+            var best = flows!.OrderByDescending(kv => kv.Value.Received.Count).FirstOrDefault();
+            string remote = best.Key ?? "-";
+            var down = FlowAnalysis.Analyze(remote, best.Value?.Received ?? new List<double>(), FlowDirection.FromServer);
+            var up = FlowAnalysis.Analyze(remote, best.Value?.Sent ?? new List<double>(), FlowDirection.ToServer);
+            string verdict = FlowAnalysis.Verdict(down, up);
+            NetDiagFlowSummary.Text = verdict.Length > 0 ? verdict : down.Summary;
 
             var sb = new StringBuilder();
-            sb.AppendLine($"Servidor: {report.Remote} · {report.Packets} paquetes en {report.DurationSeconds:0} s · intervalo normal {report.MedianIntervalMs:0.0} ms · p99 {report.P99IntervalMs:0.0} ms");
-            if (report.Gaps.Count > 0)
+            sb.AppendLine($"Servidor: {remote}");
+            foreach (var r in new[] { down, up })
             {
-                sb.AppendLine("Huecos (segundo de la grabación → duración):");
-                foreach (var g in report.Gaps.Take(40)) sb.AppendLine($"   {g.AtSeconds,6:0.0} s → {g.GapMs:0} ms");
-                if (report.Gaps.Count > 40) sb.AppendLine($"   … y {report.Gaps.Count - 40} más");
+                bool isDown = r.Direction == FlowDirection.FromServer;
+                sb.AppendLine();
+                sb.AppendLine(r.Summary);
+                if (r.Packets >= 10)
+                    sb.AppendLine($"   {r.Packets} paquetes en {r.DurationSeconds:0} s · intervalo normal {r.MedianIntervalMs:0.0} ms · p99 {r.P99IntervalMs:0.0} ms");
+                if (r.Gaps.Count > 0)
+                {
+                    sb.AppendLine(isDown ? "   Huecos de bajada (segundo de la grabación → duración):" : "   Huecos de subida (segundo de la grabación → duración):");
+                    foreach (var g in r.Gaps.Take(40)) sb.AppendLine($"      {g.AtSeconds,6:0.0} s → {g.GapMs:0} ms");
+                    if (r.Gaps.Count > 40) sb.AppendLine($"      … y {r.Gaps.Count - 40} más");
+                }
             }
-            if (string.IsNullOrEmpty(NetDiagTargetBox.Text) && report.Remote != "-") NetDiagTargetBox.Text = HostOf(report.Remote); // para probar la ruta después
+            if (string.IsNullOrEmpty(NetDiagTargetBox.Text) && remote != "-") NetDiagTargetBox.Text = HostOf(remote); // para probar la ruta después
             NetDiagFlowDetail.Text = sb.ToString().TrimEnd();
             NetDiagFlowDetail.Visibility = Visibility.Visible;
         }
