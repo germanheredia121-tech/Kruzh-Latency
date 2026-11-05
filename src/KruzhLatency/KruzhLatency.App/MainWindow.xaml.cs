@@ -29,6 +29,16 @@ namespace KruzhLatency;
 
 public sealed partial class MainWindow : Window
 {
+    /// <summary>
+    /// Constructor estático explícito (vacío a propósito): sin él, .NET puede inicializar los campos estáticos recién cuando
+    /// alguien los lee por primera vez, y si eso pasa en un hilo de fondo (un Task.Run que lee una constante de la ventana),
+    /// los pinceles estáticos de WinUI fallan con RPC_E_WRONG_THREAD. Con este constructor se inicializan al crear la
+    /// ventana, en el hilo de la interfaz.
+    /// </summary>
+    static MainWindow()
+    {
+    }
+
     private readonly DispatcherTimer _telemetryTimer;
     private readonly List<double> _cpuSamples = new();
     private readonly List<double> _gpuSamples = new();
