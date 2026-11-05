@@ -2182,10 +2182,11 @@ public sealed partial class MainWindow : Window
 
         if (interactive)
         {
-            int devices = session.Steps.Count / 2;
-            int minutes = (int)Math.Ceiling(session.Steps.Count * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + devices;
+            int devices = AutoMsiService.DeviceCount(session);
+            int minutes = (int)Math.Ceiling(AutoMsiService.MeasuringSteps(session) * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + devices;
             bool go = await ShowConfirmModalAsync("Medir MSI (auto)",
-                $"KRUZH va a medir {devices} dispositivos con MSI y sin MSI, con una carga que los hace trabajar. Tarda unos {minutes} minutos.\n\n" +
+                $"KRUZH va a medir {devices} dispositivos con una carga que los hace trabajar: MSI sí o no, prioridad alta, y en los que " +
+                $"aceptan varios mensajes (MSI-X), el límite de mensajes. Tarda unos {minutes} minutos.\n\n" +
                 "• Antes se crea un punto de restauración.\n" +
                 "• Cada dispositivo se reinicia (la pantalla parpadea con la GPU; el mouse o la red se cortan 1-2 s).\n" +
                 "• Los que no se reinician en caliente (a veces la GPU) piden reiniciar Windows, también para volver atrás: KRUZH se abre solo al volver y sigue.\n" +
@@ -2389,9 +2390,14 @@ public sealed partial class MainWindow : Window
             }, RequiresReboot: true),
             new OverlayStep("MSI medido", () =>
             {
-                var ids = App.AuditService.TweakIdsStartingWith(AutoMsiService.TweakPrefix);
-                int n = ids.Count(id => App.AuditService.RevertTweakFromJournal(id, out _));
-                return (true, n == 0 ? "No había MSI medido para revertir." : $"{n} dispositivos vuelven a su MSI original.");
+                // Orden inverso al de la medición (límite → prioridad → modo): así el modo MSI restaura el límite original al final.
+                int n = 0;
+                foreach (string prefix in AutoMsiService.AllTweakPrefixes.Reverse())
+                {
+                    var ids = App.AuditService.TweakIdsStartingWith(prefix);
+                    n += ids.Count(id => App.AuditService.RevertTweakFromJournal(id, out _));
+                }
+                return (true, n == 0 ? "No había MSI medido para revertir." : $"{n} cambios de MSI, prioridad o límite vuelven a como estaban.");
             }, RequiresReboot: true),
             new OverlayStep("Afinidad USB/NVMe medida", () =>
             {

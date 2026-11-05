@@ -50,7 +50,7 @@ public sealed class IrqAndMsiService
                 MsiCapable = n.Interrupts is { } caps && (caps.SupportsMsi || caps.SupportsMsiX),
                 MsiSupported = msiKey?.GetValue("MSISupported") is int v ? v == 1 : null,
                 AssignedCoreIndex = core,
-                ChangedByKruzh = _audit.HasBackupForTweak(AutoMsiService.TweakPrefix + n.InstanceId)
+                ChangedByKruzh = AutoMsiService.AllTweakPrefixes.Any(p => _audit.HasBackupForTweak(p + n.InstanceId))
                               || _audit.HasBackupForTweak(AutoAffinityService.TweakPrefix + n.InstanceId)
                               || (kind == "GPU" && _audit.HasBackupForTweak(AutoGpuAffinityService.TweakId)),
             });
