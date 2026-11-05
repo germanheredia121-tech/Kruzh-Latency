@@ -130,6 +130,15 @@ public class SetupAdvisorTests
     }
 
     [Fact]
+    public void FantasmaDelDriverGenericoDeWindows_NoEsDobleEdid()
+    {
+        // Lo que se ve en la PC del autor: DISPLAY\GBT2404\1&...&UID0 colgando de ROOT\BasicDisplay\0000, recreado al reiniciar el driver.
+        var basic = new MonitorAnalysis(new MonitorInfo(@"DISPLAY\GSM5B7F\2", "GS25F2", false, @"ROOT\BasicDisplay\0000", new byte[] { 2 }, null, null),
+                                        null, null, null, 0, false, false, false, Array.Empty<string>());
+        Assert.Empty(SetupAdvisor.Displays(new[] { Mon(@"DISPLAY\GSM5B7F\1", true, new byte[] { 1 }), basic }));
+    }
+
+    [Fact]
     public void FantasmaDeOtroModelo_NoEsDobleEdid() =>
         Assert.Empty(SetupAdvisor.Displays(new[]
         {

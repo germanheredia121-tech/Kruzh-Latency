@@ -93,7 +93,10 @@ public static class SetupAdvisor
         }
 
         // "Doble EDID": el mismo modelo de monitor registrado más de una vez (conectado + fantasmas de otros puertos o cables).
-        foreach (var g in monitors.GroupBy(a => ModelKey(a.Monitor.InstanceId)).Where(g => g.Count() > 1 && g.Any(a => a.Monitor.IsPresent)))
+        // No cuenta el fantasma que cuelga del Microsoft Basic Display Adapter: Windows lo vuelve a crear cada vez que se
+        // reinicia el driver de la GPU (actualización, restart64 de CRU, mediciones de KRUZH) y no se usa con el driver cargado.
+        foreach (var g in monitors.Where(a => a.Monitor.IsPresent || !IsBasicDisplayGhost(a.Monitor))
+                                  .GroupBy(a => ModelKey(a.Monitor.InstanceId)).Where(g => g.Count() > 1 && g.Any(a => a.Monitor.IsPresent)))
         {
             int ghosts = g.Count(a => !a.Monitor.IsPresent);
             bool differentEdids = g.Select(a => a.Monitor.EffectiveEdid is { } e ? Convert.ToBase64String(e) : "").Distinct().Count() > 1;
@@ -104,6 +107,9 @@ public static class SetupAdvisor
         }
         return list;
     }
+
+    private static bool IsBasicDisplayGhost(MonitorInfo m) =>
+        m.ParentInstanceId is { } p && p.StartsWith(@"ROOT\BasicDisplay", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>DISPLAY\GSM5B7F\5&amp;xxx&amp;0&amp;UID… → GSM5B7F (el ID de modelo del EDID).</summary>
     private static string ModelKey(string instanceId)
