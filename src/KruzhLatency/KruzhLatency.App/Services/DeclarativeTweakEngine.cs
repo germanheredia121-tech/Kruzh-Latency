@@ -560,6 +560,14 @@ public sealed partial class DeclarativeTweakEngine
         }
     }
 
+    /// <summary>La opción que eligen los perfiles para un tweak con opciones (la última, salvo excepciones medidas).</summary>
+    public static string RecommendedOptionKey(DeclarativeTweakItem t) => t.Id switch
+    {
+        "CpuPrioritySeparationSelector" => "38",
+        "MmcssAndNetworkThrottlingSelector" => "Balanced10_Off",
+        _ => t.Options.LastOrDefault()?.Key ?? string.Empty
+    };
+
     public void SelectPresetProfile(PresetProfileKind preset)
     {
         var hw = _hwService.CurrentProfile;
@@ -597,13 +605,7 @@ public sealed partial class DeclarativeTweakEngine
             {
                 if (t.HasOptions)
                 {
-                    string recOpt = t.Id switch
-                    {
-                        "CpuPrioritySeparationSelector" => "38",
-                        "MmcssAndNetworkThrottlingSelector" => "Balanced10_Off",
-                        _ => t.Options.LastOrDefault()?.Key ?? string.Empty
-                    };
-                    t.SetDesiredOption(recOpt);
+                    t.SetDesiredOption(RecommendedOptionKey(t));
                 }
                 else
                 {

@@ -20,7 +20,8 @@ atender USB/red/NVMe y qué CPU Sets darle al juego. Sin elegir nada "a ojo" y s
 
 ### F3. Auto MSI
 - Dispositivos: los que declaran MSI/MSI-X (MsiPlanner). Candidatos por dispositivo: línea (INTx) / MSI.
-- Dispositivos reiniciables en caliente: reinicio del devnode. No reiniciables (GPU, NVMe de arranque): reinicio de Windows con retomado.
+- Dispositivos reiniciables en caliente: reinicio del devnode. No reiniciables (a veces la GPU): reinicio de Windows con retomado, también para la vuelta atrás (se reinicia en el momento, nunca "reiniciá más tarde": el dispositivo no puede quedar funcionando con el valor de prueba).
+- MSI del NVMe: no se mide. Sin MSI el disco del sistema puede trabarse y colgar Windows sin volcado (visto en la PC del autor dos veces, nov-2026).
 - Criterio: menor p99 de ISR+DPC del driver bajo su carga, sin empeorar FPS; si el dispositivo falla con MSI, queda en línea y "no apto".
 
 ### F4. Auto afinidad de dispositivos
@@ -31,6 +32,19 @@ atender USB/red/NVMe y qué CPU Sets darle al juego. Sin elegir nada "a ojo" y s
 - KRUZH Agent aplica CPU Sets a cs2.exe / VALORANT-Win64-Shipping.exe al abrirse.
 - Candidatos: sin CPU Sets / sin el núcleo 0 / solo primeros hilos (SMT "blando") / CCD con V-Cache (X3D) / P-cores (Intel híbrido).
 - La elección se mide con el benchmark de F1 (los juegos no se automatizan: ADR-004) o la elige el usuario.
+
+### F6. Optimización completa (asistente tipo instalador)
+- Botón "Empezar" en Inicio. Pantallas: perfil (Normal / Competitivo / Profesional / Entusiasta) → una por sección del catálogo
+  con casillas (solo lo aplicable a la PC) → Laboratorio (ADR-011: nada marcado de entrada, el usuario elige a mano) →
+  mediciones (F2, F3, F4) → resumen → "Optimizar".
+- Solo suma: lo ya aplicado se muestra marcado y bloqueado. Revertir se hace desde Optimizaciones o Monitor.
+- Lo manual que toca lo mismo que una medición sale del lote: "MSI en todos" (PciMsiModeV3) si se mide MSI; el reparto fijo
+  de interrupciones (I02) si se mide afinidad, y si estaba aplicado se revierte para poder medir.
+- Orden (`OnboardingPlan`): aplicar el lote con el flujo normal (punto de restauración + journal + aviso rojo de seguridad/
+  anticheat) → reinicio si algún cambio lo pide y hay mediciones → MSI → afinidad de GPU → afinidad USB/NVMe.
+- La cola vive en ProgramData (`OnboardingStore`): sobrevive a reinicios de Windows y a que KRUZH se reabra tras reiniciar el
+  driver de video. Dentro del asistente las mediciones no preguntan; cada resultado se suma a un informe final, que ofrece
+  reiniciar.
 
 ## Seguridad y estabilidad
 - Punto de restauración antes de cada sesión. Journal por cada cambio. Cancelar = revertir todo lo de la sesión.

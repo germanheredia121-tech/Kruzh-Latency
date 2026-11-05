@@ -173,6 +173,22 @@
                                 <TextBlock x:Name="BottomStatusBarText" Text="-" Style="{StaticResource KruzhPageSubtitleStyle}" />
                             </StackPanel>
 
+                            <!-- Optimización completa (asistente tipo instalador) -->
+                            <Border Style="{StaticResource KruzhCardStyle}" Padding="24,20">
+                                <Grid ColumnSpacing="24">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="Optimización completa" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                        <TextBlock Text="Elegí un perfil, revisá sección por sección qué sumar o sacar, y KRUZH aplica todo y mide MSI y afinidad en tu PC de una sola vez."
+                                                   FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Click="OpenOnboardingBtn_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Empezar" MinWidth="130" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
                             <!-- ROW 1: MONITORES EN VIVO (100% REAL SENSORS, ZERO MOCK DATA, COMPACT) -->
                             <StackPanel Spacing="12">
                                 <TextBlock Text="MONITORES EN VIVO" Style="{StaticResource KruzhMicroLabelStyle}" />
@@ -2138,6 +2154,145 @@
                 </StackPanel>
             </Border>
         </Canvas>
+
+        <!-- ======================================================================= -->
+        <!-- ASISTENTE DE OPTIMIZACIÓN COMPLETA (tipo instalador): perfil → secciones  -->
+        <!-- → mediciones → resumen → Optimizar. Debajo de modales y overlay de pasos. -->
+        <!-- ======================================================================= -->
+        <Grid x:Name="OnboardingOverlay" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed" Background="#0B0B0B">
+            <Grid MaxWidth="1120" Margin="48,58,48,28" ColumnSpacing="44">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="210" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Pasos -->
+                <StackPanel Grid.RowSpan="2" Spacing="14">
+                    <TextBlock Text="OPTIMIZACIÓN COMPLETA" Style="{StaticResource KruzhMicroLabelStyle}" />
+                    <StackPanel x:Name="OnboardingStepsPanel" Spacing="10" Margin="0,6,0,0" />
+                </StackPanel>
+
+                <!-- Contenido -->
+                <Grid Grid.Column="1" RowSpacing="18">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Spacing="6">
+                        <TextBlock x:Name="OnboardingTitleText" Text="-" Style="{StaticResource KruzhPageTitleStyle}" TextWrapping="Wrap" />
+                        <TextBlock x:Name="OnboardingSubtitleText" Text="-" Style="{StaticResource KruzhPageSubtitleStyle}" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Perfil -->
+                    <Grid x:Name="OnboardingProfilePanel" Grid.Row="1" ColumnSpacing="14" RowSpacing="14" VerticalAlignment="Top">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Border x:Name="OnbProfileMinimal" Tag="Minimal" Tapped="OnboardingProfile_Tapped" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Normal" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                <TextBlock Text="Lo mínimo: pocos cambios, nada que baje la seguridad ni moleste al anticheat. Para una PC de uso diario que también juega." FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                        <Border x:Name="OnbProfileCompetitivo" Grid.Column="1" Tag="Competitivo" Tapped="OnboardingProfile_Tapped" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Competitivo" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                <TextBlock Text="Recomendado para jugar CS2 y VALORANT. Sin nada que baje la seguridad ni moleste al anticheat." FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                        <Border x:Name="OnbProfileProfesional" Grid.Row="1" Tag="Profesional" Tapped="OnboardingProfile_Tapped" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Profesional" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                <TextBlock Text="Más ajustes que Competitivo, para una PC dedicada a jugar. Tampoco incluye nada que baje la seguridad ni moleste al anticheat." FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                        <Border x:Name="OnbProfileEntusiasta" Grid.Row="1" Grid.Column="1" Tag="Entusiasta" Tapped="OnboardingProfile_Tapped" Style="{StaticResource KruzhCardStyle}" Padding="20,18">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Entusiasta" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" />
+                                <TextBlock Text="Todo lo que aplica a tu PC, incluidos los que bajan la seguridad o piden cuidado. Antes de aplicar esos te pide confirmación." FontSize="12.5" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Lista de opciones de la sección -->
+                    <Grid x:Name="OnboardingRowsPanel" Grid.Row="1" RowSpacing="10" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <TextBlock x:Name="OnboardingCountText" Text="-" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" VerticalAlignment="Center" />
+                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                <Button Click="OnboardingSelectAll_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Marcar todo" />
+                                <Button Click="OnboardingSelectNone_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Desmarcar todo" />
+                            </StackPanel>
+                        </Grid>
+                        <Border Grid.Row="1" Style="{StaticResource KruzhCardStyle}" Padding="18,2">
+                            <ScrollViewer x:Name="OnboardingRowsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl x:Name="OnboardingRowsList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnSpacing="12" Padding="0,12" BorderBrush="{StaticResource KruzhDividerHairlineBrush}" BorderThickness="0,0,0,1"
+                                                  ToolTipService.ToolTip="{Binding Tooltip}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled}" MinWidth="0" Width="30"
+                                                          VerticalAlignment="Top" Margin="0,-4,0,0" />
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold" Foreground="{StaticResource KruzhTextPrimaryBrush}" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Description}" Visibility="{Binding DescriptionVisibility}" FontSize="12" Foreground="{StaticResource KruzhTextTertiaryBrush}" TextWrapping="Wrap" />
+                                                    <ItemsControl ItemsSource="{Binding Badges}" Visibility="{Binding BadgesVisibility}" Margin="0,2,0,0">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Horizontal" Spacing="6" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Style="{StaticResource KruzhBadgeOutlineStyle}">
+                                                                    <TextBlock Text="{Binding}" FontSize="11" Foreground="{StaticResource KruzhTextSecondaryBrush}" />
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+
+                    <!-- Resumen -->
+                    <ScrollViewer x:Name="OnboardingSummaryPanel" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                        <Border Style="{StaticResource KruzhCardStyle}" Padding="22,20" VerticalAlignment="Top">
+                            <TextBlock x:Name="OnboardingSummaryText" Text="-" FontSize="13" LineHeight="22" Foreground="{StaticResource KruzhTextSecondaryBrush}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                        </Border>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- Botonera -->
+                <Grid Grid.Row="1" Grid.Column="1" Margin="0,20,0,0">
+                    <Button Click="OnboardingCancel_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Cancelar" MinWidth="110" />
+                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                        <Button x:Name="OnboardingBackBtn" Click="OnboardingBack_Click" Style="{StaticResource KruzhGhostButtonStyle}" Content="Atrás" MinWidth="110" />
+                        <Button x:Name="OnboardingNextBtn" Click="OnboardingNext_Click" Style="{StaticResource KruzhPrimaryButtonStyle}" Content="Siguiente" MinWidth="130" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
 
         <!-- ======================================================================= -->
         <!-- OVERLAY AL "APLICAR CAMBIOS" (MOCKUP KRUZH_LOADERS 1:1)                  -->

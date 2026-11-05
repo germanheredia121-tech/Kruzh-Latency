@@ -19,7 +19,8 @@ namespace KruzhLatency.Services;
 /// Spec 003 / G6: auto MSI. Por cada dispositivo que declara MSI/MSI-X se mide el p99 de su driver en el estado actual
 /// y con MSI invertido (on↔off), bajo una carga que lo hace interrumpir. Se queda la alternativa solo si baja el p99 más que
 /// el ruido (<see cref="LatencyComparer"/>); si el dispositivo no arranca con el cambio, vuelve atrás y queda "no apto".
-/// Los dispositivos que no se reinician en caliente (NVMe de arranque, a veces la GPU) usan el reinicio con retomado (G5).
+/// Los dispositivos que no se reinician en caliente (a veces la GPU) usan el reinicio con retomado (G5), tanto para probar como
+/// para volver atrás. El NVMe no se mide (ver BuildSession).
 /// </summary>
 public sealed class AutoMsiService
 {
@@ -68,6 +69,10 @@ public sealed class AutoMsiService
         int i = 0;
         foreach (var t in MsiPlanner.Targets(tree))
         {
+            // El NVMe no se mide: sin MSI el disco puede trabarse y colgar Windows entero (sin volcado, porque el disco
+            // es donde se escribiría), y por ser el disco del sistema la vuelta atrás exige reiniciar. Queda como está.
+            if (t.Kind == "NVMe") continue;
+
             string driver = DriverFiles.ImageFileName(t.Device.Service) ?? "";
             if (driver.Length == 0) continue;
 
@@ -147,28 +152,40 @@ public sealed class AutoMsiService
         session.Data[$"{key}:alt"] = Join(alt);
         var baseP99 = Split(session.Data.GetValueOrDefault($"{key}:base"));
         var decision = LatencyComparer.Decide(baseP99, alt);
+        bool backNeedsReboot = false;
         if (!decision.KeepAlternative)
         {
             _audit.RevertTweakFromJournal(tweakId, out _);
-            var back = new CfgMgrDeviceInventory().Restart(instance, TimeSpan.FromSeconds(30));
-            if (!back.Restarted) session.Data["pendingReboot"] = "1"; // la vuelta atrás se aplica en el próximo reinicio
+            backNeedsReboot = !new CfgMgrDeviceInventory().Restart(instance, TimeSpan.FromSeconds(30)).IsHealthy;
         }
         session.Data[$"{key}:result"] = decision.Reason;
         session.Finish(stepId, true, decision.Reason);
         AutoTuneSessionService.Checkpoint(session);
-        return (true, decision.Reason, false);
+        return backNeedsReboot ? RebootNow(session, decision.Reason, true) : (true, decision.Reason, false);
     }
 
     private (bool, string, bool) Unfit(AutoTuneSession session, string stepId, string tweakId, string instance, string why)
     {
         _audit.RevertTweakFromJournal(tweakId, out _);
         var back = new CfgMgrDeviceInventory().Restart(instance, TimeSpan.FromSeconds(30));
-        if (!back.IsHealthy) session.Data["pendingReboot"] = "1";
         string key = stepId[..stepId.IndexOf(':')];
         session.Data[$"{key}:result"] = $"No apto: {why}. Se dejó como estaba.";
         session.Finish(stepId, false, session.Data[$"{key}:result"]);
         AutoTuneSessionService.Checkpoint(session);
-        return (false, session.Data[$"{key}:result"], false);
+        return back.IsHealthy ? (false, session.Data[$"{key}:result"], false) : RebootNow(session, session.Data[$"{key}:result"], false);
+    }
+
+    /// <summary>
+    /// La vuelta atrás no se pudo aplicar en caliente: se reinicia YA (no "más tarde"), para que el dispositivo no siga
+    /// funcionando con el valor de prueba. La sesión sigue sola al volver.
+    /// </summary>
+    private (bool, string, bool) RebootNow(AutoTuneSession session, string result, bool ok)
+    {
+        var (scheduled, detail) = _sessions.RebootToContinue(session);
+        if (scheduled) return (ok, $"{result} Reiniciando para aplicar la vuelta atrás: {detail}", true);
+        session.Data["pendingReboot"] = "1";
+        AutoTuneSessionService.Checkpoint(session);
+        return (ok, $"{result} ({detail})", false);
     }
 
 

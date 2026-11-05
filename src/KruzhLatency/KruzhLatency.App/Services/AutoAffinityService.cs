@@ -187,11 +187,17 @@ public sealed class AutoAffinityService
             result = $"Ningún núcleo mejora a \"como viene Windows\" (p99 {baseP99.DefaultIfEmpty(0).Average():F0} µs): queda como estaba.";
         }
         var restart = new CfgMgrDeviceInventory().Restart(instance, TimeSpan.FromSeconds(30));
-        if (!restart.Restarted) s.Data["pendingReboot"] = "1";
         s.Data[$"{key}:result"] = result;
         s.Finish(stepId, true, result);
         AutoTuneSessionService.Checkpoint(s);
-        return (true, result, false);
+        if (restart.IsHealthy) return (true, result, false);
+
+        // No se aplica en caliente: reiniciar ya, para no dejar el dispositivo con la afinidad de la última prueba.
+        var (scheduled, detail) = _sessions.RebootToContinue(s);
+        if (scheduled) return (true, $"{result} Reiniciando para aplicarlo: {detail}", true);
+        s.Data["pendingReboot"] = "1";
+        AutoTuneSessionService.Checkpoint(s);
+        return (true, $"{result} ({detail})", false);
     }
 
     public string Finish(AutoTuneSession session)

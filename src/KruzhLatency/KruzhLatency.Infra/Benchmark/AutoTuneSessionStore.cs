@@ -65,6 +65,49 @@ public static class AutoTuneSessionStore
     }
 }
 
+/// <summary>
+/// Asistente de optimización completa: cola de mediciones pendientes y el informe acumulado. Sobrevive a reinicios de
+/// Windows y a que KRUZH se reabra (tras reiniciar el driver de video). Misma carpeta protegida que la sesión.
+/// </summary>
+public static class OnboardingStore
+{
+    private static string Dir => SecureFolders.ProgramData("autotune");
+    private static string QueuePath => Path.Combine(Dir, "onboarding-queue.txt");
+    private static string ReportPath => Path.Combine(Dir, "onboarding-report.txt");
+
+    public static bool IsActive => File.Exists(QueuePath);
+
+    public static void Start(IEnumerable<string> queue)
+    {
+        try { File.Delete(ReportPath); } catch (IOException) { }
+        File.WriteAllLines(QueuePath, queue);
+    }
+
+    /// <summary>Saca y devuelve la próxima medición; null si no queda ninguna (o no hay asistente activo).</summary>
+    public static string? Pop()
+    {
+        if (!File.Exists(QueuePath)) return null;
+        var items = File.ReadAllLines(QueuePath).Where(l => l.Length > 0).ToList();
+        if (items.Count == 0) return null;
+        File.WriteAllLines(QueuePath, items.Skip(1));
+        return items[0];
+    }
+
+    public static void AppendReport(string title, string text) =>
+        File.AppendAllText(ReportPath, $"{title}\n{text.Trim()}\n\n");
+
+    /// <summary>Termina el asistente: devuelve el informe acumulado y borra la cola.</summary>
+    public static string Finish()
+    {
+        string report = File.Exists(ReportPath) ? File.ReadAllText(ReportPath).Trim() : string.Empty;
+        foreach (string p in new[] { QueuePath, ReportPath })
+        {
+            try { File.Delete(p); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+        return report;
+    }
+}
+
 /// <summary>Volver a abrir KRUZH (ventana nueva) después de reiniciar el driver de video.</summary>
 public static class SelfRelaunch
 {

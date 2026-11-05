@@ -67,6 +67,7 @@ public sealed partial class MainWindow : Window
         // Spec 003 / G5: quién retoma cada tipo de medición después de un reinicio.
         AutoTuneSessionService.Runners[AutoMsiService.Kind] = RunAutoMsiAsync;
         AutoTuneSessionService.Runners[AutoAffinityService.Kind] = RunAutoAffinityAsync;
+        AutoTuneSessionService.Runners[OnboardingRebootKind] = ResumeOnboardingAfterRebootAsync;
     }
 
     private IntPtr GetWindowHandle() => WindowNative.GetWindowHandle(this);
@@ -294,14 +295,8 @@ public sealed partial class MainWindow : Window
             // ADR-009: si hay un EDID esperando confirmación (se aplicó y se reinició), preguntar ya.
             _ = ConfirmPendingEdidAsync();
 
-            // Spec 003 / G5: si una medición quedó a mitad (reinicio), ofrecer retomarla o cancelarla.
-            _ = ResumePendingAutoTuneAsync();
-
-            // Spec 003: resultado guardado antes de reabrir KRUZH (tras reiniciar el driver de video).
-            if (KruzhLatency.Infra.Benchmark.AutoTuneSessionStore.TakeReport() is { } pendingReport)
-            {
-                _ = ShowSimpleInfoModalAsync(pendingReport.Title, pendingReport.Text);
-            }
+            // Spec 003: medición a mitad (reinicio), resultado guardado antes de reabrir KRUZH, o asistente en curso.
+            _ = ResumeAutoTuneAtStartupAsync();
 
             // T11: si el journal estaba dañado, avisar (nunca en silencio).
             switch (App.AuditService.JournalLoadOutcome)
@@ -1064,23 +1059,24 @@ public sealed partial class MainWindow : Window
 
     private bool _isApplyingBatch;
 
-    private async Task ApplyPendingChangesFlowAsync()
+    /// <summary>Aplica lo pendiente. false = no se aplicó nada (cancelado o bloqueado). <paramref name="rebootNotice"/>: avisar si hace falta reiniciar.</summary>
+    private async Task<bool> ApplyPendingChangesFlowAsync(bool rebootNotice = true)
     {
-        if (_isApplyingBatch) return;
+        if (_isApplyingBatch) return false;
         var pending = App.TweakEngine.AllTweaks.Where(t => t.IsPending).ToList();
-        if (pending.Count == 0) return;
+        if (pending.Count == 0) return true;
 
         if (!App.LicenseService.PerformIntegrityAndAntiDebugCheck(out string integrityMsg))
         {
             await ShowSimpleInfoModalAsync("Verificación de integridad", integrityMsg);
-            return;
+            return false;
         }
 
         var toApply = pending.Where(t => !t.IsPendingRevert).ToList();
         var toRevert = pending.Where(t => t.IsPendingRevert).ToList();
         bool needsReboot = pending.Any(t => t.RequiresReboot);
 
-        if (!await ConfirmRiskyAsync(toApply)) return;
+        if (!await ConfirmRiskyAsync(toApply)) return false;
 
         _isApplyingBatch = true;
         _telemetryTimer.Stop(); // no refrescar estado de tweaks mientras se escriben (evita lecturas a medio aplicar)
@@ -1257,12 +1253,13 @@ public sealed partial class MainWindow : Window
                 $"{detailText}\n\nEl resto del lote se aplicó normalmente. Detalle técnico en %LOCALAPPDATA%\\KruzhLatency\\errors.log");
         }
 
-        if (needsReboot)
+        if (needsReboot && rebootNotice)
         {
             await ShowSimpleInfoModalAsync(
                 "Reinicio recomendado",
                 "Algunos cambios a nivel de kernel/BCD requieren reiniciar la PC para surtir efecto total.");
         }
+        return true;
     }
 
     // ========================================================================================
@@ -2106,7 +2103,8 @@ public sealed partial class MainWindow : Window
         string what = session.Current?.Title ?? "medición";
         if (AutoTuneSessionService.Runners.TryGetValue(session.Kind, out var runner))
         {
-            bool resume = await ShowConfirmModalAsync("Medición en curso",
+            // Dentro del asistente el usuario ya aceptó todo: se sigue sin preguntar.
+            bool resume = InOnboarding || await ShowConfirmModalAsync("Medición en curso",
                 $"Hay una medición de KRUZH a mitad (reinicio {session.Reboots}). Sigue con: {what}.\n\n" +
                 "Si la cancelás, se revierte todo lo que cambió.", "Continuar", "Cancelar y revertir");
             if (resume)
@@ -2122,37 +2120,83 @@ public sealed partial class MainWindow : Window
         }
         string result = await Task.Run(() => svc.Cancel(session));
         SetStatus($"Medición cancelada. {result}");
+        if (InOnboarding)
+        {
+            KruzhLatency.Infra.Benchmark.OnboardingStore.AppendReport($"Medición cancelada ({what})", result);
+            await ContinueOnboardingAsync();
+        }
     }
 
-    /// <summary>Spec 003 / G6: prepara y arranca una sesión de auto MSI.</summary>
-    private async void AutoMsiBtn_Click(object sender, RoutedEventArgs e)
+    private static bool InOnboarding => KruzhLatency.Infra.Benchmark.OnboardingStore.IsActive;
+
+    /// <summary>Resultado de una medición: modal si se lanzó a mano; dentro del asistente se suma al informe y sigue la cola.</summary>
+    private async Task ReportAutoTuneAsync(string title, string report)
+    {
+        AfterPciChange();
+        if (InOnboarding)
+        {
+            KruzhLatency.Infra.Benchmark.OnboardingStore.AppendReport(title, report);
+            await ContinueOnboardingAsync();
+            return;
+        }
+        await ShowSimpleInfoModalAsync(title, report);
+    }
+
+    /// <summary>Tras reiniciar el driver de video: guardar el resultado y reabrir KRUZH (la ventana puede quedar sin texto).</summary>
+    private static void ReportAndRelaunch(string title, string report)
+    {
+        if (InOnboarding) KruzhLatency.Infra.Benchmark.OnboardingStore.AppendReport(title, report);
+        else KruzhLatency.Infra.Benchmark.AutoTuneSessionStore.SaveReport(title, report);
+        App.RelaunchAndExit();
+    }
+
+    /// <summary>Una medición que no se puede hacer: aviso a mano; en el asistente se anota y se pasa a la siguiente.</summary>
+    private async Task SkipAutoTuneAsync(string title, string why, bool interactive)
+    {
+        if (interactive)
+        {
+            await ShowSimpleInfoModalAsync(title, why);
+            return;
+        }
+        KruzhLatency.Infra.Benchmark.OnboardingStore.AppendReport(title, "No se midió: " + why);
+        await ContinueOnboardingAsync();
+    }
+
+    private async void AutoMsiBtn_Click(object sender, RoutedEventArgs e) => await StartAutoMsiAsync(interactive: true);
+
+    /// <summary>Spec 003 / G6: prepara y arranca una sesión de auto MSI (interactive = false: lanzada por el asistente).</summary>
+    private async Task StartAutoMsiAsync(bool interactive)
     {
         if (AutoTuneSessionService.Pending() is not null)
         {
-            await ShowSimpleInfoModalAsync("Medir MSI", "Ya hay una medición en curso. Reiniciá KRUZH para retomarla o cancelarla.");
+            await SkipAutoTuneAsync("Medir MSI", "ya hay una medición en curso. Reiniciá KRUZH para retomarla o cancelarla.", interactive);
             return;
         }
         var svc = new AutoMsiService(App.AuditService);
         var session = await Task.Run(svc.BuildSession);
         if (session.Steps.Count == 0)
         {
-            await ShowSimpleInfoModalAsync("Medir MSI", "Ningún dispositivo de tu PC declara soporte de MSI.");
+            await SkipAutoTuneAsync("Medir MSI", "ningún dispositivo de tu PC (salvo el disco, que no se prueba) declara soporte de MSI.", interactive);
             return;
         }
 
-        int devices = session.Steps.Count / 2;
-        int minutes = (int)Math.Ceiling(session.Steps.Count * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + devices;
-        bool go = await ShowConfirmModalAsync("Medir MSI (auto)",
-            $"KRUZH va a medir {devices} dispositivos con MSI y sin MSI, con una carga que los hace trabajar. Tarda unos {minutes} minutos.\n\n" +
-            "• Antes se crea un punto de restauración.\n" +
-            "• Cada dispositivo se reinicia (la pantalla parpadea con la GPU; el mouse o la red se cortan 1-2 s).\n" +
-            "• Los que no se reinician en caliente (el disco de arranque, a veces la GPU) piden reiniciar Windows: KRUZH se abre solo al volver y sigue.\n" +
-            "• En los pasos de USB, mové el mouse en círculos mientras mide.\n" +
-            "• Solo queda lo que baja la latencia por encima del ruido; si un dispositivo falla con el cambio, vuelve atrás.",
-            "Empezar");
-        if (!go) return;
+        if (interactive)
+        {
+            int devices = session.Steps.Count / 2;
+            int minutes = (int)Math.Ceiling(session.Steps.Count * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + devices;
+            bool go = await ShowConfirmModalAsync("Medir MSI (auto)",
+                $"KRUZH va a medir {devices} dispositivos con MSI y sin MSI, con una carga que los hace trabajar. Tarda unos {minutes} minutos.\n\n" +
+                "• Antes se crea un punto de restauración.\n" +
+                "• Cada dispositivo se reinicia (la pantalla parpadea con la GPU; el mouse o la red se cortan 1-2 s).\n" +
+                "• Los que no se reinician en caliente (a veces la GPU) piden reiniciar Windows, también para volver atrás: KRUZH se abre solo al volver y sigue.\n" +
+                "• El disco NVMe no se prueba: sin MSI puede colgar Windows.\n" +
+                "• En los pasos de USB, mové el mouse en círculos mientras mide.\n" +
+                "• Solo queda lo que baja la latencia por encima del ruido; si un dispositivo falla con el cambio, vuelve atrás.",
+                "Empezar");
+            if (!go) return;
+            await App.AuditService.CreateSystemRestorePointAsync("KRUZH LATENCY — antes de medir MSI");
+        }
 
-        await App.AuditService.CreateSystemRestorePointAsync("KRUZH LATENCY — antes de medir MSI");
         await Task.Run(() => svc.Begin(session));
         await RunAutoMsiAsync(session);
     }
@@ -2184,46 +2228,50 @@ public sealed partial class MainWindow : Window
         string report = await Task.Run(() => svc.Finish(session));
         if (gpuRestarted)
         {
-            KruzhLatency.Infra.Benchmark.AutoTuneSessionStore.SaveReport("Resultado: MSI", report);
-            App.RelaunchAndExit();
+            ReportAndRelaunch("Resultado: MSI", report);
             return;
         }
-        await ShowSimpleInfoModalAsync("Resultado: MSI", report);
-        AfterPciChange();
+        await ReportAutoTuneAsync("Resultado: MSI", report);
     }
 
+    private async void AutoAffinityBtn_Click(object sender, RoutedEventArgs e) => await StartAutoAffinityAsync(interactive: true);
+
     /// <summary>Spec 003 / G7: afinidad medida de la xHCI del mouse y del NVMe.</summary>
-    private async void AutoAffinityBtn_Click(object sender, RoutedEventArgs e)
+    private async Task StartAutoAffinityAsync(bool interactive)
     {
+        const string title = "Medir afinidad USB/NVMe";
         if (AutoTuneSessionService.Pending() is not null)
         {
-            await ShowSimpleInfoModalAsync("Medir afinidad", "Ya hay una medición en curso. Reiniciá KRUZH para retomarla o cancelarla.");
+            await SkipAutoTuneAsync(title, "ya hay una medición en curso. Reiniciá KRUZH para retomarla o cancelarla.", interactive);
             return;
         }
-        if (App.AuditService.HasBackupForTweak("PciIrqSmartBalancer"))
+        if (App.AuditService.HasBackupForTweak(KruzhLatency.Core.Benchmark.OnboardingPlan.ManualAffinityTweak))
         {
-            await ShowSimpleInfoModalAsync("Medir afinidad", "Primero revertí \"Interrupciones por núcleo físico\" (I02): toca la misma afinidad.");
+            await SkipAutoTuneAsync(title, "primero hay que revertir \"Interrupciones por núcleo físico\" (I02): toca la misma afinidad.", interactive);
             return;
         }
         var svc = new AutoAffinityService(App.AuditService, () => App.HardwareService.CurrentProfile.CoreTopology);
         var session = await Task.Run(svc.BuildSession);
         if (session.Steps.Count == 0)
         {
-            await ShowSimpleInfoModalAsync("Medir afinidad", "No se encontró el USB del mouse ni un NVMe para medir.");
+            await SkipAutoTuneAsync(title, "no se encontró el USB del mouse ni un NVMe para medir.", interactive);
             return;
         }
 
-        int runs = session.Steps.Count(s => !s.Id.EndsWith(":decide", StringComparison.Ordinal));
-        int minutes = (int)Math.Ceiling(runs * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + 1;
-        bool go = await ShowConfirmModalAsync("Medir afinidad USB/NVMe (auto)",
-            $"KRUZH va a probar {runs} configuraciones (como viene Windows + núcleos) para el USB del mouse y el disco NVMe. Tarda unos {minutes} minutos.\n\n" +
-            "• En los pasos de USB, mové el mouse en círculos todo el tiempo que mide.\n" +
-            "• El NVMe de arranque necesita reiniciar Windows entre pruebas: KRUZH se abre solo al volver y sigue.\n" +
-            "• Solo queda lo que baja la latencia por encima del ruido; si nada gana, todo queda como estaba.",
-            "Empezar");
-        if (!go) return;
+        if (interactive)
+        {
+            int runs = session.Steps.Count(s => !s.Id.EndsWith(":decide", StringComparison.Ordinal));
+            int minutes = (int)Math.Ceiling(runs * AutoMsiService.Trials * (AutoMsiService.Settle + AutoMsiService.Window).TotalSeconds / 60) + 1;
+            bool go = await ShowConfirmModalAsync("Medir afinidad USB/NVMe (auto)",
+                $"KRUZH va a probar {runs} configuraciones (como viene Windows + núcleos) para el USB del mouse y el disco NVMe. Tarda unos {minutes} minutos.\n\n" +
+                "• En los pasos de USB, mové el mouse en círculos todo el tiempo que mide.\n" +
+                "• El NVMe de arranque necesita reiniciar Windows entre pruebas: KRUZH se abre solo al volver y sigue.\n" +
+                "• Solo queda lo que baja la latencia por encima del ruido; si nada gana, todo queda como estaba.",
+                "Empezar");
+            if (!go) return;
+            await App.AuditService.CreateSystemRestorePointAsync("KRUZH LATENCY — antes de medir afinidad");
+        }
 
-        await App.AuditService.CreateSystemRestorePointAsync("KRUZH LATENCY — antes de medir afinidad");
         await Task.Run(() => svc.Begin(session));
         await RunAutoAffinityAsync(session);
     }
@@ -2250,18 +2298,20 @@ public sealed partial class MainWindow : Window
             return;
         }
         string report = await Task.Run(() => svc.Finish(session));
-        await ShowSimpleInfoModalAsync("Resultado: afinidad USB/NVMe", report);
-        AfterPciChange();
+        await ReportAutoTuneAsync("Resultado: afinidad USB/NVMe", report);
     }
 
+    private async void AutoGpuAffinityBtn_Click(object sender, RoutedEventArgs e) => await StartAutoGpuAffinityAsync(interactive: true);
+
     /// <summary>Spec 003 / G4: mide cada núcleo para la GPU con carga sintética y aplica el ganador o nada.</summary>
-    private async void AutoGpuAffinityBtn_Click(object sender, RoutedEventArgs e)
+    private async Task StartAutoGpuAffinityAsync(bool interactive)
     {
+        const string title = "Medir afinidad de GPU";
         var svc = new AutoGpuAffinityService(App.AuditService, () => App.HardwareService.CurrentProfile.CoreTopology);
         var (gpu, problem) = await Task.Run(svc.FindGpu);
         if (gpu is null)
         {
-            await ShowSimpleInfoModalAsync("Medir afinidad de GPU", problem ?? "No se puede medir en esta PC.");
+            await SkipAutoTuneAsync(title, problem ?? "no se puede medir en esta PC.", interactive);
             return;
         }
 
@@ -2269,21 +2319,24 @@ public sealed partial class MainWindow : Window
         SetStatus("Probando la carga 3D…");
         if (await Task.Run(svc.Preflight) is { } preflightError)
         {
-            await ShowSimpleInfoModalAsync("Medir afinidad de GPU", preflightError);
+            await SkipAutoTuneAsync(title, preflightError, interactive);
             return;
         }
 
         var candidates = svc.Candidates();
-        double perRunSec = (AutoGpuAffinityService.Warmup + AutoGpuAffinityService.Capture).TotalSeconds + 4;
-        int minutes = (int)Math.Ceiling(candidates.Count * (AutoGpuAffinityService.TrialsPerCandidate * perRunSec + 10) / 60);
-        bool go = await ShowConfirmModalAsync("Medir afinidad de GPU",
-            $"KRUZH va a probar {candidates.Count} opciones (como viene Windows + un núcleo por vez) para las interrupciones de tu {gpu.Name}, " +
-            $"con una carga 3D propia medida por PresentMon. Tarda unos {minutes} minutos.\n\n" +
-            "• La pantalla va a parpadear cada vez que se reinicia el driver de video.\n" +
-            "• Cerrá juegos y no uses la PC mientras mide.\n" +
-            "• Al final aplica solo lo que gane por encima del ruido; si nada gana, deja todo como estaba.",
-            "Empezar");
-        if (!go) return;
+        if (interactive)
+        {
+            double perRunSec = (AutoGpuAffinityService.Warmup + AutoGpuAffinityService.Capture).TotalSeconds + 4;
+            int minutes = (int)Math.Ceiling(candidates.Count * (AutoGpuAffinityService.TrialsPerCandidate * perRunSec + 10) / 60);
+            bool go = await ShowConfirmModalAsync("Medir afinidad de GPU",
+                $"KRUZH va a probar {candidates.Count} opciones (como viene Windows + un núcleo por vez) para las interrupciones de tu {gpu.Name}, " +
+                $"con una carga 3D propia medida por PresentMon. Tarda unos {minutes} minutos.\n\n" +
+                "• La pantalla va a parpadear cada vez que se reinicia el driver de video.\n" +
+                "• Cerrá juegos y no uses la PC mientras mide.\n" +
+                "• Al final aplica solo lo que gane por encima del ruido; si nada gana, deja todo como estaba.",
+                "Empezar");
+            if (!go) return;
+        }
 
         using var cts = new CancellationTokenSource();
         bool failed = false;
@@ -2318,13 +2371,11 @@ public sealed partial class MainWindow : Window
         if (svc.GpuRestarted)
         {
             // Después de reiniciar el driver de video, WinUI puede quedar sin dibujar texto: se reabre KRUZH con ventana nueva
-            // y el resultado se muestra al volver.
-            KruzhLatency.Infra.Benchmark.AutoTuneSessionStore.SaveReport("Resultado: afinidad de GPU", report);
-            App.RelaunchAndExit();
+            // y el resultado se muestra (o el asistente sigue) al volver.
+            ReportAndRelaunch("Resultado: afinidad de GPU", report);
             return;
         }
-        await ShowSimpleInfoModalAsync("Resultado: afinidad de GPU", report);
-        AfterPciChange();
+        await ReportAutoTuneAsync("Resultado: afinidad de GPU", report);
     }
 
     private async void RevertAllPciIrqMsiBtn_Click(object sender, RoutedEventArgs e)
